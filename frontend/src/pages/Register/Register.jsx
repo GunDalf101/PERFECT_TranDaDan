@@ -1,25 +1,29 @@
 import React from "react";
-import styles from "./Login.module.scss";
+import styles from "./Register.module.scss";
 import alogo from "../../assets/image/42_Logo.png";
 import { Link } from "react-router-dom";
 
-const Login = () => {
+const Register = () => {
   return (
     <div class={`flex ${styles.newBody}`}>
-      <div class="flex flex-col justify-center items-center w-full lg:w-2/5 p-8 bg-black text-white relative">
-        <Link to="/">
-          <button class="absolute top-4 left-4 rounded-full bg-transparent transition-colors w-[40px] h-[40px]">
-            <svg
-              fill="#00d4ff"
-              class="w-6 h-6"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 330 330"
-            >
-              <path d="M111.213,165.004L250.607,25.607c5.858-5.858,5.858-15.355,0-21.213c-5.858-5.858-15.355-5.858-21.213,0.001 l-150,150.004C76.58,157.211,75,161.026,75,165.004c0,3.979,1.581,7.794,4.394,10.607l150,149.996 C232.322,328.536,236.161,330,240,330s7.678-1.464,10.607-4.394c5.858-5.858,5.858-15.355,0-21.213L111.213,165.004z" />
-            </svg>
-          </button>
-        </Link>
+      <Link to="/">
+        <button class="absolute top-4 left-4 rounded-full bg-transparent transition-colors w-[40px] h-[40px]">
+          <svg
+            fill="#00d4ff"
+            class="w-6 h-6"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 330 330"
+          >
+            <path d="M111.213,165.004L250.607,25.607c5.858-5.858,5.858-15.355,0-21.213c-5.858-5.858-15.355-5.858-21.213,0.001 l-150,150.004C76.58,157.211,75,161.026,75,165.004c0,3.979,1.581,7.794,4.394,10.607l150,149.996 C232.322,328.536,236.161,330,240,330s7.678-1.464,10.607-4.394c5.858-5.858,5.858-15.355,0-21.213L111.213,165.004z" />
+          </svg>
+        </button>
+      </Link>
+      <div class={`hidden lg:flex flex-1 ${styles.imagePlaceholder}`}></div>
+      <div
+        class={`hidden lg:block lg:absolute ${styles.transitionEffect}`}
+      ></div>
 
+      <div class="flex flex-col justify-center items-center w-full lg:w-2/5 p-8 bg-black text-white relative">
         <h1
           class={`text-3xl font-extrabold text-center ${styles.glowText} mb-4`}
         >
@@ -37,23 +41,25 @@ const Login = () => {
             />
 
             <input
+              type="text"
+              placeholder="Email"
+              class={`${styles.emailInput} w-full px-8 py-4 rounded-lg font-medium bg-gray-800 border border-gray-600 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-gray-900 mb-5 text-white`}
+            />
+
+            <input
               type="password"
               placeholder="Password"
               class={`${styles.passwordInput} w-full px-8 py-4 rounded-lg font-medium bg-gray-800 border border-gray-600 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-gray-900 mb-5 text-white`}
             />
-            <div class="text-right w-full mb-5">
-              <Link to="#" class="text-sm text-[#00d4ff] hover:text-gray-400">
-                Forgot Password?
-              </Link>
-            </div>
+            <div class="text-right w-full mb-5"></div>
             <button
               type="submit"
               class={`${styles.retroButton} w-full font-bold shadow-sm rounded-lg py-3 text-white flex items-center justify-center transition-all duration-300 ease-in-out focus:outline-none`}
             >
-              Login
+              Register
             </button>
           </div>
-          <div class="my-12 border-b text-center">
+          <div class="my-8 border-b text-center">
             <div class="leading-none px-2 inline-block text-sm text-gray-400 tracking-wide font-medium bg-black transform translate-y-1/2">
               Or login with
             </div>
@@ -103,20 +109,14 @@ const Login = () => {
           </div>
         </form>
         <p class="mt-6 text-xs text-gray-600 text-center">
-          Don't have an account?{" "}
-          <Link to="/register" class="text-[#00d4ff] hover:underline">
-            Register
+          Do you already have an account?{" "}
+          <Link to="/login" class="text-[#00d4ff] hover:underline">
+            Log in
           </Link>
         </p>
       </div>
-
-      <div
-        class={`hidden lg:block lg:absolute ${styles.transitionEffect}`}
-      ></div>
-
-      <div class={`hidden lg:flex flex-1 ${styles.imagePlaceholder}`}></div>
     </div>
   );
 };
 
-export default Login;
+export default Register;
