@@ -24,6 +24,18 @@ const ProfileDropdown = React.forwardRef(({isVisible}, ref) => {
         href="#"
         className="block px-4 py-2 hover:bg-pink-500 hover:text-gray-900"
       >
+        History
+      </a>
+      <a
+        href="#"
+        className="block px-4 py-2 hover:bg-pink-500 hover:text-gray-900"
+      >
+        Dashboards
+      </a>
+      <a
+        href="#"
+        className="block px-4 py-2 hover:bg-pink-500 hover:text-gray-900"
+      >
         Settings
       </a>
       <a
