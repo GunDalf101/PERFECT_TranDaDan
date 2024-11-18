@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { Route, BrowserRouter, Routes, Navigate } from 'react-router-dom'
+import Homepage from './pages/Homepage'
+import MainLayout from './layouts/MainLayout'
 
 
 function App() {
 
   return (
     <BrowserRouter>
-        <ToastContainer />
         <Routes>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<MainLayout />}>
+              <Route index element={<Homepage />} />
+            </Route>
             
         </Routes>
     </BrowserRouter>

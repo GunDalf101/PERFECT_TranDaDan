@@ -1,0 +1,67 @@
+.profileDropdown {
+  display: none;
+  flex-direction: column;
+  background-color: #222;
+  border: 2px solid #ff00cc;
+  box-shadow: 0 0 10px 2px #00ffcc;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: auto;
+  padding: 0.5rem;
+  border-radius: 5px;
+  font-family: "Press Start 2P", cursive;
+  z-index: 10;
+
+  &.show {
+    display: flex;
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+    animation: glitch 0.5s ease-in-out infinite;
+  }
+  
+  a {
+    padding: 1rem;
+    text-align: center;
+    border-bottom: 2px solid #ff00cc;
+    color: #00ffcc;
+    text-decoration: none;
+    font-size: 0.8rem;
+    background-color: #222;
+    transition: background-color 0.3s, color 0.3s;
+
+    &:hover {
+      background-color: #ff00cc;
+      color: #222;
+      box-shadow: 0 0 10px 2px #ff00cc;
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+@keyframes glitch {
+  0% {
+    transform: translateX(0);
+  }
+  10% {
+    transform: translateX(-10px);
+  }
+  20% {
+    transform: translateX(10px);
+  }
+  30% {
+    transform: translateX(-5px);
+  }
+  40% {
+    transform: translateX(5px);
+  }
+  50% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
