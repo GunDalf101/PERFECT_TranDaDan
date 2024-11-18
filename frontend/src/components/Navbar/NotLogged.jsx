@@ -5,17 +5,25 @@ import { useClickOutside } from "../../hooks/useClickOutside";
 
 const NotLogged = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef(null);
   const buttonRef = useRef(null);
   useClickOutside([dropdownRef, buttonRef], () => setIsOpen(false));
-  const handleHamburgerClick = (e) => {
-    e.stopPropagation();
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 100);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleHamburgerClick = () => {
     setIsOpen((prev) => !prev);
   };
   return (
     <nav
       id="navbar"
-      className="navbar fixed top-0 w-full flex flex-column justify-between items-center pb-4 pr-10 pl-10 z-10"
+      className={`navbar ${scrolled ? 'scrolled' : ''} fixed top-0 w-full flex flex-column justify-between items-center pb-4 pr-10 pl-10 z-10`}
     >
       <div className="logo text-white text-5xl ml-5">TranDaDan</div>
       <div className="flex space-x-5">

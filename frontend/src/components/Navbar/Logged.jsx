@@ -10,14 +10,26 @@ import styles from "./Navbar.module.scss";
 const Logged = () => {
   const [isSidebarVisible, setSidebarVisible] = useState(false);
   const [isSearhVisible, setSearchVisible] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const sidebarRef = useRef(null);
   const searchRef = useRef(null);
+
   useClickOutside(sidebarRef, () => setSidebarVisible(false));
   useClickOutside(searchRef, () => setSearchVisible(false));
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 100);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+
   return (
     <nav
       id="navbar"
-      className="navbar fixed top-0 w-full flex flex-column justify-between items-center pb-4 pr-10 pl-10 z-10"
+      className={`navbar ${scrolled ? 'scrolled' : ''} fixed top-0 w-full flex flex-column justify-between items-center pb-4 pr-10 pl-10 z-10`}
     >
       <div className="flex items-center">
         <button

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Route, BrowserRouter, Routes, Navigate } from 'react-router-dom'
-import Homepage from './pages/Homepage'
+import Homepage from './pages/Homepage/Homepage'
 import MainLayout from './layouts/MainLayout'
 
 
