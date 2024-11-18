@@ -1,6 +1,6 @@
 import React from "react";
 import styles from "./Navbar.module.scss";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useClickOutside } from "../../hooks/useClickOutside";
 
 const NotLogged = () => {
