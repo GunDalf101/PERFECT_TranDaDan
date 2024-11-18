@@ -7,7 +7,7 @@ const Register = () => {
   return (
     <div class={`flex ${styles.newBody}`}>
       <Link to="/">
-        <button class="absolute top-4 left-4 rounded-full bg-transparent transition-colors w-[40px] h-[40px]">
+        <button class="absolute z-10 top-4 left-4 rounded-full bg-transparent transition-colors w-[40px] h-[40px]">
           <svg
             fill="#00d4ff"
             class="w-6 h-6"
