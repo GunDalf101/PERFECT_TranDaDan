@@ -3,7 +3,7 @@ import Logged from '../components/Navbar/Logged'
 import NotLogged from '../components/Navbar/NotLogged'
 import { Outlet } from 'react-router-dom'
 
-const MainLayout = ({loggedIn = true}) => {
+const MainLayout = ({loggedIn = false}) => {
   return (
     <div>
       <header>

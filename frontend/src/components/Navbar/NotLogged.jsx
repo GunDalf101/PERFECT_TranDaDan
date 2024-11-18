@@ -2,6 +2,7 @@ import React from "react";
 import styles from "./Navbar.module.scss";
 import { useState, useRef, useEffect } from "react";
 import { useClickOutside } from "../../hooks/useClickOutside";
+import { Link } from "react-router-dom";
 
 const NotLogged = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,8 +28,8 @@ const NotLogged = () => {
     >
       <div className="logo text-white text-5xl ml-5">TranDaDan</div>
       <div className="flex space-x-5">
-        <button className={styles.loginButton}>Login</button>
-        <button className={styles.registerButton}>Register</button>
+        <Link to="/login"><button className={styles.loginButton}>Login</button></Link>
+        <Link to="/register"><button className={styles.registerButton}>Register</button></Link>
       </div>
       <button
         className={styles.hamburger}
@@ -41,12 +42,12 @@ const NotLogged = () => {
         className={`${styles.authDropdown} ${isOpen && styles.show}`}
         ref={dropdownRef}
       >
-        <a href="#" className="dropdown-item block">
+        <Link to="/login" className="dropdown-item block">
           Login
-        </a>
-        <a href="#" className="dropdown-item block">
+        </Link>
+        <Link to="/register" className="dropdown-item block">
           Register
-        </a>
+        </Link>
       </div>
     </nav>
   );

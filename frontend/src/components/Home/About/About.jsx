@@ -3,7 +3,7 @@ import styles from "./About.module.scss";
 
 const About = React.forwardRef(({},ref) => {
   return (
-    <section className={`${styles.aboutSection} relative bg-black text-white pt-20 pb-5`} ref={ref}>
+    <section className={`${styles.aboutSection} relative bg-black text-white pb-5`} ref={ref}>
       <h1 className="about-header text-2xl sm:text-3xl md:text-5xl text-center font-pixel mb-8">
         About TranDaDan
       </h1>
@@ -14,7 +14,7 @@ const About = React.forwardRef(({},ref) => {
         to game, choomba!
       </p>
 
-      <div className="stats grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 justify-center mx-auto max-w-4xl">
+      <div className="stats grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 justify-center mx-auto max-w-4xl">
         <div className="stat mx-auto flex flex-col items-center justify-center text-center p-6 rounded-xl shadow-lg font-pixel text-xl transform hover:scale-105 transition-transform duration-300">
           <div className="number text-4xl font-bold text-yellow-400 mb-5">15</div>
           <span className="block text-sm text-yellow-400">Players</span>

@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { useClickOutside } from "../../hooks/useClickOutside";
 import ProfileIcon from "./SubNav/ProfileIcon";
 import styles from "./Navbar.module.scss";
+import { Link } from "react-router-dom";
 
 const Logged = () => {
   const [isSidebarVisible, setSidebarVisible] = useState(false);
