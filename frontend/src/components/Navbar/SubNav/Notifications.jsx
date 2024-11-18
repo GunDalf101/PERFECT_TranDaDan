@@ -13,7 +13,7 @@ const Notifications = () => {
     <div className="relative">
       <button id="notificationButton" ref={buttonRef} className="focus:outline-none" onClick={() => setNotifOpen(prev => !prev)}>
         <svg
-          className="w-10 h-10 text-gray-400 hover:text-white"
+          className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 hover:text-white"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           stroke="currentColor"

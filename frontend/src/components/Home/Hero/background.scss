@@ -15,7 +15,7 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: 100vh;
+  height: 100svh;
   z-index: 0;
   overflow: hidden;
   display: flex;
@@ -24,7 +24,7 @@
   .top-half {
     flex: 1;
     width: 100%;
-    height: 108vh;
+    height: 108svh;
     z-index: -3;
     overflow: hidden;
     background: linear-gradient(
@@ -103,24 +103,24 @@
     &.first {
       top: 45%;
       left: -4%;
-      width: 48vh;
-      height: 48vh;
+      width: 48svh;
+      height: 48svh;
       transform: rotate(30deg);
     }
 
     &.second {
       top: 37%;
       left: 8%;
-      width: 36vh;
-      height: 36vh;
+      width: 36svh;
+      height: 36svh;
       transform: rotate(45deg);
     }
 
     &.third {
       top: 45%;
       left: 17%;
-      width: 34vh;
-      height: 34vh;
+      width: 34svh;
+      height: 34svh;
       transform: rotate(45deg);
     }
 
@@ -130,9 +130,9 @@
       width: 0;
       height: 0;
       background-color: transparent;
-      border-left: 42vh solid transparent;
-      border-right: 42vh solid transparent;
-      border-bottom: 37vh solid black;
+      border-left: 42svh solid transparent;
+      border-right: 42svh solid transparent;
+      border-bottom: 37svh solid black;
       transform: rotate(-2deg);
     }
 
@@ -142,9 +142,9 @@
       width: 0;
       height: 0;
       background-color: transparent;
-      border-left: 22vh solid transparent;
-      border-right: 22vh solid transparent;
-      border-bottom: 36vh solid black;
+      border-left: 22svh solid transparent;
+      border-right: 22svh solid transparent;
+      border-bottom: 36svh solid black;
     }
 
     &.sixth {
@@ -153,9 +153,9 @@
       width: 0;
       height: 0;
       background-color: transparent;
-      border-left: 22vh solid transparent;
-      border-right: 22vh solid transparent;
-      border-bottom: 36vh solid black;
+      border-left: 22svh solid transparent;
+      border-right: 22svh solid transparent;
+      border-bottom: 36svh solid black;
     }
 
     &.seventh {
@@ -164,9 +164,9 @@
       width: 0;
       height: 0;
       background-color: transparent;
-      border-left: 45vh solid transparent;
-      border-right: 45vh solid transparent;
-      border-bottom: 34vh solid black;
+      border-left: 45svh solid transparent;
+      border-right: 45svh solid transparent;
+      border-bottom: 34svh solid black;
       transform: rotate(5deg);
     }
 
@@ -176,16 +176,16 @@
       width: 0;
       height: 0;
       background-color: transparent;
-      border-left: 27vh solid transparent;
-      border-right: 27vh solid transparent;
-      border-bottom: 35vh solid black;
+      border-left: 27svh solid transparent;
+      border-right: 27svh solid transparent;
+      border-bottom: 35svh solid black;
     }
 
     &.ninth {
       top: 35%;
       left: 83%;
-      width: 43vh;
-      height: 43vh;
+      width: 43svh;
+      height: 43svh;
       transform: rotate(45deg);
     }
   }
@@ -199,10 +199,10 @@
   top: 35%;
 
   .sun {
-    width: 45vh;
-    height: 45vh;
+    width: 45svh;
+    height: 45svh;
     z-index: -2;
-    margin: 3vh;
+    margin: 3svh;
     border-radius: 50%;
     background: radial-gradient(
       circle,

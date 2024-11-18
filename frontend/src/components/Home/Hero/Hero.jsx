@@ -33,7 +33,7 @@ const Hero = () => {
       </div>
 
 
-      <div className="relative flex flex-col items-center justify-center h-full">
+      <div className={`${styles.content} relative flex flex-col items-center justify-center h-full`}>
         <div className="text-center">
           <h1 className={styles.heroHeader}>
             <span className={styles.firstHero}>Classic Games</span>

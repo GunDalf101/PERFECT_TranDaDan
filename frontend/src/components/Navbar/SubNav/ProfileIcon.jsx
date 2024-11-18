@@ -14,7 +14,7 @@ const ProfileIcon = () => {
         <img
           src="https://via.placeholder.com/40"
           alt="Profile"
-          className="w-14 h-14 rounded-full border-2 border-pink-500"
+          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-pink-500"
         />
       </button>
         <ProfileDropdown isVisible={profileDropdown} ref={profileRef}/>

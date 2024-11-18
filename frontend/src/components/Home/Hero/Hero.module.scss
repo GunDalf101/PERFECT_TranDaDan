@@ -1,5 +1,5 @@
 .heroSection {
-  height: 100vh;
+  height: 100svh;
   max-height: 100em;
 }
 
@@ -104,14 +104,7 @@
   .heroSection {
     height: 600px !important;
   }
-  .background {
+  .content {
     height: 600px !important;
-  }
-  .mountains {
-    display: none;
-  }
-
-  .sun-wrapper {
-    display: none;
   }
 }

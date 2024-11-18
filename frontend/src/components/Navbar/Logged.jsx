@@ -46,7 +46,7 @@ const Logged = () => {
       <div className="flex items-center mt-5 space-x-4">
         <button id="searchIcon" className="md:hidden focus:outline-none" onClick={() => setSearchVisible((prev) => !prev)}>
           <svg
-            className="w-10 h-10 text-gray-400 hover:text-white"
+            className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 hover:text-white"
             xmlns="http://www.w3.org/2000/svg"
             x="0px"
             y="0px"
