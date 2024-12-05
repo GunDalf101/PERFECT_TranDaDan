@@ -1,0 +1,662 @@
+{
+  "accessors": [
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 2034,
+      "max": [
+        0.09496638923883438,
+        0.1259705126285553,
+        0.027451273053884506
+      ],
+      "min": [
+        -0.09496638923883438,
+        -0.1259705275297165,
+        -0.018002711236476898
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 24408,
+      "componentType": 5126,
+      "count": 2034,
+      "max": [
+        0.9999966025352478,
+        1.0,
+        1.0
+      ],
+      "min": [
+        -0.9999966025352478,
+        -1.0,
+        -1.0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5126,
+      "count": 2034,
+      "max": [
+        1.0,
+        0.9999576210975647,
+        1.0,
+        1.0
+      ],
+      "min": [
+        -0.9999123811721802,
+        -0.9999576210975647,
+        -1.0,
+        -1.0
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 2034,
+      "max": [
+        1.9219958782196045,
+        0.9971900582313538
+      ],
+      "min": [
+        0.000130433589220047,
+        0.0027018189430236816
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 8292,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 48816,
+      "componentType": 5126,
+      "count": 514,
+      "max": [
+        -0.03604482486844063,
+        0.1082947626709938,
+        0.012540748342871666
+      ],
+      "min": [
+        -0.07578928023576736,
+        0.06847857683897018,
+        -0.027451273053884506
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 54984,
+      "componentType": 5126,
+      "count": 514,
+      "max": [
+        0.9935790300369263,
+        0.9958123564720154,
+        0.9995840191841125
+      ],
+      "min": [
+        -0.9935742020606995,
+        -0.9958122968673706,
+        -0.9995840191841125
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 32544,
+      "componentType": 5126,
+      "count": 514,
+      "max": [
+        0.9995908141136169,
+        0.7989369034767151,
+        0.9573804140090942,
+        1.0
+      ],
+      "min": [
+        -0.5178230404853821,
+        -0.9993387460708618,
+        -0.9987128973007202,
+        1.0
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 16272,
+      "componentType": 5126,
+      "count": 514,
+      "max": [
+        0.9724270105361938,
+        0.9714211225509644
+      ],
+      "min": [
+        0.029017388820648193,
+        0.026019275188446045
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 33168,
+      "componentType": 5125,
+      "count": 2880,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 61152,
+      "componentType": 5126,
+      "count": 514,
+      "max": [
+        0.020000005140900612,
+        0.019999995827674866,
+        0.019999999552965164
+      ],
+      "min": [
+        -0.019999997690320015,
+        -0.020000003278255463,
+        -0.019999999552965164
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 67320,
+      "componentType": 5126,
+      "count": 514,
+      "max": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "min": [
+        -1.0,
+        -1.0,
+        -1.0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 40768,
+      "componentType": 5126,
+      "count": 514,
+      "max": [
+        0.23420068621635437,
+        0.5228392481803894,
+        0.9996128082275391,
+        1.0
+      ],
+      "min": [
+        -0.9979567527770996,
+        -0.9275826811790466,
+        -0.9993959069252014,
+        1.0
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 20384,
+      "componentType": 5126,
+      "count": 514,
+      "max": [
+        0.9724270105361938,
+        0.9714211225509644
+      ],
+      "min": [
+        0.029017388820648193,
+        0.026019275188446045
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 44688,
+      "componentType": 5125,
+      "count": 2880,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 73488,
+      "componentType": 5126,
+      "count": 1036,
+      "max": [
+        0.07459516078233719,
+        0.20250916481018066,
+        0.009845324791967869
+      ],
+      "min": [
+        -0.07459516078233719,
+        -0.04761888086795807,
+        -0.010458203963935375
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 85920,
+      "componentType": 5126,
+      "count": 1036,
+      "max": [
+        0.999997079372406,
+        1.0,
+        1.0
+      ],
+      "min": [
+        -0.999997079372406,
+        -1.0,
+        -1.0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 48992,
+      "componentType": 5126,
+      "count": 1036,
+      "max": [
+        1.0,
+        0.9999576807022095,
+        1.0,
+        1.0
+      ],
+      "min": [
+        -0.9999123215675354,
+        -0.9999576807022095,
+        -1.0,
+        -1.0
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 24496,
+      "componentType": 5126,
+      "count": 1036,
+      "max": [
+        1.9219958782196045,
+        0.9971900582313538
+      ],
+      "min": [
+        0.000130433589220047,
+        0.0027018189430236816
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 56208,
+      "componentType": 5125,
+      "count": 4146,
+      "type": "SCALAR"
+    }
+  ],
+  "asset": {
+    "extras": {
+      "author": "AndrewHunt95 (https://sketchfab.com/AndrewHunt95)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/table-tennis-rackets-ping-pong-ad3b85ec56d042af88e4e57db648eacb",
+      "title": "Table Tennis Rackets (Ping Pong)"
+    },
+    "generator": "Sketchfab-15.22.0",
+    "version": "2.0"
+  },
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 72792,
+      "name": "floatBufferViews",
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 32784,
+      "byteOffset": 72792,
+      "byteStride": 8,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 98352,
+      "byteOffset": 105576,
+      "byteStride": 12,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 65568,
+      "byteOffset": 203928,
+      "byteStride": 16,
+      "name": "floatBufferViews",
+      "target": 34962
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 269496,
+      "uri": "scene.bin"
+    }
+  ],
+  "images": [
+    {
+      "uri": "textures/M_PingPongPaddle_baseColor.png"
+    },
+    {
+      "uri": "textures/M_PingPongPaddle_metallicRoughness.png"
+    },
+    {
+      "uri": "textures/M_PingPongPaddle_normal.png"
+    },
+    {
+      "uri": "textures/M_PingPongBall_baseColor.png"
+    },
+    {
+      "uri": "textures/M_PingPongBall_metallicRoughness.png"
+    },
+    {
+      "uri": "textures/M_PingPongBall_normal.png"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "M_PingPongPaddle",
+      "normalTexture": {
+        "index": 2
+      },
+      "occlusionTexture": {
+        "index": 1
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0
+        },
+        "metallicRoughnessTexture": {
+          "index": 1
+        }
+      }
+    },
+    {
+      "doubleSided": true,
+      "name": "M_PingPongBall",
+      "normalTexture": {
+        "index": 5
+      },
+      "occlusionTexture": {
+        "index": 4
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 3
+        },
+        "metallicRoughnessTexture": {
+          "index": 4
+        }
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "SM_PingPongPaddle_Show_M_PingPongPaddle_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 1,
+            "POSITION": 0,
+            "TANGENT": 2,
+            "TEXCOORD_0": 3
+          },
+          "indices": 4,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "SM_PingPongPaddle_Show_M_PingPongBall_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 6,
+            "POSITION": 5,
+            "TANGENT": 7,
+            "TEXCOORD_0": 8
+          },
+          "indices": 9,
+          "material": 1,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "SM_PingPongBall_M_PingPongBall_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 11,
+            "POSITION": 10,
+            "TANGENT": 12,
+            "TEXCOORD_0": 13
+          },
+          "indices": 14,
+          "material": 1,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "SM_PingPongPaddle_M_PingPongPaddle_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 16,
+            "POSITION": 15,
+            "TANGENT": 17,
+            "TEXCOORD_0": 18
+          },
+          "indices": 19,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "children": [
+        1
+      ],
+      "matrix": [
+        0.9999991059303284,
+        0.0013151280581951141,
+        1.6119017382068818e-16,
+        0.0,
+        1.6081251375867913e-16,
+        2.872765577218857e-16,
+        -1.0,
+        0.0,
+        -0.0013151280581951141,
+        0.9999991059303284,
+        2.8706481271996193e-16,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "Sketchfab_model"
+    },
+    {
+      "children": [
+        2
+      ],
+      "matrix": [
+        0.009999999776482582,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.009999999776482582,
+        0.0,
+        0.0,
+        -0.009999999776482582,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "SM_PingPongPaddle.fbx"
+    },
+    {
+      "children": [
+        3,
+        6,
+        8
+      ],
+      "name": "RootNode"
+    },
+    {
+      "children": [
+        4,
+        5
+      ],
+      "matrix": [
+        -99.99999999999885,
+        1.5099579909783707e-05,
+        2.6469779601696886e-21,
+        0.0,
+        2.46003382353768e-12,
+        1.6292068005796523e-05,
+        -99.99999999999865,
+        0.0,
+        -1.5099579909783506e-05,
+        -99.99999999999753,
+        -1.6292067983592062e-05,
+        0.0,
+        -9.986047744750977,
+        1.7605953216552734,
+        -7.65386438369751,
+        1.0
+      ],
+      "name": "SM_PingPongPaddle_Show"
+    },
+    {
+      "mesh": 0,
+      "name": "SM_PingPongPaddle_Show_M_PingPongPaddle_0"
+    },
+    {
+      "mesh": 1,
+      "name": "SM_PingPongPaddle_Show_M_PingPongBall_0"
+    },
+    {
+      "children": [
+        7
+      ],
+      "matrix": [
+        100.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.629206793918314e-05,
+        -99.99999999999868,
+        0.0,
+        0.0,
+        99.99999999999868,
+        -1.629206793918314e-05,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "SM_PingPongBall"
+    },
+    {
+      "mesh": 2,
+      "name": "SM_PingPongBall_M_PingPongBall_0"
+    },
+    {
+      "children": [
+        9
+      ],
+      "matrix": [
+        100.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -2.8212996916465727e-05,
+        -99.99999999999602,
+        0.0,
+        0.0,
+        99.99999999999602,
+        -2.8212996916465727e-05,
+        0.0,
+        7.869891166687012,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "SM_PingPongPaddle"
+    },
+    {
+      "mesh": 3,
+      "name": "SM_PingPongPaddle_M_PingPongPaddle_0"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Sketchfab_Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    },
+    {
+      "sampler": 0,
+      "source": 2
+    },
+    {
+      "sampler": 0,
+      "source": 3
+    },
+    {
+      "sampler": 0,
+      "source": 4
+    },
+    {
+      "sampler": 0,
+      "source": 5
+    }
+  ]
+}

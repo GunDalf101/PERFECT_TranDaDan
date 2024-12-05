@@ -5,13 +5,13 @@ import { Link } from "react-router-dom";
 
 const Login = () => {
   return (
-    <div class={`flex ${styles.newBody}`}>
-      <div class="flex flex-col justify-center items-center w-full lg:w-2/5 p-8 bg-black text-white relative">
+    <div className={`flex ${styles.newBody}`}>
+      <div className="flex flex-col justify-center items-center w-full lg:w-2/5 p-8 bg-black text-white relative">
         <Link to="/">
-          <button class="absolute top-4 left-4 rounded-full bg-transparent transition-colors w-[40px] h-[40px]">
+          <button className="absolute top-4 left-4 rounded-full bg-transparent transition-colors w-[40px] h-[40px]">
             <svg
               fill="#00d4ff"
-              class="w-6 h-6"
+              className="w-6 h-6"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 330 330"
             >
@@ -21,48 +21,48 @@ const Login = () => {
         </Link>
 
         <h1
-          class={`text-3xl font-extrabold text-center ${styles.glowText} mb-4`}
+          className={`text-3xl font-extrabold text-center ${styles.glowText} mb-4`}
         >
           TranDaDan
         </h1>
-        <p class="text-center text-gray-400 mb-8">
+        <p className="text-center text-gray-400 mb-8">
           A whole world of games waiting for you!
         </p>
-        <form onsubmit="handleSubmit(event)" class="w-full max-w-md">
-          <div class="flex flex-col items-center">
+        <form onsubmit="handleSubmit(event)" className="w-full max-w-md">
+          <div className="flex flex-col items-center">
             <input
               type="text"
               placeholder="Username"
-              class={`${styles.usernameInput} w-full px-8 py-4 rounded-lg font-medium bg-gray-800 border border-gray-600 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-gray-900 mb-5 text-white`}
+              className={`${styles.usernameInput} w-full px-8 py-4 rounded-lg font-medium bg-gray-800 border border-gray-600 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-gray-900 mb-5 text-white`}
             />
 
             <input
               type="password"
               placeholder="Password"
-              class={`${styles.passwordInput} w-full px-8 py-4 rounded-lg font-medium bg-gray-800 border border-gray-600 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-gray-900 mb-5 text-white`}
+              className={`${styles.passwordInput} w-full px-8 py-4 rounded-lg font-medium bg-gray-800 border border-gray-600 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-gray-900 mb-5 text-white`}
             />
-            <div class="text-right w-full mb-5">
-              <Link to="#" class="text-sm text-[#00d4ff] hover:text-gray-400">
+            <div className="text-right w-full mb-5">
+              <Link to="#" className="text-sm text-[#00d4ff] hover:text-gray-400">
                 Forgot Password?
               </Link>
             </div>
             <button
               type="submit"
-              class={`${styles.retroButton} w-full font-bold shadow-sm rounded-lg py-3 text-white flex items-center justify-center transition-all duration-300 ease-in-out focus:outline-none`}
+              className={`${styles.retroButton} w-full font-bold shadow-sm rounded-lg py-3 text-white flex items-center justify-center transition-all duration-300 ease-in-out focus:outline-none`}
             >
               Login
             </button>
           </div>
-          <div class="my-12 border-b text-center">
-            <div class="leading-none px-2 inline-block text-sm text-gray-400 tracking-wide font-medium bg-black transform translate-y-1/2">
+          <div className="my-12 border-b text-center">
+            <div className="leading-none px-2 inline-block text-sm text-gray-400 tracking-wide font-medium bg-black transform translate-y-1/2">
               Or login with
             </div>
           </div>
-          <div class="flex justify-center space-x-4">
-            <button class="w-14 h-14 rounded-full bg-gray-100 hover:bg-[#00d4ff] transition-colors flex items-center justify-center">
+          <div className="flex justify-center space-x-4">
+            <button className="w-14 h-14 rounded-full bg-gray-100 hover:bg-[#00d4ff] transition-colors flex items-center justify-center">
               <svg
                 viewBox="-3 0 262 262"
-                class="w-8 h-8"
+                className="w-8 h-8"
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <path
@@ -83,13 +83,13 @@ const Login = () => {
                 />
               </svg>
             </button>
-            <button class="w-14 h-14 rounded-full bg-gray-100 hover:bg-[#00d4ff] transition-colors flex items-center justify-center">
-              <img class="w-10 h-10" src={alogo} />
+            <button className="w-14 h-14 rounded-full bg-gray-100 hover:bg-[#00d4ff] transition-colors flex items-center justify-center">
+              <img className="w-10 h-10" src={alogo} />
             </button>
-            <button class="w-14 h-14 rounded-full bg-gray-100 hover:bg-[#00d4ff] transition-colors flex items-center justify-center">
+            <button className="w-14 h-14 rounded-full bg-gray-100 hover:bg-[#00d4ff] transition-colors flex items-center justify-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="w-12 h-12"
+                className="w-12 h-12"
                 x="0px"
                 y="0px"
                 viewBox="0 0 32 32"
@@ -102,19 +102,19 @@ const Login = () => {
             </button>
           </div>
         </form>
-        <p class="mt-6 text-xs text-gray-600 text-center">
+        <p className="mt-6 text-xs text-gray-600 text-center">
           Don't have an account?{" "}
-          <Link to="/register" class="text-[#00d4ff] hover:underline">
+          <Link to="/register" className="text-[#00d4ff] hover:underline">
             Register
           </Link>
         </p>
       </div>
 
       <div
-        class={`hidden lg:block lg:absolute ${styles.transitionEffect}`}
+        className={`hidden lg:block lg:absolute ${styles.transitionEffect}`}
       ></div>
 
-      <div class={`hidden lg:flex flex-1 ${styles.imagePlaceholder}`}></div>
+      <div className={`hidden lg:flex flex-1 ${styles.imagePlaceholder}`}></div>
     </div>
   );
 };

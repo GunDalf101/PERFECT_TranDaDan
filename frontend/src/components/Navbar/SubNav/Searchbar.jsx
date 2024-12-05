@@ -7,7 +7,7 @@ const Searchbar = React.forwardRef(({isVisible}, ref) => {
             <input
             type="text"
             placeholder="Search..."
-            className="w-3/4 xl:w-2/3 px-6 py-4 mt-5 text-sm text-teal-200 bg-gray-800 border-4 border-pink-500 focus:outline-none focus:ring focus:ring-pink-500 transition duration-500 ease-in-out transform hover:scale-105 font-pixel"
+            className="w-3/4 xl:w-2/3 px-6 py-3 m-auto text-sm text-teal-200 bg-gray-800 border-4 border-pink-500 focus:outline-none focus:ring focus:ring-pink-500 transition duration-500 ease-in-out transform hover:scale-105 font-pixel"
             />
         </div>
         {isVisible? (<div

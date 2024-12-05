@@ -2,7 +2,9 @@
   display: block;
   font-size: 2em;
   color: #00fff0;
-  padding-top: 1rem;
+  // padding: auto;
+  padding-bottom: 0.4svh;
+  margin: auto;
   background: none;
   border: none;
   cursor: pointer;
@@ -17,7 +19,8 @@
   display: none;
   font-size: 2em;
   color: #00fff0;
-  padding-top: 1rem;
+  margin: auto;
+  margin-right: 0;
   background: none;
   border: none;
   cursor: pointer;
@@ -45,7 +48,7 @@
   font-weight: 400;
   text-align: center;
   padding: auto;
-  margin-top: 5%;
+  margin: auto;
   cursor: pointer;
   box-shadow: 0 0 5px #7DF9FF, 0 0 10px #7DF9FF, 0 0 15px #7DF9FF;
   border-radius: 4px;

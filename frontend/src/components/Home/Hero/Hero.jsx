@@ -1,6 +1,7 @@
 import React from 'react'
 import './background.scss'
 import styles from './Hero.module.scss'
+import { Link } from 'react-router-dom'
 
 const Hero = () => {
   return (
@@ -46,7 +47,7 @@ const Hero = () => {
             Grab a paddle, challenge a friend, and show off your skills. The
             classics are calling—answer the challenge!
           </p>
-          <button className={styles.pressStartButton}>Press Start</button>
+          <Link to="/game-lobby"><button className={styles.pressStartButton}>Press Start</button></Link>
         </div>
       </div>
     </section>

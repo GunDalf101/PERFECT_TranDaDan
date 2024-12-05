@@ -30,7 +30,7 @@ const Logged = () => {
   return (
     <nav
       id="navbar"
-      className={`navbar ${scrolled ? 'scrolled' : ''} fixed top-0 w-full flex flex-column justify-between items-center pb-4 pr-10 pl-10 z-10`}
+      className={`navbar ${scrolled ? 'scrolled' : ''} fixed top-0 w-full flex flex-column justify-between items-center px-4 sm:px-10 z-10`}
     >
       <div className="flex items-center">
         <button
@@ -40,11 +40,11 @@ const Logged = () => {
         >
           ☰
         </button>
-        <div className="logo text-white text-5xl ml-5">TDD</div>
+        <div className="logo text-white text-5xl ml-5 mb-4">TDD</div>
       </div>
       <Searchbar isVisible={isSearhVisible} ref={searchRef} />
       <Sidebar isVisible={isSidebarVisible} ref={sidebarRef} />
-      <div className="flex items-center mt-5 space-x-4">
+      <div className="flex items-center my-auto py-2 space-x-4">
         <button id="searchIcon" className="md:hidden focus:outline-none" onClick={() => setSearchVisible((prev) => !prev)}>
           <svg
             className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 hover:text-white"

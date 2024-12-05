@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const Sidebar = React.forwardRef(({isVisible}, ref) => {
   return isVisible? (
@@ -13,10 +14,10 @@ const Sidebar = React.forwardRef(({isVisible}, ref) => {
         </p>
         <ul>
           <li className="py-3 px-4 hover:bg-pink-500 hover:text-gray-900 rounded-md transition duration-300">
-            <a href="#">Home</a>
+            <Link to="/">Home</Link>
           </li>
           <li className="py-3 px-4 hover:bg-pink-500 hover:text-gray-900 rounded-md transition duration-300">
-            <a href="#">Game Lobby</a>
+            <Link to="/game-lobby">Game Mode</Link>
           </li>
           <li className="py-3 px-4 hover:bg-pink-500 hover:text-gray-900 rounded-md transition duration-300">
             <a href="#">Leaderboards & Statistics</a>

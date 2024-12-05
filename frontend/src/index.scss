@@ -48,9 +48,6 @@
 
 
 @media (max-width: 820px) {
-  .navbar {
-    padding-bottom: clamp(0.5em, 3vw, 1em) !important;
-  }
   .logo {
     font-size: clamp(1em, 9vw, 3em) !important;
   }
@@ -61,6 +58,6 @@
   flex-wrap: wrap;
 
   &.scrolled {
-    background-color: #1a1a2e;
+    background-color: #1a1a2ecc;
   }
 }
