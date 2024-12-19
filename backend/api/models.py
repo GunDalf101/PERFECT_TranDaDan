@@ -16,16 +16,17 @@ class User(AbstractBaseUser):
         max_length=255,
         unique=True,
         validators=[EmailValidator()],
-        null=True
+        null=True,
+        blank=True
     )
     avatar_url = models.CharField(max_length=255, blank=True, null=True)
     email_token = models.CharField(max_length=32, blank=True, null=True)
     online = models.BooleanField(default=False)
-    intra_user = models.BooleanField(default=False)
     mfa_enabled = models.BooleanField(default=False)
     email_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    mfa_totp_secret = models.CharField(max_length=60, blank=True, null=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
@@ -33,17 +34,22 @@ class User(AbstractBaseUser):
     objects = UserManager()  # Use the custom manager
 
     def has_usable_password(self):
-        return not self.intra_user and self.email_verified and super().has_usable_password()
-
-    def generate_verification_link(self):
-        token = self.email_token
-        verification_route = reverse('verify-email', kwargs={'token': token})
-        print(f"verification route: {verification_route}")
-        return f"http://localhost{verification_route}"
-    
-    def send_email(self, message):
-        print(f"📧: {message}")
+        return not self.intra_connection and self.email_verified and super().has_usable_password()
 
     def __str__(self):
         fields = [f"{field.name}={getattr(self, field.name)}" for field in self._meta.fields]
         return ", ".join(fields)
+    
+class IntraConnection(models.Model):
+    user = models.OneToOneField(
+        'User',
+        on_delete=models.CASCADE,
+        related_name='intra_connection',
+        null=True
+    )
+    uid = models.IntegerField(unique=True)
+    email = models.EmailField(max_length=255, unique=True)
+    avatar_url = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return f"IntraConnection(uid={self.uid}, username={self.username})"
