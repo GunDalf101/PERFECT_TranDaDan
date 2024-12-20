@@ -5,12 +5,15 @@ from django.contrib.auth import get_user_model
 from datetime import timedelta
 from django.core.cache import cache
 from .tasks import send_reset_password_email
+from django.core import serializers
+
+User = get_user_model()
 
 def unset_cookie_header(cookie):
     return {"Set-Cookie": f"{cookie}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/; Secure; HttpOnly; SameSite=Lax"}
 
 def get_free_username(username):
-    while get_user_model().objects.filter(username=username).first():
+    while User.objects.filter(username=username).first():
         username = f"{username}_{''.join(random.choices(string.ascii_letters + string.digits, k=5))}"
     return username
 
@@ -30,3 +33,9 @@ def find_user_id_by_reset_token(token):
         return None
     cache.delete(cache_key)
     return int(user_id)
+
+def minuser(a, b):
+    return min([a, b], key=lambda user: user.id)
+
+def maxuser(a, b):
+    return max([a, b], key=lambda user: user.id)

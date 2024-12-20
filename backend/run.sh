@@ -1,5 +1,6 @@
 docker pull postgres:latest
 
+docker container rm postgres-db
 docker run -d \
   --name postgres-db \
   -e POSTGRES_USER=myuser \
@@ -10,6 +11,7 @@ docker run -d \
 
 docker pull redis:latest
 
+docker container rm redis-db
 docker run -d \
   --name redis-db \
   -p 6379:6379 \

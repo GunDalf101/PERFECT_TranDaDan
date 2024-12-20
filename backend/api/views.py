@@ -13,7 +13,7 @@ import jwt
 from django.urls import reverse
 from django.utils import timezone
 from django.conf import settings
-from .utils import unset_cookie_header, get_free_username, reset_password_for_user, find_user_id_by_reset_token
+from .utils import unset_cookie_header, get_free_username, reset_password_for_user, find_user_id_by_reset_token, minuser, maxuser
 from .serializers import RegisterSerializer, LoginSerializer, RequestResetPasswordSerializer, ResetPasswordSerializer
 from .tasks import send_registration_email
 from .models import IntraConnection
@@ -22,6 +22,9 @@ import pyqrcode
 import io
 from django.core import serializers
 from django.utils.crypto import get_random_string
+from .models import UserRelationship, RelationshipType
+from django.db.models import Q
+from django.db import IntegrityError
 
 User = get_user_model()
 
@@ -298,3 +301,221 @@ class UsersMeView(APIView):
         }
         
         return Response(user_data, status=status.HTTP_200_OK)
+
+class SendFriendRequest(APIView):
+    def post(self, request):
+        username = request.data.get('username')
+        if not username or not isinstance(username, str):
+            return Response({"detail": "Username is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        current_user = request.user
+
+        try:
+            target_user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if current_user == target_user:
+            return Response({"detail": "You cannot send a friend request to yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+        relationship = UserRelationship.objects.filter(
+            Q(user_first_id=current_user, user_second_id=target_user) | 
+            Q(user_first_id=target_user, user_second_id=current_user)
+        ).first()
+
+        if relationship:
+            if relationship.type in [RelationshipType.PENDING_FIRST_SECOND, RelationshipType.PENDING_SECOND_FIRST]:
+                return Response({"detail": "A friend request is already pending."}, status=status.HTTP_400_BAD_REQUEST)
+            if relationship.type == RelationshipType.FRIENDS:
+                return Response({"detail": "You are already friends."}, status=status.HTTP_400_BAD_REQUEST)
+            if relationship.type in [RelationshipType.BLOCK_BOTH, RelationshipType.BLOCK_FIRST_SECOND, RelationshipType.BLOCK_SECOND_FIRST]:
+                return Response({"detail": "You can't send a friend request to this user."}, status=status.HTTP_400_BAD_REQUEST)
+
+        relationship = UserRelationship.objects.create(
+            user_first_id=current_user,
+            user_second_id=target_user,
+            type=RelationshipType.PENDING_FIRST_SECOND
+        )
+        try:
+            relationship.clean()
+            relationship.save()
+        except ValueError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": "Friend request sent."}, status=status.HTTP_201_CREATED)
+    
+class DeleteFriendRequest(APIView):
+    def delete(self, request):
+        username = request.data.get('username')
+        if not username or not isinstance(username, str):
+            return Response({"detail": "Username is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        current_user = request.user
+
+        try:
+            target_user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if current_user == target_user:
+            return Response({"detail": "You cannot delete a request with yourself."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        relationship = UserRelationship.objects.filter(
+            Q(user_first_id=current_user, user_second_id=target_user) |
+            Q(user_first_id=target_user, user_second_id=current_user)
+        ).first()
+
+        if relationship and relationship.type in [RelationshipType.PENDING_FIRST_SECOND, RelationshipType.PENDING_SECOND_FIRST]:
+            relationship.delete()
+            return Response({"detail": "Friend request deleted."}, status=status.HTTP_204_NO_CONTENT)
+
+        return Response({"detail": "No request to delete."}, status=status.HTTP_400_BAD_REQUEST)
+
+class AcceptFriendRequestView(APIView):
+
+    def get(self, request, username):
+        try:
+            target_user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.user != target_user:
+            return Response({"detail": "You can only accept requests sent to you."}, status=status.HTTP_400_BAD_REQUEST)
+
+        relationship = UserRelationship.objects.filter(
+            Q(user_first_id=target_user, user_second_id=request.user, type=RelationshipType.PENDING_FIRST_SECOND) |
+            Q(user_first_id=request.user, user_second_id=target_user, type=RelationshipType.PENDING_SECOND_FIRST)
+        ).first()
+
+        if not relationship:
+            return Response({"detail": "No pending friend request to accept."}, status=status.HTTP_400_BAD_REQUEST)
+
+        relationship.type = RelationshipType.FRIENDS
+        relationship.save()
+
+        return Response({"detail": "Friend request accepted."}, status=status.HTTP_200_OK)
+
+class BlockUser(APIView):
+
+    def post(self, request):
+        username = request.data.get('username')
+        if not username or not isinstance(username, str):
+            return Response({"detail": "Username is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        current_user = request.user
+
+        try:
+            target_user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if current_user == target_user:
+            return Response({"detail": "You cannot block yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+        relationship = UserRelationship.objects.filter(
+            Q(user_first_id=current_user, user_second_id=target_user) |
+            Q(user_first_id=target_user, user_second_id=current_user)
+        ).first()
+
+        if relationship:
+            if relationship.user_first_id == current_user:
+                if relationship.type in [RelationshipType.BLOCK_BOTH, RelationshipType.BLOCK_FIRST_SECOND]:
+                    return Response({"detail": "Already blocked that user."}, status=status.HTTP_400_BAD_REQUEST)
+                if relationship.type == RelationshipType.BLOCK_SECOND_FIRST:
+                    relationship.type = RelationshipType.BLOCK_BOTH
+                    relationship.save()
+                else:
+                    relationship.type = RelationshipType.BLOCK_FIRST_SECOND
+                    relationship.save()
+                return Response({"detail": "User blocked."}, status=status.HTTP_201_CREATED)
+            else:
+                if relationship.type in [RelationshipType.BLOCK_BOTH, RelationshipType.BLOCK_SECOND_FIRST]:
+                    return Response({"detail": "Already blocked that user."}, status=status.HTTP_400_BAD_REQUEST)
+                if relationship.type == RelationshipType.BLOCK_FIRST_SECOND:
+                    relationship.type = RelationshipType.BLOCK_BOTH
+                    relationship.save()
+                else:
+                    relationship.type = RelationshipType.BLOCK_SECOND_FIRST
+                    relationship.save()
+                return Response({"detail": "User blocked."}, status=status.HTTP_201_CREATED)
+
+        relationship = UserRelationship(
+            user_first_id=current_user,
+            user_second_id=target_user,
+            type=RelationshipType.BLOCK_FIRST_SECOND
+        )
+
+        try:
+            relationship.clean()
+            relationship.save()
+        except ValueError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"detail": "User blocked."}, status=status.HTTP_201_CREATED)
+
+    def delete(self, request):
+        username = request.data.get('username')
+        if not username or not isinstance(username, str):
+            return Response({"detail": "Username is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        current_user = request.user
+
+        try:
+            target_user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if current_user == target_user:
+            return Response({"detail": "You cannot unblock yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+        relationship = UserRelationship.objects.filter(
+            Q(user_first_id=current_user, user_second_id=target_user) |
+            Q(user_first_id=target_user, user_second_id=current_user)
+        ).first()
+
+        if relationship and relationship.type in [RelationshipType.BLOCK_BOTH, RelationshipType.BLOCK_FIRST_SECOND, RelationshipType.BLOCK_SECOND_FIRST]:
+            if relationship.user_first_id == current_user:
+                if relationship.type == RelationshipType.BLOCK_BOTH:
+                    relationship.type = RelationshipType.BLOCK_SECOND_FIRST
+                    relationship.save()
+                    return Response({"detail": "User unblocked."}, status=status.HTTP_204_NO_CONTENT)
+                elif relationship.type == RelationshipType.BLOCK_FIRST_SECOND:
+                    relationship.delete()
+                    return Response({"detail": "User unblocked."}, status=status.HTTP_204_NO_CONTENT)
+            else:
+                if relationship.type == RelationshipType.BLOCK_BOTH:
+                    relationship.type = RelationshipType.BLOCK_FIRST_SECOND
+                    relationship.save()
+                    return Response({"detail": "User unblocked."}, status=status.HTTP_204_NO_CONTENT)
+                elif relationship.type == RelationshipType.BLOCK_SECOND_FIRST:
+                    relationship.delete()
+                    return Response({"detail": "User unblocked."}, status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response({"detail": "No block relationship exists."}, status=status.HTTP_400_BAD_REQUEST)
+        
+class UnfriendView(APIView):
+
+    def delete(self, request, username):
+        username = request.data.get('username')
+        if not username or not isinstance(username, str):
+            return Response({"detail": "Username is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        current_user = request.user
+
+        try:
+            target_user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if current_user == target_user:
+            return Response({"detail": "You cannot unfriend yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+        relationship = UserRelationship.objects.filter(
+            Q(user_first_id=current_user, user_second_id=target_user, type=RelationshipType.FRIENDS) |
+            Q(user_first_id=target_user, user_second_id=current_user, type=RelationshipType.FRIENDS)
+        ).first()
+
+        if not relationship:
+            return Response({"detail": "You are not friends with this user."}, status=status.HTTP_400_BAD_REQUEST)
+
+        relationship.delete()
+        return Response({"detail": "Friend removed."}, status=status.HTTP_204_NO_CONTENT)

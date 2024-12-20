@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.validators import RegexValidator, EmailValidator
 from django.contrib.auth.models import AbstractBaseUser
-from django.urls import reverse
+from enum import Enum
 
 from .managers import UserManager
 
@@ -31,7 +31,7 @@ class User(AbstractBaseUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
-    objects = UserManager()  # Use the custom manager
+    objects = UserManager()
 
     def has_usable_password(self):
         return not self.intra_connection and self.email_verified and super().has_usable_password()
@@ -53,3 +53,46 @@ class IntraConnection(models.Model):
 
     def __str__(self):
         return f"IntraConnection(uid={self.uid}, username={self.username})"
+
+class RelationshipType(Enum):
+    PENDING_FIRST_SECOND = 'pending_first_second'
+    PENDING_SECOND_FIRST = 'pending_second_first'
+    FRIENDS = 'friends'
+    BLOCK_FIRST_SECOND = 'block_first_second'
+    BLOCK_SECOND_FIRST = 'block_second_first'
+    BLOCK_BOTH = 'block_both'
+
+    @classmethod
+    def choices(cls):
+        return [(tag.name, tag.value) for tag in cls]
+
+class UserRelationship(models.Model):
+    user_first_id = models.ForeignKey(User, related_name='user_first', on_delete=models.CASCADE)
+    user_second_id = models.ForeignKey(User, related_name='user_second', on_delete=models.CASCADE)
+    
+    type = models.CharField(
+        max_length=20, 
+        choices=RelationshipType.choices(), 
+        default=RelationshipType.PENDING_FIRST_SECOND.value
+    )
+
+    class Meta:
+        unique_together = ('user_first_id', 'user_second_id')
+    
+    def clean(self):
+        if self.user_first_id == self.user_second_id:
+            raise ValueError("A user cannot be in a relationship with themselves.")
+        
+        if self.user_first_id > self.user_second_id:
+            self.user_first_id, self.user_second_id = self.user_second_id, self.user_first_id
+            if self.type == RelationshipType.PENDING_FIRST_SECOND:
+                self.type = RelationshipType.PENDING_SECOND_FIRST
+            elif self.type == RelationshipType.PENDING_SECOND_FIRST:
+                self.type = RelationshipType.PENDING_FIRST_SECOND
+            elif self.type == RelationshipType.BLOCK_FIRST_SECOND:
+                self.type = RelationshipType.BLOCK_SECOND_FIRST
+            elif self.type == RelationshipType.BLOCK_SECOND_FIRST:
+                self.type = RelationshipType.BLOCK_FIRST_SECOND
+
+    def __str__(self):
+        return f"Relationship between {self.user_first_id} and {self.user_second_id} is {self.get_type_display()}"

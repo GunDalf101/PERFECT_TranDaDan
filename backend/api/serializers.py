@@ -82,3 +82,4 @@ class ResetPasswordSerializer(serializers.Serializer):
         if data['password'] != data['password_confirmation']:
             raise serializers.ValidationError({"error": "Password and confirmation do not match."})
         return data
+    
