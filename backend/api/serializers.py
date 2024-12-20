@@ -3,6 +3,7 @@ from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.utils.crypto import get_random_string
 from django.contrib.auth import get_user_model
+from django.core.validators import EmailValidator
 
 User = get_user_model()
 
@@ -17,7 +18,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     
     def validate(self, data):
         if data['password'] != data['password_confirmation']:
-            raise serializers.ValidationError("Passwords must match.")
+            raise serializers.ValidationError({"error": "Passwords must match."})
         
         try:
             password_validation.validate_password(data['password'])
@@ -25,7 +26,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"password": e.messages})
 
         if User.objects.filter(email=data['email']).exists():
-            raise serializers.ValidationError("A user with this email already exists.")
+            raise serializers.ValidationError({"error": "A user with this email already exists."})
         return data
     
     def create(self, validated_data):
@@ -49,8 +50,35 @@ class LoginSerializer(serializers.Serializer):
         email = data["email"]
         user = User.objects.filter(email=email).first()
         if user:
-            if user.intra_user:
-                raise serializers.ValidationError("Use 42 oauth to login to this account.")
-            elif not user.email_verified:
-                raise serializers.ValidationError("Verify your account before logging in.")
+            if not user.email_verified:
+                raise serializers.ValidationError({"error": "Verify your account before logging in."})
+        return data
+    
+class RequestResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        validator = EmailValidator()
+        try:
+            validator(value)
+        except ValidationError:
+            raise serializers.ValidationError({"error": "Invalid email address."})
+        return value
+    
+class ResetPasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(
+        write_only=True, 
+        required=True, 
+        min_length=8,
+        style={'input_type': 'password'}
+    )
+    password_confirmation = serializers.CharField(
+        write_only=True, 
+        required=True, 
+        style={'input_type': 'password'}
+    )
+    
+    def validate(self, data):
+        if data['password'] != data['password_confirmation']:
+            raise serializers.ValidationError({"error": "Password and confirmation do not match."})
         return data
