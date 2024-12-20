@@ -9,7 +9,7 @@ const ProfileDropdown = React.forwardRef(({isVisible}, ref) => {
       className={`${styles.profileDropdown} ${isVisible && styles.show} absolute right-0 mt-2 w-48 bg-gray-900 text-teal-200 border-2 border-pink-500 shadow-lg rounded-md z-10`}
     >
       <a
-        href="#"
+        href="/profile"
         className="block px-4 py-2 hover:bg-pink-500 hover:text-gray-900"
       >
         View Profile

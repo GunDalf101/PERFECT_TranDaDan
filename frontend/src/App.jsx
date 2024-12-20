@@ -8,6 +8,8 @@ import GameMode from './layouts/GameMode/GameMode'
 import GameChoice from './pages/GameChoice/GameChoice'
 import MatchMaking from './pages/MatchMaking/MatchMaking'
 
+import Profile from './pages/Profile/Profile'
+
 
 function App() {
 
@@ -23,6 +25,7 @@ function App() {
             </Route>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/Profile" element={<Profile />} />
             
         </Routes>
     </BrowserRouter>
