@@ -206,6 +206,7 @@ class RegisterView(UnprotectedView):
             user = serializer.save()
             token = user.email_token
             confirmation_link = request.build_absolute_uri(reverse("verify-email", kwargs={"token": token}))
+            print(confirmation_link)
             send_registration_email(confirmation_link, user.email, schedule=timezone.now())
             return Response({
                 "message": "User registered successfully, please verify your email.",
@@ -298,6 +299,22 @@ class UsersMeView(APIView):
             'username': user.username,
             'email': user.email,
             'intra_connection': ic
+        }
+        
+        return Response(user_data, status=status.HTTP_200_OK)
+
+class UserView(APIView):
+    
+    def get(self, _, username):
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"error": "User not found."}, status=404)
+
+        user_data = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
         }
         
         return Response(user_data, status=status.HTTP_200_OK)

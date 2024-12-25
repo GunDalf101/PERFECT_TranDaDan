@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import OAuth2StartView, OAuth2CallbackView, UsersMeView, MFATOTPView, RegisterView, VerifyEmailView, LoginView, SecurityMFATOTP, RequestResetPasswordView, ResetPasswordView
+from .views import OAuth2StartView, OAuth2CallbackView, UsersMeView, MFATOTPView, RegisterView, VerifyEmailView, LoginView, SecurityMFATOTP, RequestResetPasswordView, ResetPasswordView, UserView
 
 urlpatterns = [
     path('oauth2/42/', OAuth2StartView.as_view(), name='oauth2-start'),
@@ -12,4 +12,5 @@ urlpatterns = [
     path('reset/<str:token>', ResetPasswordView.as_view(), name='reset-token'),
     path('users/me', UsersMeView.as_view(), name='users-me'),
     path('security/mfa/totp', SecurityMFATOTP.as_view(), name='security-mfa-totp'),
+    path('user/<str:username>', UserView.as_view(), name='get-user'),
 ]
