@@ -1,10 +1,11 @@
-import React from "react";
 import styles from "./Profile.module.scss";
 import alogo from "../../assets/image/42_Logo.png";
 import Navbar from "../../components/Navbar/Logged";
 import { Link } from "react-router-dom";
+import React ,{ useState, useEffect } from "react";
 
 const Profile = () => {
+  
   const Profile = {
     username: "serhouni",
     fullname: "Soufiane Erhouni",
@@ -39,7 +40,7 @@ const Profile = () => {
             alt="Profile"
             className="w-36 h-36 rounded-full border-4 border-white shadow-[0_0_20px_5px] shadow-neonPink mb-4"
           />
-          <h2 className="text-3xl text-center text-neonPink">{Profile.fullname}</h2>
+          <h2 className="text-3xl text-center text-neonPink">coco</h2>
           {/* Display Username */}
           <p className="text-center text-3xl text-gray-200 mt-4" style={{ textShadow: "1px 1px 5px rgb(0, 0, 0)" }}>
             {Profile.username}

@@ -303,6 +303,18 @@ class UsersMeView(APIView):
         
         return Response(user_data, status=status.HTTP_200_OK)
 
+class UsersMeTestView(UnprotectedView):
+    
+    def get(self, request):
+        user_data = {
+            'id': 1,
+            'username': 'abdellah',
+            'email': "abdellah@gmail.com",
+            'intra_connection': None
+        }
+        
+        return Response(user_data, status=status.HTTP_200_OK)
+
 class UserView(APIView):
     
     def get(self, _, username):
