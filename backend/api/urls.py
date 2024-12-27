@@ -14,4 +14,5 @@ urlpatterns = [
     path('users/meTest', UsersMeTestView.as_view(), name='users-me'),
     path('security/mfa/totp', SecurityMFATOTP.as_view(), name='security-mfa-totp'),
     path('user/<str:username>', UserView.as_view(), name='get-user'),
+
 ]

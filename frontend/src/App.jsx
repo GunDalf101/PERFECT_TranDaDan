@@ -7,9 +7,9 @@ import Register from './pages/Register/Register'
 import GameMode from './layouts/GameMode/GameMode'
 import GameChoice from './pages/GameChoice/GameChoice'
 import MatchMaking from './pages/MatchMaking/MatchMaking'
-
+import IntraCallback from './components/auth/IntraCallback'
 import Profile from './pages/Profile/Profile'
-
+import ChatApp from './pages/Chatpage/Chatpage'
 
 function App() {
 
@@ -26,7 +26,8 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/Profile" element={<Profile />} />
-            
+            <Route path='/chat' element={<ChatApp/>}/>
+            <Route path="/Intra/callback/" element={<IntraCallback />} />
         </Routes>
     </BrowserRouter>
   )
