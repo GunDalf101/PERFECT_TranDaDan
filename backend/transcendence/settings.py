@@ -36,15 +36,17 @@ INSTALLED_APPS = [
     # 'django.contrib.flatpages',
     'background_task',
     'rest_framework',
-    'api'
+    'corsheaders',
+    'api',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.common.CommonMiddleware',
     # 'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
-    # "django.middleware.cache.UpdateCacheMiddleware",
-    # "django.middleware.common.CommonMiddleware",
+    "django.middleware.cache.UpdateCacheMiddleware",
+    "django.middleware.common.CommonMiddleware",
+     'corsheaders.middleware.CorsMiddleware',
     # "django.middleware.cache.FetchFromCacheMiddleware"
 ]
 
@@ -180,3 +182,10 @@ CACHES = {
         },
     }
 }
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # Add your frontend URL here
+]

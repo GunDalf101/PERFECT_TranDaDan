@@ -26,6 +26,8 @@ from .models import UserRelationship, RelationshipType
 from django.db.models import Q
 from django.db import IntegrityError
 
+
+
 User = get_user_model()
 
 env = environ.Env()
@@ -51,7 +53,6 @@ class OAuth2CallbackView(UnprotectedView):
     def get(self, request, *args, **kwargs):
         code = request.GET.get('code')
         state = request.GET.get('state')
-
         saved_state = request.COOKIES.get('oauth2_state')
         if not saved_state or state != jwt.decode(saved_state, settings.SECRET_KEY, algorithms=['HS256'])["state"]:
             return Response({"message": "Invalid state parameter"}, status=status.HTTP_400_BAD_REQUEST, headers=unset_cookie_header("oauth2_state"))
@@ -127,12 +128,13 @@ class OAuth2CallbackView(UnprotectedView):
         access_token = AccessToken.for_user(user)
         access_token["mfa_required"] = user.mfa_enabled
 
-        return Response({
-            "access_token": str(access_token),
-            "message": message,
-            "user_id": user.id,
-            "mfa_required": user.mfa_enabled
-        }, status=status.HTTP_200_OK, headers=unset_cookie_header("oauth2_state"))
+        # //Response({
+        #     "access_token": str(access_token),
+        #     "message": message,
+        #     "user_id": user.id,
+        #     "mfa_required": user.mfa_enabled
+        # }, status=status.HTTP_200_OK, headers=unset_cookie_header("oauth2_state"))
+        return HttpResponseRedirect(f'{env.str("FRONT_END_REDIRECT_URL")}?accessToken={str(access_token)}&mfa_required={user.mfa_enabled}')
 
 
 class MFATOTPView(APIView):
@@ -285,8 +287,10 @@ class LoginView(UnprotectedView):
                 return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class UsersMeView(APIView):
-    
+    # authentication_classes = [BearerTokenAuthentication]
+
     def get(self, request):
         user = request.user
         
@@ -519,3 +523,5 @@ class UnfriendView(APIView):
 
         relationship.delete()
         return Response({"detail": "Friend removed."}, status=status.HTTP_204_NO_CONTENT)
+
+

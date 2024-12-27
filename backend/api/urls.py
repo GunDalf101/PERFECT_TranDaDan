@@ -12,4 +12,5 @@ urlpatterns = [
     path('reset/<str:token>', ResetPasswordView.as_view(), name='reset-token'),
     path('users/me', UsersMeView.as_view(), name='users-me'),
     path('security/mfa/totp', SecurityMFATOTP.as_view(), name='security-mfa-totp'),
+
 ]
