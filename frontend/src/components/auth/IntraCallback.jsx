@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import MeAx from "../../api/authServiceUser"
 import { useNavigate } from "react-router-dom";
 // import axiosInstance from '../../api/axiosInstance';
 import { getUserData } from "../../api/authService42Intra";
