@@ -180,3 +180,31 @@ CACHES = {
         },
     }
 }
+##
+### Les Parametres du gondalf
+
+
+INSTALLED_APPS += [
+    'daphne',
+    'channels',
+    'channels_redis',
+    'corsheaders',
+    'games',
+]
+
+MIDDLEWARE += [
+    'corsheaders.middleware.CorsMiddleware',
+]
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+ASGI_APPLICATION = 'transcendence.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("localhost", 6379)],
+        },
+    },
+}

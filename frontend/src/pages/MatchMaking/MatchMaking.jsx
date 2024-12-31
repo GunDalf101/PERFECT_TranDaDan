@@ -58,7 +58,7 @@ const MatchMaking = () => {
 
   return (
     <div className="match-container text-white flex relative z-0 items-center justify-center min-h-screen">
-      <div className="w-full max-w-5xl mx-auto rounded-lg shadow-lg overflow-hidden flex flex-col md:flex-row border border-cyan-400 relative z-10">
+      <div className="w-11/12 max-w-5xl mx-auto rounded-lg shadow-lg overflow-hidden flex flex-col md:flex-row border border-cyan-400 relative z-10">
         {/* Left Side: Your Profile */}
         <div className="w-full md:w-1/2 bg-gradient-to-b from-gray-900 to-gray-800 p-6 flex flex-col items-center justify-center border-b md:border-r md:border-b-0 border-gray-700">
           <ProfileCard {...userData} />
