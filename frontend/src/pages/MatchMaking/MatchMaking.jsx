@@ -101,7 +101,7 @@ const MatchMaking = () => {
           // Wait for 2 seconds before navigating to the lobby
           setTimeout(() => {
             navigate(`/game-lobby/remote-play/`);
-          }, 2650);
+          }, 5000);
         }
       } else {
         console.log(response.data.message);
