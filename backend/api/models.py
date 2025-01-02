@@ -55,12 +55,12 @@ class IntraConnection(models.Model):
         return f"IntraConnection(uid={self.uid}, username={self.username})"
 
 class RelationshipType(Enum):
-    PENDING_FIRST_SECOND = 'pending_first_second'
-    PENDING_SECOND_FIRST = 'pending_second_first'
-    FRIENDS = 'friends'
-    BLOCK_FIRST_SECOND = 'block_first_second'
-    BLOCK_SECOND_FIRST = 'block_second_first'
-    BLOCK_BOTH = 'block_both'
+    PENDING_FIRST_SECOND = 1
+    PENDING_SECOND_FIRST = 2
+    FRIENDS = 3
+    BLOCK_FIRST_SECOND = 4
+    BLOCK_SECOND_FIRST = 5
+    BLOCK_BOTH = 6
 
     @classmethod
     def choices(cls):
@@ -70,11 +70,7 @@ class UserRelationship(models.Model):
     user_first_id = models.ForeignKey(User, related_name='user_first', on_delete=models.CASCADE)
     user_second_id = models.ForeignKey(User, related_name='user_second', on_delete=models.CASCADE)
     
-    type = models.CharField(
-        max_length=20, 
-        choices=RelationshipType.choices(), 
-        default=RelationshipType.PENDING_FIRST_SECOND.value
-    )
+    type = models.IntegerField(unique=True)
 
     class Meta:
         unique_together = ('user_first_id', 'user_second_id')
@@ -83,7 +79,7 @@ class UserRelationship(models.Model):
         if self.user_first_id == self.user_second_id:
             raise ValueError("A user cannot be in a relationship with themselves.")
         
-        if self.user_first_id > self.user_second_id:
+        if self.user_first_id.id > self.user_second_id.id:
             self.user_first_id, self.user_second_id = self.user_second_id, self.user_first_id
             if self.type == RelationshipType.PENDING_FIRST_SECOND:
                 self.type = RelationshipType.PENDING_SECOND_FIRST

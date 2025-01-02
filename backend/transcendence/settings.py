@@ -23,7 +23,7 @@ SECRET_KEY = 'django-insecure-_rs31oa2lq2*qk-&ry^-izx$+jgv+6sy-ry0b-lk8&m%5vj=(m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1'] #change it later
 
 
 # Application definition
@@ -50,6 +50,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
      'corsheaders.middleware.CorsMiddleware',
     # "django.middleware.cache.FetchFromCacheMiddleware"
+    "corsheaders.middleware.CorsMiddleware",
 ]
 
 ROOT_URLCONF = 'transcendence.urls'
@@ -84,12 +85,12 @@ WSGI_APPLICATION = 'transcendence.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 
 # Password validation
@@ -147,16 +148,16 @@ docker run -d \
   postgres:latest
 '''
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mydb', 
-        'USER': 'myuser',
-        'PASSWORD': 'mypassword',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'mydb', 
+#         'USER': 'myuser',
+#         'PASSWORD': 'mypassword',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
+# }
 
 AUTH_USER_MODEL = 'api.User'
 

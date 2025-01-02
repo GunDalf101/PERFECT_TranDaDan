@@ -1,36 +1,56 @@
-import styles from "./Profile.module.scss";
-import alogo from "../../assets/image/42_Logo.png";
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import Navbar from "../../components/Navbar/Logged";
-import { Link, Navigate } from "react-router-dom";
-import getMyData from "../../api/authServiceMe";
-import React ,{ useState, useEffect } from "react";
-import { Return } from "three/src/nodes/TSL.js";
+import NotFound from "../NotFound/NotFound";
+import getUserData from "../../api/authServiceUser";
+import {sendFriendReq, cancelFriendReq} from "../../api/friendService";
 
-const Profile = () => {
-  
-  const [mydata, setMyData] = useState(true);
-  // const [error, setError] = useState(null);
-  // const [loading, setLoading] = useState(true);
-  
+const User = () => {
+  const [mydata, setMyData] = useState(null); // Store user data
+  const [error, setError] = useState(false); // Handle errors
+  const [friendRequestText, setFriendRequestText] = useState("Add Friend"); // Default button state
+  const { username } = useParams();
+  const [reload, setReload] = useState(false); // State to trigger useEffect
+  const [isHovering, setIsHovering] = useState(false); // State to manage hover
+
+  // Fetch user data and friend request status
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const data = await getMyData();
+        const data = await getUserData(username);
         setMyData(data);
+
+        // Set friend request status based on fetched data
+        if (data.relationship === 1) {
+          setFriendRequestText("Request Sent");
+        } else {
+          setFriendRequestText("Add Friend");
+        }
       } catch (error) {
-        console.error("Error:", error);
-        window.location.href =  "/login"
+        console.error("Error fetching user data:", error);
+        setError(true);
       }
     };
 
     fetchUserData();
-  }, []);
+  }, [username, reload]); // Add reload dependency
 
-  // const Profile = {
-  //   username: "serhouni",
-  //   fullname: "Soufiane Erhouni",
-  //   email: "sou2000far@gmail.com",
-  // };
+  // Handle sending a friend request
+  const handleAddFriend = async () => {
+    try {
+      if(mydata.relationship == 0)
+        await sendFriendReq(username);
+      else if(mydata.relationship == 1)
+        await cancelFriendReq(username)
+        
+      setReload(!reload); // Trigger the useEffect to refetch user data
+    } catch (error) {
+      console.error("Error sending friend request:", error);
+    }
+  };
+
+  if (error) return <NotFound />;
+  if (!mydata) return <div>Loading...</div>; // Show loading state while fetching data
 
   const matchHistory = [
     { id: 1, opponent: "Player1", result: "Win", score: "3-1" },
@@ -48,12 +68,10 @@ const Profile = () => {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-cover bg-center bg-[url('retro_1.jpeg')] from-darkBackground via-purpleGlow to-neonBlue text-white font-retro">
+    <div className="flex flex-col items-center min-h-screen bg-cover bg-center bg-[url('/retro_1.jpeg')] from-darkBackground via-purpleGlow to-neonBlue text-white font-retro">
       <Navbar />
-
       {/* Profile Card */}
       <div className="w-11/12 h-fit m-4 mt-20 p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
-        {/* Profile Image */}
         <div className="flex flex-col items-center">
           <img
             src="https://media.licdn.com/dms/image/v2/D4E03AQHoy7si-hZGzQ/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1723469726527?e=1740614400&v=beta&t=yUwzZJlP32P8gwYyIVh4vivqMCCeIiJw5xpYa0IYjDU"
@@ -66,9 +84,28 @@ const Profile = () => {
             {mydata.username}
           </p>
           {/* Display Email */}
-          <p className="text-center text-neonBlue mt-2 text-xl">
-            {mydata.email}
-          </p>
+          <p className="text-center text-neonBlue mt-2 text-xl">{mydata.email}</p>
+          {/* Add Friend Button */}
+          <button
+            onClick={handleAddFriend}
+            onMouseEnter={() => {
+              if (mydata.relationship == 1) setIsHovering(true);
+            }}
+            onMouseLeave={() => setIsHovering(false)}
+            className={`mt-4 px-6 py-2 rounded-lg text-xl font-bold transition-all duration-300 ${
+              (mydata.relationship == 0)
+                ? "bg-neonBlue text-black hover:bg-neonPink hover:text-white"
+                : (isHovering && mydata.relationship == 1)
+                ? "bg-neonBlue text-black hover:bg-red-600 hover:text-white"
+                : "bg-gray-500 text-white cursor-not-allowed"
+            }`}
+          >
+            {mydata.relationship == 0
+              ? "Add Friend"
+              : isHovering && mydata.relationship == 1
+              ? "Cancel Request"
+              : "Request is sent"}
+          </button>
         </div>
       </div>
 
@@ -123,4 +160,4 @@ const Profile = () => {
   );
 };
 
-export default Profile;
+export default User;

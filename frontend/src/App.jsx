@@ -12,6 +12,7 @@ import Profile from './pages/Profile/Profile'
 import ChatApp from './pages/Chatpage/Chatpage'
 import { ToastContainer } from 'react-toastify';
 
+import User from './pages/User/User'
 
 function App() {
 
@@ -28,7 +29,8 @@ function App() {
             </Route>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/Profile" element={<Profile />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/user/:username" element={<User />} />
             <Route path='/chat' element={<ChatApp/>}/>
             <Route path="/Intra/callback/" element={<IntraCallback />} />
         </Routes>

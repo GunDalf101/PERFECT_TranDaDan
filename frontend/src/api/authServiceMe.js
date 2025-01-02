@@ -1,9 +1,9 @@
 import axiosInstance from './axiosInstance';
 
 
-const getUserData = async (username) => {
+const getMyData = async () => {
   try {
-    const response = await axiosInstance.get('/user/' + username);
+    const response = await axiosInstance.get('/users/me');
     return response.data;
   } catch (error) {
     console.error('Get user data error:', error);
@@ -13,4 +13,4 @@ const getUserData = async (username) => {
 
 
 
-export default getUserData;
+export default getMyData;
