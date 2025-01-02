@@ -11,6 +11,8 @@ import IntraCallback from './components/auth/IntraCallback'
 import Profile from './pages/Profile/Profile'
 import ChatApp from './pages/Chatpage/Chatpage'
 import User from './pages/User/User'
+import EditProfile from './pages/EditProfile/EditProfile'
+import { Edit } from 'lucide-react'
 
 function App() {
 
@@ -26,7 +28,8 @@ function App() {
             </Route>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile" element={<Profile />}/>
+            <Route path="/profile/edit" element={<EditProfile />}/>
             <Route path="/user/:username" element={<User />} />
             <Route path='/chat' element={<ChatApp/>}/>
             <Route path="/Intra/callback/" element={<IntraCallback />} />

@@ -21,6 +21,4 @@ const cancelFriendReq = async (username) => {
   }
 };
 
-
-
 export {sendFriendReq, cancelFriendReq}

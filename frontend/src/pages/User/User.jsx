@@ -3,29 +3,30 @@ import { useParams } from "react-router-dom";
 import Navbar from "../../components/Navbar/Logged";
 import NotFound from "../NotFound/NotFound";
 import getUserData from "../../api/authServiceUser";
-import {sendFriendReq, cancelFriendReq} from "../../api/friendService";
+import { sendFriendReq, cancelFriendReq } from "../../api/friendService";
+import { blockUser, unblockUser } from "../../api/blockService";
+// import { blockUser, unblockUser } from "../../api/blockService"; // Assuming you have a service for blocking/unblocking users
+
+function isBlocked(r)
+{
+  return r == 4 || r == 5;
+}
 
 const User = () => {
-  const [mydata, setMyData] = useState(null); // Store user data
+  const [userdata, setuserdata] = useState(null); // Store user data
   const [error, setError] = useState(false); // Handle errors
-  const [friendRequestText, setFriendRequestText] = useState("Add Friend"); // Default button state
-  const { username } = useParams();
   const [reload, setReload] = useState(false); // State to trigger useEffect
   const [isHovering, setIsHovering] = useState(false); // State to manage hover
+  const [isBlockHovering, setIsBlockHovering] = useState(false); // State to manage hover for block button
+
+  const { username } = useParams();
 
   // Fetch user data and friend request status
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const data = await getUserData(username);
-        setMyData(data);
-
-        // Set friend request status based on fetched data
-        if (data.relationship === 1) {
-          setFriendRequestText("Request Sent");
-        } else {
-          setFriendRequestText("Add Friend");
-        }
+        setuserdata(data);
       } catch (error) {
         console.error("Error fetching user data:", error);
         setError(true);
@@ -33,24 +34,40 @@ const User = () => {
     };
 
     fetchUserData();
-  }, [username, reload]); // Add reload dependency
+  }, [reload, isHovering, isBlockHovering]); // Add reload dependency
 
-  // Handle sending a friend request
+  // Handle sending/canceling a friend request
   const handleAddFriend = async () => {
     try {
-      if(mydata.relationship == 0)
-        await sendFriendReq(username);
-      else if(mydata.relationship == 1)
-        await cancelFriendReq(username)
-        
+      if (userdata.relationship == 0) await sendFriendReq(username);
+      else if (userdata.relationship == 1) {
+        await cancelFriendReq(username);
+        setIsHovering(false);
+      }
       setReload(!reload); // Trigger the useEffect to refetch user data
     } catch (error) {
       console.error("Error sending friend request:", error);
     }
   };
 
+  const handleBlockUser = async () => {
+    try {
+      if (isBlocked(userdata.relationship))
+        await unblockUser(username);
+      else
+      {
+        await blockUser(username);
+        window.location.href = '/'
+      }
+      console.log(reload)
+      setReload(!reload);
+    } catch (error) {
+      console.error("Error sending friend request:", error);
+    }
+  };
+
   if (error) return <NotFound />;
-  if (!mydata) return <div>Loading...</div>; // Show loading state while fetching data
+  if (!userdata) return <div>Loading...</div>; // Show loading state while fetching data
 
   const matchHistory = [
     { id: 1, opponent: "Player1", result: "Win", score: "3-1" },
@@ -78,33 +95,55 @@ const User = () => {
             alt="Profile"
             className="w-36 h-36 rounded-full border-4 border-white shadow-[0_0_20px_5px] shadow-neonPink mb-4"
           />
-          <h2 className="text-3xl text-center text-neonPink">zaba</h2>
+          <h2 className="text-3xl text-center text-neonPink">username</h2>
           {/* Display Username */}
           <p className="text-center text-3xl text-gray-200 mt-4" style={{ textShadow: "1px 1px 5px rgb(0, 0, 0)" }}>
-            {mydata.username}
+            {userdata.username}
           </p>
           {/* Display Email */}
-          <p className="text-center text-neonBlue mt-2 text-xl">{mydata.email}</p>
+          <p className="text-center text-neonBlue mt-2 text-xl">{userdata.email}</p>
           {/* Add Friend Button */}
           <button
+            style={{visibility: isBlocked(userdata.relationship)?
+              "hidden":"visible"
+            }}
+
             onClick={handleAddFriend}
             onMouseEnter={() => {
-              if (mydata.relationship == 1) setIsHovering(true);
+              if (userdata.relationship == 1) setIsHovering(true);
             }}
             onMouseLeave={() => setIsHovering(false)}
             className={`mt-4 px-6 py-2 rounded-lg text-xl font-bold transition-all duration-300 ${
-              (mydata.relationship == 0)
+              userdata.relationship == 0
                 ? "bg-neonBlue text-black hover:bg-neonPink hover:text-white"
-                : (isHovering && mydata.relationship == 1)
+                : isHovering
                 ? "bg-neonBlue text-black hover:bg-red-600 hover:text-white"
-                : "bg-gray-500 text-white cursor-not-allowed"
+                : "bg-gray-500 text-white"
+                
             }`}
           >
-            {mydata.relationship == 0
-              ? "Add Friend"
-              : isHovering && mydata.relationship == 1
+            {isHovering
               ? "Cancel Request"
-              : "Request is sent"}
+              : userdata.relationship == 1
+              ? "Request Sent"
+              : "Add Friend"}
+          </button>
+          {/* Block Button */}
+          <button
+            onClick={handleBlockUser}
+            onMouseEnter={() => setIsBlockHovering(true)}
+            onMouseLeave={() => setIsBlockHovering(false)}
+            className={`mt-4 px-6 py-2 rounded-lg text-xl font-bold transition-all duration-300 ${
+              !isBlockHovering
+                ? "bg-red-600 text-white hover:bg-gray-800"
+                : "bg-gray-500 text-white"
+            }`}
+          >
+            {isBlocked(userdata.relationship) && isBlockHovering
+              ? "Unblock"
+              : isBlocked(userdata.relationship)
+              ? "Blocked"
+              : "Block"}
           </button>
         </div>
       </div>
