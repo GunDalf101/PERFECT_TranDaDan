@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, Menu, X } from "lucide-react";
 import styles from "../styles.module.scss";
 import SearchBar from "../SearchBar/SearchBar";
 import ProfileIcon from "./ProfileIcon";
 import Notifications from "./Notifications";
 import { Link } from "react-router-dom";
+import { getUserData } from "../../../api/authService42Intra";
+
 
 const Navbar = () => {
   // const [isSearchExpanded, setIsSearchExpanded] = useState(false);
@@ -17,6 +19,20 @@ const Navbar = () => {
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
+
+  // const [user,setUser] = useState('');
+  // useEffect(() =>{
+  //     const fetchUserData = async () => {
+  //     try {
+  //       const data = await getUserData();
+  //       setUser(data);
+  //     } catch (error) {
+  //       console.error("Error:", error);
+  //     }
+  //   };
+  //   fetchUserData();
+  //   },[])
+
 
   return (
     <div

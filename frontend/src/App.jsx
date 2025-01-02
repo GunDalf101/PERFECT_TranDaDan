@@ -10,11 +10,14 @@ import MatchMaking from './pages/MatchMaking/MatchMaking'
 import IntraCallback from './components/auth/IntraCallback'
 import Profile from './pages/Profile/Profile'
 import ChatApp from './pages/Chatpage/Chatpage'
+import { ToastContainer } from 'react-toastify';
+
 
 function App() {
 
   return (
     <BrowserRouter>
+        <ToastContainer position="top-right" autoClose={3000} />
         <Routes>
             <Route path="/" element={<MainLayout />}>
               <Route index element={<Homepage />} />

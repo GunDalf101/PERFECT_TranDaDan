@@ -3,6 +3,8 @@ import styles from "./Register.module.scss";
 import alogo from "../../assets/image/42_Logo.png";
 import { Link } from "react-router-dom";
 import RegisterAx from "../../api/authServiceRegister";
+import { toast } from 'react-toastify';
+
 
 const Register = () => {
 
@@ -108,6 +110,17 @@ const Register = () => {
 					}
 				});
 				setErrors(errors);
+				if (errors.general) {
+					toast.error(errors.general, {
+					  position: "top-right",
+					  autoClose: 2000,
+					  hideProgressBar: false,
+					  closeOnClick: true,
+					  pauseOnHover: true,
+					  draggable: true,
+					  theme: "light",
+					});
+				  }
 			}
 		} finally {
 			setLoading(false);

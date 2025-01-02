@@ -27,7 +27,7 @@
   --chat-height: 80vh; /* 80% of viewport height */
   --sidebar-width: 90px;
   --chat-width: 70%;
-  --bg-color: rgba(17, 25, 40, 0.19);
+  --bg-color: rgba(17, 25, 40, 0.437);
   --border-color: rgba(80, 173, 178, 0.943);
   --icon-size: 40px; /* Consistent icon size */
   --spacing: 40px;
@@ -410,11 +410,11 @@
   flex-direction: column;
   justify-items: stretch;
   place-items: center;
-  
+  // background-color: rgba(#0f172a00, 0.8);
+  // border-radius: 10px;
 }
 
 .ulist {
-  // flex: 1 1 0%;
   list-style:decimal;
   overflow-y: auto;
   height: 65vh;
@@ -423,24 +423,19 @@
   gap: 0.2rem;
   scrollbar-width: thin;
   scrollbar-color: rgba(122, 214, 234, 0.832) transparent;
+  height: 93%;
   @media screen and (max-width: 768px) {
     height: 100%;
   }
-  
-  // &__item
-  // {
-  //   @media screen and (max-width: 648px) {
-  //     scale: 40px;
-  //   }
-  // }
+
 }
 
-.picture
-{
+// .picture
+// {
   
-  // box-shadow: 0 0 0 5px #8c7d8f26, 0 0 0 10px #8f639c30;
-  overflow: hidden;
-}
+//   // box-shadow: 0 0 0 5px #8c7d8f26, 0 0 0 10px #8f639c30;
+//   overflow: hidden;
+// }
 .add_friend_btn 
 {
   width: 45px;
@@ -478,6 +473,8 @@
   height: 100%;
   width: 80%;
   scrollbar-color: rgba(122, 214, 234, 0.832) transparent;
+  // background-color: rgba(#0f172a00, 0.8);
+  // border-radius: 1px;
   // scrollbar-gutter: stable both-edges;
   // background-color: #7ee0ed;
 }

@@ -5,8 +5,8 @@ import imag1 from "./1189258767129399428.webp";
 
 const DynamicSidebar = ({ selectedUser, onClose }) => {
   return (
-    <div class={`${styles.dynamic_sidebar_container}`}>
-      <div class={`${styles.dynamic_sidebar}`}>
+    <div className={`${styles.dynamic_sidebar_container}`}>
+      <div className={`${styles.dynamic_sidebar}`}>
         <button
           onClick={onClose}
           className="absolute top-4 left-4 text-white hover:bg-white/10 rounded-full p-2"

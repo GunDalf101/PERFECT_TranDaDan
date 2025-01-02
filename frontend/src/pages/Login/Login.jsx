@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import styles from "./Login.module.scss";
 import alogo from "../../assets/image/42_Logo.png";
 import { Link, useNavigate } from "react-router-dom";
-
+import { toast } from 'react-toastify';
 import LoginAx from "../../api/authServiceLogin";
 
 const Login = () => {
@@ -37,6 +37,7 @@ const Login = () => {
 			const response = await LoginAx(formData);
 			const { access_token } = response.data;
 			localStorage.setItem('access_token', access_token);
+			
 		} catch (err) {
 			if (err.response?.data) {
 				const apiErrors = err.response.data;
@@ -50,6 +51,17 @@ const Login = () => {
 				});
 			}
 			setErrors(errors);
+			if (errors.general) {
+				toast.error(errors.general, {
+				  position: "top-right",
+				  autoClose: 2000,
+				  hideProgressBar: false,
+				  closeOnClick: true,
+				  pauseOnHover: true,
+				  draggable: true,
+				  theme: "light",
+				});
+			  }
 		}finally
 		{
 			setLoading(false);
@@ -97,9 +109,6 @@ const Login = () => {
 							{errors.email && (
 								<p className="mt-1 text-sm text-red-500">{errors.email}</p>
 							)}
-							{errors.general && (
-								<p className="mt-1 text-sm text-red-500">{errors.general}</p>
-							)}
 						</div>
 
 						<div className="w-full mb-5">
@@ -114,9 +123,6 @@ const Login = () => {
 							/>
 							{errors.password && (
 								<p className="mt-1 text-sm text-red-500">{errors.password}</p>
-							)}
-							{errors.general && (
-								<p className="mt-1 text-sm text-red-500">{errors.general}</p>
 							)}
 						</div>
 						<div className="text-right w-full mb-5">

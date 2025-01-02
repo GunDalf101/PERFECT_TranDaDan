@@ -7,14 +7,30 @@ import Sidebar from "../../components/chat/Sidebar/Sidebar";
 import Dprofile from "../../components/chat/Dprofile/Dprofile";
 import ChatWin from "../../components/chat/ChatWin/ChatWin";
 
+
+
+
 const ChatApp = () => {
-  // const [users, setUsers] = useState(null);
   // const [friends, setFriends] = useState([]);
   // const [messages, setMessages] = useState([]);
   // const [selectedChat, setSelectedChat] = useState(null);
   // const [activeSidebar, setActiveSidebar] = useState(false);
   // const [socket, setSocket] = useState(null);
   // // const { toast } = useToast();
+  
+  
+  // const [user,setUser] = useState('');
+  // useEffect(() =>{
+  //     const fetchUserData = async () => {
+  //     try {
+  //       const data = await getUserData();
+  //       setUser(data);
+  //     } catch (error) {
+  //       console.error("Error:", error);
+  //     }
+  //   };
+  //   fetchUserData();
+  //   },[])
 
   // // Initialize WebSocket connection
   // useEffect(() => {
@@ -285,7 +301,7 @@ const ChatApp = () => {
     <div className={`flex flex-col ${styles.nwbody}`}>
       <Navbar />
       <div className={`flex`}>
-        <Sidebar />
+        <Sidebar/>
         <ChatWin
           users={users}
           messages={messages}

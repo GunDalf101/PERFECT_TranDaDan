@@ -27,6 +27,7 @@ from django.db.models import Q
 from django.db import IntegrityError
 
 
+from chat.serializers import ChatRoomSerializer
 
 User = get_user_model()
 

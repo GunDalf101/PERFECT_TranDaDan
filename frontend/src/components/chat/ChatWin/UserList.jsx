@@ -42,7 +42,7 @@ const UserList = ({ users, selectedChat, setSelectedChat }) => (
               <div className="relative">
                 <div
                   className={`
-                    ${styles.picture}
+                    // ${styles.picture}
                     w-12 h-12 md:w-20 md:h-20 rounded-full 
                     bg-blue-300
                     flex items-center justify-center 
