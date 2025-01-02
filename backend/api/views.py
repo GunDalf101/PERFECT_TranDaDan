@@ -319,6 +319,25 @@ class UsersMeTestView(UnprotectedView):
         
         return Response(user_data, status=status.HTTP_200_OK)
 
+# class RelativeRelationshipType(Enum):
+#     YOU_REQUEST = 1
+#     HE_REQUEST = 2
+#     FRIENDS = 3
+#     YOU_BLOCK = 4
+#     HE_SECOND_FIRST = 5
+#     BLOCK_BOTH = 6
+
+# def createRelativeRelation(uid, relationship):
+#     if relationship.type == RelationshipType.PENDING_FIRST_SECOND.value:
+#     if relationship.user_first_id == uid:
+#         if relationship.type == RelationshipType.PENDING_FIRST_SECOND.value:
+#             return RelativeRelationshipType.YOU_REQUEST.value
+#         else if relationship.type == RelationshipType.PENDING_SECOND_FIRST.value:
+#             return RelativeRelationshipType.HE_REQUEST.value
+#         else if relationship.type == RelationshipType.PENDING_SECOND_FIRST.value:
+#             return RelativeRelationshipType.HE_REQUEST.value
+
+
 class UserView(APIView):
     
     def get(self, request, username):
@@ -344,7 +363,7 @@ class UserView(APIView):
         user_data = {
             'id': target_user.id,
             'username': target_user.username,
-            'email': target_user.email,
+            'email': target_user.intra_connection.email if not target_user.email else target_user.email,
             'relationship': relationship_n
         }
         
@@ -370,7 +389,6 @@ class SendFriendRequest(APIView):
             Q(user_first_id=current_user, user_second_id=target_user) | 
             Q(user_first_id=target_user, user_second_id=current_user)
         ).first()
-
         if relationship:
             if relationship.type in [RelationshipType.PENDING_FIRST_SECOND.value, RelationshipType.PENDING_SECOND_FIRST.value]:
                 return Response({"detail": "A friend request is already pending."}, status=status.HTTP_400_BAD_REQUEST)
@@ -379,7 +397,7 @@ class SendFriendRequest(APIView):
             if relationship.type in [RelationshipType.BLOCK_BOTH.value, RelationshipType.BLOCK_FIRST_SECOND.value, RelationshipType.BLOCK_SECOND_FIRST.value]:
                 return Response({"detail": "You can't send a friend request to this user."}, status=status.HTTP_400_BAD_REQUEST)
 
-        relationship, _ = UserRelationship.objects.get_or_create( # get_or_create check if the releationship is already exists
+        relationship = UserRelationship.objects.create( # get_or_create check if the releationship is already exists
             user_first_id=current_user,
             user_second_id=target_user,
             type=RelationshipType.PENDING_FIRST_SECOND.value
