@@ -11,7 +11,6 @@ import CpuMode from './components/Pong/CpuMode/CpuMode'
 import Profile from './pages/Profile/Profile'
 import RemoteMode from './components/Pong/RemotePlay/RemoteMode'
 import IntraCallback from './components/auth/IntraCallback'
-import Profile from './pages/Profile/Profile'
 import ChatApp from './pages/Chatpage/Chatpage'
 import { ToastContainer } from 'react-toastify';
 
@@ -25,7 +24,6 @@ function App() {
         <Routes>
             <Route path="/" element={<MainLayout />}>
               <Route index element={<Homepage />} />
-              <Route path="/profile" element={<Profile />} />
             </Route>
             <Route path="/game-lobby" element={<GameMode />}>
               <Route index element={<GameChoice />} />

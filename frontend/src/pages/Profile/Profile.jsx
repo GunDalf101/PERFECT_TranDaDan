@@ -48,7 +48,9 @@ const Profile = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-cover bg-center bg-[url('retro_1.jpeg')] from-darkBackground via-purpleGlow to-neonBlue text-white font-retro">
+    <div className="flex flex-col items-center min-h-screen bg-cover bg-center bg-[url('retro_1.jpeg')] from-darkBackground via-purpleGlow to-neonBlue text-white font-retro">
+      <Navbar />
+
       {/* Profile Card */}
       <div className="w-11/12 h-fit m-4 mt-20 p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
         {/* Profile Image */}

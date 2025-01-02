@@ -37,7 +37,7 @@ const Login = () => {
 			const response = await LoginAx(formData);
 			const { access_token } = response.data;
 			localStorage.setItem('access_token', access_token);
-			
+			window.location.href = "/";
 		} catch (err) {
 			if (err.response?.data) {
 				const apiErrors = err.response.data;

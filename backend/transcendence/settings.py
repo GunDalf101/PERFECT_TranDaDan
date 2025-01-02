@@ -189,6 +189,7 @@ INSTALLED_APPS += [
     'channels',
     'channels_redis',
     'corsheaders',
+    'chat',
     'games',
 ]
 
@@ -198,33 +199,11 @@ MIDDLEWARE += [
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-ASGI_APPLICATION = 'transcendence.asgi.application'
-
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [("localhost", 6379)],
-        },
-    },
-}
-##
-### Les Parametres du gondalf
-
-
-INSTALLED_APPS += [
-    'daphne',
-    'channels',
-    'channels_redis',
-    'corsheaders',
-    'games',
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173", 
 ]
+CORS_ALLOW_CREDENTIALS = True
 
-MIDDLEWARE += [
-    'corsheaders.middleware.CorsMiddleware',
-]
-
-CORS_ALLOW_ALL_ORIGINS = True
 
 ASGI_APPLICATION = 'transcendence.asgi.application'
 
