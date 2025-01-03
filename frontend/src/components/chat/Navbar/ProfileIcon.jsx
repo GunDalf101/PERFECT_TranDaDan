@@ -2,8 +2,11 @@ import React from "react";
 import ProfileDropdown from "./ProfileDropdown";
 // import { useClickOutside } from "../../../hooks/useClickOutside";
 import { useState, useRef,useEffect } from "react";
+import { getUserData } from "../../../api/authService42Intra";
+
 
 export const useClickOutside = (refs, callback) => {
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       const refsArray = Array.isArray(refs) ? refs : [refs];
@@ -26,13 +29,24 @@ const ProfileIcon = () => {
     const profileRef = useRef();
     const buttonRef = useRef();
     useClickOutside([profileRef, buttonRef], setProfileDropdown);
+    const storedUserJSON = localStorage.getItem("user");
+    const user = storedUserJSON ? JSON.parse(storedUserJSON) : null;
+    const parseIntraConnection = (intraStr) => {
+      try {
+        const parsed = JSON.parse(intraStr);
+        return parsed[0].fields; 
+      } catch (error) {
+        console.error('Error parsing intra connection:', error);
+        return null;
+      }
+    };
+    const intraData = user?.intra_connection ? parseIntraConnection(user.intra_connection) : null;
   return (
-    <div className="relative py-1">
-      <button id="profileButton" ref={buttonRef} className="focus:outline-none" onClick={() => setProfileDropdown(prev => !prev)}>
-        <img
-          src="https://via.placeholder.com/40"
-          alt="Profile"
-          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-pink-500"
+    <div className="relative py-1 ">
+      <button id="profileButton" ref={buttonRef} className="focus:outline-none rounded-full border-2  border-pink-500" onClick={() => setProfileDropdown(prev => !prev)}>
+      <img 
+          src={intraData?.avatar_url || "https://via.placeholder.com/40"}
+          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full "
         />
       </button>
         <ProfileDropdown isVisible={profileDropdown} ref={profileRef}/>

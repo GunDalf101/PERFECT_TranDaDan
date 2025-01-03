@@ -7,9 +7,13 @@ import Register from './pages/Register/Register'
 import GameMode from './layouts/GameMode/GameMode'
 import GameChoice from './pages/GameChoice/GameChoice'
 import MatchMaking from './pages/MatchMaking/MatchMaking'
-import IntraCallback from './components/auth/IntraCallback'
+import CpuMode from './components/Pong/CpuMode/CpuMode'
 import Profile from './pages/Profile/Profile'
+import RemoteMode from './components/Pong/RemotePlay/RemoteMode'
+import IntraCallback from './components/auth/IntraCallback'
 import ChatApp from './pages/Chatpage/Chatpage'
+import { ToastContainer } from 'react-toastify';
+
 import User from './pages/User/User'
 import EditProfile from './pages/EditProfile/EditProfile'
 import { Edit } from 'lucide-react'
@@ -18,6 +22,7 @@ function App() {
 
   return (
     <BrowserRouter>
+        <ToastContainer position="top-right" autoClose={3000} />
         <Routes>
             <Route path="/" element={<MainLayout />}>
               <Route index element={<Homepage />} />
@@ -25,9 +30,12 @@ function App() {
             <Route path="/game-lobby" element={<GameMode />}>
               <Route index element={<GameChoice />} />
               <Route path="matchmaking" element={<MatchMaking />} />
+              <Route path="cpu-mode" element={<CpuMode />} />
+              <Route path="remote-play" element={<RemoteMode />} />
             </Route>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            
             <Route path="/profile" element={<Profile />}/>
             <Route path="/profile/edit" element={<EditProfile />}/>
             <Route path="/user/:username" element={<User />} />

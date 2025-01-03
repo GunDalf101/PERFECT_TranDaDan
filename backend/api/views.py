@@ -13,7 +13,7 @@ import jwt
 from django.urls import reverse
 from django.utils import timezone
 from django.conf import settings
-from .utils import unset_cookie_header, get_free_username, reset_password_for_user, find_user_id_by_reset_token, minuser, maxuser
+from .utils import unset_cookie_header, get_free_username, reset_password_for_user, find_user_id_by_reset_token, minuser, maxuser, createRelativeRelation
 from .serializers import RegisterSerializer, LoginSerializer, RequestResetPasswordSerializer, ResetPasswordSerializer
 from .tasks import send_registration_email
 from .models import IntraConnection
@@ -27,6 +27,7 @@ from django.db.models import Q
 from django.db import IntegrityError
 
 
+from chat.serializers import ChatRoomSerializer
 
 User = get_user_model()
 
@@ -319,25 +320,6 @@ class UsersMeTestView(UnprotectedView):
         
         return Response(user_data, status=status.HTTP_200_OK)
 
-# class RelativeRelationshipType(Enum):
-#     YOU_REQUEST = 1
-#     HE_REQUEST = 2
-#     FRIENDS = 3
-#     YOU_BLOCK = 4
-#     HE_SECOND_FIRST = 5
-#     BLOCK_BOTH = 6
-
-# def createRelativeRelation(uid, relationship):
-#     if relationship.type == RelationshipType.PENDING_FIRST_SECOND.value:
-#     if relationship.user_first_id == uid:
-#         if relationship.type == RelationshipType.PENDING_FIRST_SECOND.value:
-#             return RelativeRelationshipType.YOU_REQUEST.value
-#         else if relationship.type == RelationshipType.PENDING_SECOND_FIRST.value:
-#             return RelativeRelationshipType.HE_REQUEST.value
-#         else if relationship.type == RelationshipType.PENDING_SECOND_FIRST.value:
-#             return RelativeRelationshipType.HE_REQUEST.value
-
-
 class UserView(APIView):
     
     def get(self, request, username):
@@ -358,7 +340,7 @@ class UserView(APIView):
         relationship_n = 0
 
         if relationship:
-            relationship_n = relationship.type
+            relationship_n = createRelativeRelation(current_user, relationship)
 
         user_data = {
             'id': target_user.id,
@@ -445,7 +427,7 @@ class AcceptFriendRequestView(APIView):
         except User.DoesNotExist:
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        if request.user != target_user:
+        if request.user == target_user:
             return Response({"detail": "You can only accept requests sent to you."}, status=status.HTTP_400_BAD_REQUEST)
 
         relationship = UserRelationship.objects.filter(

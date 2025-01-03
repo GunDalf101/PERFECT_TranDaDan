@@ -3,20 +3,20 @@ import { useParams } from "react-router-dom";
 import Navbar from "../../components/Navbar/Logged";
 import NotFound from "../NotFound/NotFound";
 import getUserData from "../../api/authServiceUser";
-import { sendFriendReq, cancelFriendReq } from "../../api/friendService";
+import { sendFriendReq, cancelFriendReq, acceptFriendReq} from "../../api/friendService";
 import { blockUser, unblockUser } from "../../api/blockService";
 // import { blockUser, unblockUser } from "../../api/blockService"; // Assuming you have a service for blocking/unblocking users
 
 function isBlocked(r)
 {
-  return r == 4 || r == 5;
+  return r == 4 || r == 6;
 }
 
 const User = () => {
   const [userdata, setuserdata] = useState(null); // Store user data
   const [error, setError] = useState(false); // Handle errors
   const [reload, setReload] = useState(false); // State to trigger useEffect
-  const [isHovering, setIsHovering] = useState(false); // State to manage hover
+  const [isAddHovering, setIsAddHovering] = useState(false); // State to manage hover
   const [isBlockHovering, setIsBlockHovering] = useState(false); // State to manage hover for block button
 
   const { username } = useParams();
@@ -34,24 +34,42 @@ const User = () => {
     };
 
     fetchUserData();
-  }, [reload, isHovering, isBlockHovering]); // Add reload dependency
+  }, [reload]); // Add reload dependency
 
   // Handle sending/canceling a friend request
   const handleAddFriend = async () => {
     try {
-      if (userdata.relationship == 0) await sendFriendReq(username);
-      else if (userdata.relationship == 1) {
-        await cancelFriendReq(username);
-        setIsHovering(false);
-      }
+      await sendFriendReq(username);
+      setIsAddHovering(false);
       setReload(!reload); // Trigger the useEffect to refetch user data
     } catch (error) {
       console.error("Error sending friend request:", error);
     }
   };
 
+  const handleCancelReq = async () => {
+    try {
+        await cancelFriendReq(username);
+        setIsAddHovering(false);
+        setReload(!reload); // Trigger the useEffect to refetch user data
+    } catch (error) {
+      console.error("Error sending friend request:", error);
+    }
+  };
+
+  const handleAcceptRequest = async () => {
+    try {
+      acceptFriendReq(username)
+      console.log("Friend request accepted");
+      setReload(!reload);
+    } catch (error) {
+      console.error("Error accepting friend request:", error);
+    }
+  };
+
   const handleBlockUser = async () => {
     try {
+      console.log(userdata.relationship)
       if (isBlocked(userdata.relationship))
         await unblockUser(username);
       else
@@ -102,32 +120,51 @@ const User = () => {
           </p>
           {/* Display Email */}
           <p className="text-center text-neonBlue mt-2 text-xl">{userdata.email}</p>
-          {/* Add Friend Button */}
-          <button
-            style={{visibility: isBlocked(userdata.relationship)?
-              "hidden":"visible"
-            }}
-
-            onClick={handleAddFriend}
-            onMouseEnter={() => {
-              if (userdata.relationship == 1) setIsHovering(true);
-            }}
-            onMouseLeave={() => setIsHovering(false)}
-            className={`mt-4 px-6 py-2 rounded-lg text-xl font-bold transition-all duration-300 ${
-              userdata.relationship == 0
-                ? "bg-neonBlue text-black hover:bg-neonPink hover:text-white"
-                : isHovering
-                ? "bg-neonBlue text-black hover:bg-red-600 hover:text-white"
-                : "bg-gray-500 text-white"
-                
-            }`}
-          >
-            {isHovering
-              ? "Cancel Request"
-              : userdata.relationship == 1
-              ? "Request Sent"
-              : "Add Friend"}
-          </button>
+          {/* Friend Request Button */}
+          {userdata.relationship == 2 ? (
+            <button
+              onClick={handleAcceptRequest}
+              className="mt-4 px-6 py-2 bg-neonBlue text-black font-bold rounded-lg shadow-[0_0_10px_2px] shadow-neonBlue hover:bg-neonPink hover:text-white transition-all"
+            >
+              Accept Request
+            </button>
+            ) : userdata.relationship == 0 ? (
+              // Add Friend Button
+              <button
+                onClick={handleAddFriend}
+                onMouseEnter={() => setIsAddHovering(true)}
+                onMouseLeave={() => setIsAddHovering(false)}
+                className="mt-4 px-6 py-2 rounded-lg text-xl font-bold transition-all duration-300 bg-neonBlue text-black hover:bg-neonPink hover:text-white"
+              >
+                Add Friend
+              </button>
+            ) : userdata.relationship == 1 ? (
+              // Cancel Request Button
+              <button
+                onClick={handleCancelReq} // Assuming the same handler cancels the request
+                onMouseEnter={() => setIsAddHovering(true)}
+                onMouseLeave={() => setIsAddHovering(false)}
+                className="mt-4 px-6 py-2 rounded-lg text-xl font-bold transition-all duration-300 hover:bg-red-600 text-white bg-gray-500"
+              >
+                {isAddHovering ? "Cancel Request" : "Request sent"}
+              </button>
+            ) : null}
+            {/* <button
+              onClick={handleAddFriend}
+              onMouseEnter={() => {
+                setIsAddHovering(true);
+              }}
+              onMouseLeave={() => setIsAddHovering(false)}
+              className={`mt-4 px-6 py-2 rounded-lg text-xl font-bold transition-all duration-300 ${
+                userdata.relationship == 0
+                  ? "bg-neonBlue text-black hover:bg-neonPink hover:text-white"
+                  : isAddHovering
+                  ? "bg-neonBlue text-black hover:bg-red-600 hover:text-white"
+                  : "bg-gray-500 text-white"
+              }`}
+            >
+              {isAddHovering ? "Cancel Request" : "Add Friend"}
+            </button> */}
           {/* Block Button */}
           <button
             onClick={handleBlockUser}

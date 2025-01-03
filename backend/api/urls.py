@@ -16,7 +16,7 @@ urlpatterns = [
     path('user/<str:username>', UserView.as_view(), name='get-user'),
     path('friend/request', SendFriendRequest.as_view(), name='send-friend-request'),
     path('friend/deleterequest', DeleteFriendRequest.as_view(), name='delete-friend-request'),
-    path('friend/acceptrequest', AcceptFriendRequestView.as_view(), name='accept-friend-request'),
+    path('friend/acceptrequest/<str:username>', AcceptFriendRequestView.as_view(), name='accept-friend-request'),
     path('blockuser', BlockUser.as_view(), name='block-user'),
 
 ]

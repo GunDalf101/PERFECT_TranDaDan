@@ -81,14 +81,14 @@ class UserRelationship(models.Model):
         
         if self.user_first_id.id > self.user_second_id.id:
             self.user_first_id, self.user_second_id = self.user_second_id, self.user_first_id
-            if self.type == RelationshipType.PENDING_FIRST_SECOND:
-                self.type = RelationshipType.PENDING_SECOND_FIRST
-            elif self.type == RelationshipType.PENDING_SECOND_FIRST:
-                self.type = RelationshipType.PENDING_FIRST_SECOND
-            elif self.type == RelationshipType.BLOCK_FIRST_SECOND:
-                self.type = RelationshipType.BLOCK_SECOND_FIRST
-            elif self.type == RelationshipType.BLOCK_SECOND_FIRST:
-                self.type = RelationshipType.BLOCK_FIRST_SECOND
+            if self.type == RelationshipType.PENDING_FIRST_SECOND.value:
+                self.type = RelationshipType.PENDING_SECOND_FIRST.value
+            elif self.type == RelationshipType.PENDING_SECOND_FIRST.value:
+                self.type = RelationshipType.PENDING_FIRST_SECOND.value
+            elif self.type == RelationshipType.BLOCK_FIRST_SECOND.value:
+                self.type = RelationshipType.BLOCK_SECOND_FIRST.value
+            elif self.type == RelationshipType.BLOCK_SECOND_FIRST.value:
+                self.type = RelationshipType.BLOCK_FIRST_SECOND.value
 
     def __str__(self):
         return f"Relationship between {self.user_first_id} and {self.user_second_id} is {self.get_type_display()}"

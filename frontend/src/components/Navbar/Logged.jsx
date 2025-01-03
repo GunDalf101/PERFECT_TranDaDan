@@ -4,7 +4,7 @@ import Sidebar from "./SubNav/Sidebar";
 import Notifications from "./SubNav/Notifications";
 import { useState, useEffect, useRef } from "react";
 import { useClickOutside } from "../../hooks/useClickOutside";
-import ProfileIcon from "./SubNav/ProfileIcon";
+import ProfileIcon from "../../components/chat/Navbar/ProfileIcon";
 import styles from "./Navbar.module.scss";
 import { Link } from "react-router-dom";
 

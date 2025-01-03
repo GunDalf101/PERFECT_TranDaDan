@@ -1,24 +1,35 @@
-# docker pull postgres:latest
 
-# docker container rm postgres-db
-# docker run -d \
-#   --name postgres-db \
-#   -e POSTGRES_USER=myuser \
-#   -e POSTGRES_PASSWORD=mypassword \
-#   -e POSTGRES_DB=mydb \
-#   -p 5432:5432 \
-#   postgres:latest
 
-# docker pull redis:latest
+docker stop postgres-db
+docker rm -f postgres-db
+docker pull postgres:latest
 
-# docker container rm redis-db
-# docker run -d \
-#   --name redis-db \
-#   -p 6379:6379 \
-#   redis:latest
+docker container rm postgres-db
+docker run -d \
+  --name postgres-db \
+  -e POSTGRES_USER=myuser \
+  -e POSTGRES_PASSWORD=mypassword \
+  -e POSTGRES_DB=mydb \
+  -p 5432:5432 \
+  postgres:latest
 
+docker pull redis:latest
+
+docker container rm redis-db
+docker run -d \
+  --name redis-db \
+  -p 6379:6379 \
+  redis:latest
+
+# sleep 10
 python manage.py makemigrations
 python manage.py migrate
+
+# export DJANGO_SETTINGS_MODULE=transcendence.settings
+
+
+# daphne transcendence.asgi:application --port 8888
+
 
 echo "!!!!! Run in another terminal: 'python manage.py process_tasks' to receive emails. !!!!!"
 

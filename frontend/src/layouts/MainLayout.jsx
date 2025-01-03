@@ -4,6 +4,7 @@ import NotLogged from '../components/Navbar/NotLogged'
 import { Outlet } from 'react-router-dom'
 
 const MainLayout = ({loggedIn = true}) => {
+  
   return (
     <div>
       <header>
