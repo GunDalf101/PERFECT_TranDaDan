@@ -8,6 +8,7 @@ import GameMode from './layouts/GameMode/GameMode'
 import GameChoice from './pages/GameChoice/GameChoice'
 import MatchMaking from './pages/MatchMaking/MatchMaking'
 import CpuMode from './components/Pong/CpuMode/CpuMode'
+import LocalMode from './components/Pong/LocalMode/LocalMode'
 import Profile from './pages/Profile/Profile'
 import RemoteMode from './components/Pong/RemotePlay/RemoteMode'
 import IntraCallback from './components/auth/IntraCallback'
@@ -15,6 +16,8 @@ import ChatApp from './pages/Chatpage/Chatpage'
 import { ToastContainer } from 'react-toastify';
 
 import User from './pages/User/User'
+import EditProfile from './pages/EditProfile/EditProfile'
+import { Edit } from 'lucide-react'
 
 function App() {
 
@@ -30,11 +33,13 @@ function App() {
               <Route path="matchmaking" element={<MatchMaking />} />
               <Route path="cpu-mode" element={<CpuMode />} />
               <Route path="remote-play" element={<RemoteMode />} />
+              <Route path="local-mode" element={<LocalMode />} />
             </Route>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile" element={<Profile />}/>
+            <Route path="/profile/edit" element={<EditProfile />}/>
             <Route path="/user/:username" element={<User />} />
             <Route path='/chat' element={<ChatApp/>}/>
             <Route path="/Intra/callback/" element={<IntraCallback />} />

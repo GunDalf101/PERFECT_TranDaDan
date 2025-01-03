@@ -3,7 +3,7 @@ import axiosInstance from './axiosInstance';
 
 const RegisterAx = async (data) => {
   try {
-    const response = await axiosInstance.post('/register', data);
+    const response = await axiosInstance.post('api/register', data);
     return response;
   } catch (error) {
     throw(error);

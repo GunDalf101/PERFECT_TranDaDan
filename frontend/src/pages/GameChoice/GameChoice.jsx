@@ -293,7 +293,7 @@ const GameChoice = () => {
                     <Link to="/game-lobby/cpu-mode"><div className="game-option" data-index="0">VS CPU</div></Link> 
                     <Link to="/game-lobby/matchmaking"><div className="game-option" data-index="1">2 PLAYER</div></Link> 
                     <Link to="/"><div className="game-option" data-index="2">TOURNAMENT</div></Link> 
-                    <Link to="/"><div className="game-option" data-index="3">PRACTICE</div></Link>
+                    <Link to="/game-lobby/local-mode"><div className="game-option" data-index="3">LOCAL MODE</div></Link>
                     <Link to="/"><div className="game-option" data-index="0">OPTIONS</div></Link> 
                 </div>
 

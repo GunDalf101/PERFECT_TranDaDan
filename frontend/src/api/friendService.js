@@ -3,7 +3,7 @@ import axiosInstance from './axiosInstance';
 
 const sendFriendReq = async (username) => {
   try {
-    const response = await axiosInstance.post('/friend/request', {username});
+    const response = await axiosInstance.post('api/friend/request', {username});
     return response.data;
   } catch (error) {
     console.error('Error sending friend request:', error);
@@ -11,9 +11,19 @@ const sendFriendReq = async (username) => {
   }
 };
 
+const acceptFriendReq = async (username) => {
+  try {
+    const response = await axiosInstance.get('/friend/acceptrequest/' + username);
+    return response.data;
+  } catch (error) {
+    console.error('Error accepting friend request:', error);
+    throw error;
+  }
+};
+
 const cancelFriendReq = async (username) => {
   try {
-    const response = await axiosInstance.delete('/friend/deleterequest', {data : {username}});
+    const response = await axiosInstance.delete('api/friend/deleterequest', {data : {username}});
     return response.data;
   } catch (error) {
     console.error('Error deleting friend request:', error);
@@ -21,6 +31,4 @@ const cancelFriendReq = async (username) => {
   }
 };
 
-
-
-export {sendFriendReq, cancelFriendReq}
+export {sendFriendReq, cancelFriendReq, acceptFriendReq}

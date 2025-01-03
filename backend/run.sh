@@ -1,4 +1,5 @@
 
+
 docker stop postgres-db
 docker rm -f postgres-db
 docker pull postgres:latest
