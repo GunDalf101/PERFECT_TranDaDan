@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback ,useRef} from "react";
 // import { Card } from '@/components/ui/card';
 // import { useToast } from '@/components/ui/use-toast';
 import styles from "../../components/chat/styles.module.scss";
-import Navbar from "../../components/chat/Navbar/Navbar";
-import Sidebar from "../../components/chat/Sidebar/Sidebar";
+import Logged from '../../components/Navbar/Logged'
+// import Sidebar from "../../components/chat/Sidebar/Sidebar";
 import Dprofile from "../../components/chat/Dprofile/Dprofile";
 import ChatWin from "../../components/chat/ChatWin/ChatWin";
 
@@ -299,9 +299,9 @@ const ChatApp = () => {
 
   return (
     <div className={`flex flex-col ${styles.nwbody}`}>
-      <Navbar />
+      <Logged />
       <div className={`flex`}>
-        <Sidebar/>
+        {/* <Sidebar/> */}
         <ChatWin
           users={users}
           messages={messages}

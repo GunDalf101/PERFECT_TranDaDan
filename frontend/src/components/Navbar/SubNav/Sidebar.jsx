@@ -23,7 +23,7 @@ const Sidebar = React.forwardRef(({isVisible}, ref) => {
             <a href="#">Leaderboards & Statistics</a>
           </li>
           <li className="py-3 px-4 hover:bg-pink-500 hover:text-gray-900 rounded-md transition duration-300">
-            <a href="#">Live Chat</a>
+            <Link to="/chat">Live Chat</Link>
           </li>
           <li className="py-3 px-4 hover:bg-pink-500 hover:text-gray-900 rounded-md transition duration-300">
             <a href="#">Settings & Security</a>

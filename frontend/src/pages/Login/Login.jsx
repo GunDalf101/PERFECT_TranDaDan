@@ -4,6 +4,8 @@ import alogo from "../../assets/image/42_Logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
 import LoginAx from "../../api/authServiceLogin";
+import { getUserData } from "../../api/authService42Intra";
+
 
 const Login = () => {
 	const [loading, setLoading] = useState(false);
@@ -37,7 +39,11 @@ const Login = () => {
 			const response = await LoginAx(formData);
 			const { access_token } = response.data;
 			localStorage.setItem('access_token', access_token);
+			const data = await getUserData();
+			const userJSON = JSON.stringify(data);
+			localStorage.setItem("user", userJSON);
 			window.location.href = "/";
+
 		} catch (err) {
 			if (err.response?.data) {
 				const apiErrors = err.response.data;

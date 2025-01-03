@@ -5,7 +5,7 @@ const NotifDropdown = React.forwardRef(({isVisible}, ref) => {
   return isVisible? (
     <div
       id="notificationDropdown"
-      className="notification-dropdown absolute text-white right-0 mt-2 w-auto bg-gray-900 text-teal-200 border-2 border-pink-500 shadow-lg rounded-md font-pixel z-10"
+      className="notification-dropdown absolute text-white right-0 mt-2 w-auto bg-gray-900 border-2 border-pink-500 shadow-lg rounded-md font-pixel z-10"
       ref={ref}
     >
       <div className="p-2">

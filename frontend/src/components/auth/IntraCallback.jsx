@@ -15,8 +15,6 @@ const IntraCallback = () => {
     }
 
     localStorage.setItem("access_token", accessToken);
-    window.location.href = "/";
-    // window.location.href = "/chat";
     const fetchUserData = async () => {
       try {
         const data = await getUserData();
