@@ -7,7 +7,7 @@ const getUserData = async () => {
     if (!token) {
       throw new Error('No access token found');
     }
-    const response = await axiosInstance.get('/users/me');
+    const response = await axiosInstance.get('api/users/me');
     return response.data;
   } catch (error) {
     console.error('Get user data error:', error);

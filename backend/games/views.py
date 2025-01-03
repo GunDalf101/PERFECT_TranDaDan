@@ -38,8 +38,8 @@ class FindMatch(APIView):
         player1, player2 = queue
         game = Match.objects.create(player1=player1.player, player2=player2.player, status='ongoing')
 
-        player1.delete()
-        player2.delete()
+        # player1.delete()
+        # player2.delete()
 
         return Response({
             "status": "success",
@@ -55,6 +55,26 @@ class LeaveQueue(APIView):
         player = request.user
         MatchmakingQueue.objects.filter(player=player).delete()
         return Response({"status": "success"})
+
+class GetMatch(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        game_id = request.query_params.get('game_id')
+        try:
+            game = Match.objects.get(id=game_id)
+            return Response({
+                "status": "success",
+                "game_id": game.id,
+                "player1": game.player1.username,
+                "player2": game.player2.username,
+                "status": game.status,
+                "score_player1": game.score_player1,
+                "score_player2": game.score_player2,
+                "winner": game.winner.username if game.winner else None
+            })
+        except Match.DoesNotExist:
+            return Response({"status": "error", "message": "Game not found"}, status=status.HTTP_404_NOT_FOUND)
 
 class CancelMatch(APIView):
     permission_classes = [IsAuthenticated]
