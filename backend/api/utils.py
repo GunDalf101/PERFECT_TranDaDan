@@ -6,6 +6,8 @@ from datetime import timedelta
 from django.core.cache import cache
 from .tasks import send_reset_password_email
 from django.core import serializers
+from enum import Enum
+from .models import RelationshipType
 
 User = get_user_model()
 
@@ -39,3 +41,42 @@ def minuser(a, b):
 
 def maxuser(a, b):
     return max([a, b], key=lambda user: user.id)
+
+
+class RelativeRelationshipType(Enum):
+    YOU_REQUEST = 1
+    HE_REQUEST = 2
+    FRIENDS = 3
+    YOU_BLOCK = 4
+    HE_BLOCK = 5
+    BLOCK_BOTH = 6
+
+
+def createRelativeRelation(uid, relationship):
+    if relationship.type == RelationshipType.FRIENDS.value:
+        return RelativeRelationshipType.FRIENDS.value
+    if relationship.type == RelationshipType.BLOCK_BOTH.value:
+        return RelativeRelationshipType.BLOCK_BOTH.value
+
+    you_first = (relationship.user_first_id == uid)
+    
+    if (you_first):
+        if (relationship.type == RelationshipType.PENDING_FIRST_SECOND.value):
+            return RelativeRelationshipType.YOU_REQUEST.value
+        elif relationship.type == RelationshipType.PENDING_SECOND_FIRST.value:
+            return RelativeRelationshipType.HE_REQUEST.value
+        elif relationship.type == RelationshipType.BLOCK_FIRST_SECOND.value:
+            return RelativeRelationshipType.YOU_BLOCK.value
+        elif relationship.type == RelationshipType.BLOCK_SECOND_FIRST.value:
+            return RelativeRelationshipType.HE_BLOCK.value
+    else:
+        if (relationship.type == RelationshipType.PENDING_FIRST_SECOND.value):
+            return RelativeRelationshipType.HE_REQUEST.value
+        elif relationship.type == RelationshipType.PENDING_SECOND_FIRST.value:
+            return RelativeRelationshipType.YOU_REQUEST.value
+        elif relationship.type == RelationshipType.BLOCK_FIRST_SECOND.value:
+            return RelativeRelationshipType.HE_BLOCK.value
+        elif relationship.type == RelationshipType.BLOCK_SECOND_FIRST.value:
+            return RelativeRelationshipType.YOU_BLOCK.value
+    
+    return 0

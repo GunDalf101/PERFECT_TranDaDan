@@ -13,7 +13,7 @@ import jwt
 from django.urls import reverse
 from django.utils import timezone
 from django.conf import settings
-from .utils import unset_cookie_header, get_free_username, reset_password_for_user, find_user_id_by_reset_token, minuser, maxuser
+from .utils import unset_cookie_header, get_free_username, reset_password_for_user, find_user_id_by_reset_token, minuser, maxuser, createRelativeRelation
 from .serializers import RegisterSerializer, LoginSerializer, RequestResetPasswordSerializer, ResetPasswordSerializer
 from .tasks import send_registration_email
 from .models import IntraConnection
@@ -340,12 +340,12 @@ class UserView(APIView):
         relationship_n = 0
 
         if relationship:
-            relationship_n = relationship.type
+            relationship_n = createRelativeRelation(current_user, relationship)
 
         user_data = {
             'id': target_user.id,
             'username': target_user.username,
-            'email': target_user.email,
+            'email': target_user.intra_connection.email if not target_user.email else target_user.email,
             'relationship': relationship_n
         }
         
@@ -371,7 +371,6 @@ class SendFriendRequest(APIView):
             Q(user_first_id=current_user, user_second_id=target_user) | 
             Q(user_first_id=target_user, user_second_id=current_user)
         ).first()
-
         if relationship:
             if relationship.type in [RelationshipType.PENDING_FIRST_SECOND.value, RelationshipType.PENDING_SECOND_FIRST.value]:
                 return Response({"detail": "A friend request is already pending."}, status=status.HTTP_400_BAD_REQUEST)
@@ -380,7 +379,7 @@ class SendFriendRequest(APIView):
             if relationship.type in [RelationshipType.BLOCK_BOTH.value, RelationshipType.BLOCK_FIRST_SECOND.value, RelationshipType.BLOCK_SECOND_FIRST.value]:
                 return Response({"detail": "You can't send a friend request to this user."}, status=status.HTTP_400_BAD_REQUEST)
 
-        relationship, _ = UserRelationship.objects.get_or_create( # get_or_create check if the releationship is already exists
+        relationship = UserRelationship.objects.create( # get_or_create check if the releationship is already exists
             user_first_id=current_user,
             user_second_id=target_user,
             type=RelationshipType.PENDING_FIRST_SECOND.value
@@ -428,7 +427,7 @@ class AcceptFriendRequestView(APIView):
         except User.DoesNotExist:
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        if request.user != target_user:
+        if request.user == target_user:
             return Response({"detail": "You can only accept requests sent to you."}, status=status.HTTP_400_BAD_REQUEST)
 
         relationship = UserRelationship.objects.filter(
