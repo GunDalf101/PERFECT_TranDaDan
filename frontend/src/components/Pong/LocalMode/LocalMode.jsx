@@ -14,11 +14,11 @@ const LocalMode = () => {
     const paddleCPURef = useRef(null);
     const [scores, setScores] = useState({ player: 0, ai: 0 });
     const [matches, setMatches] = useState({ player: 0, ai: 0 });
+    let tableBoundsRef = useRef(null);
 
     useEffect(() => {
         if (!canvasRef.current) return;
 
-        // Game state
         let playerScore = 0;
         let aiScore = 0;
         const maxScore = 11;
@@ -32,31 +32,23 @@ const LocalMode = () => {
         let lastHitAI = true;
         let mouseCurrent = { x: 0, y: 0 };
 
-        // Scene setup
         const scene = new THREE.Scene();
         sceneRef.current = scene;
 
-        // Bounding boxes
         const ballBoundingBox = new THREE.Box3();
         const paddleBoundingBox = new THREE.Box3();
         const paddleCPUBoundingBox = new THREE.Box3();
         const tableBoundingBox = new THREE.Box3();
         const netBoundingBox = new THREE.Box3();
 
-        // Environment setup
-
         scene.background = null;
-        // scene.background = environmentMapTexture;
-        // scene.environment = environmentMapTexture;
 
 
-        // Audio setup
         const ballSound = new Audio('/sounds/ping_pong.mp3');
 
-        // Camera setup
         const camera = new THREE.PerspectiveCamera(
             75,
-            window.innerWidth * 0.5 / window.innerHeight,
+            window.innerWidth / (window.innerHeight * 0.5),
             0.1,
             100
         );
@@ -64,14 +56,13 @@ const LocalMode = () => {
         scene.add(camera);
         const splitCamera = new THREE.PerspectiveCamera(
             75,
-            window.innerWidth * 0.5 / window.innerHeight,
+            window.innerWidth / (window.innerHeight * 0.5),
             0.1,
             100
         )
         splitCamera.position.set(-10, 10, 15);
         scene.add(splitCamera);
 
-        // Renderer setup
         const renderer = new THREE.WebGLRenderer({
             canvas: canvasRef.current
         });
@@ -82,11 +73,9 @@ const LocalMode = () => {
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-        // Controls
         const controls = new OrbitControls(camera, canvasRef.current);
         controls.enableDamping = true;
 
-        // GameObject class
         class GameObject {
             static id = 0;
             constructor(mesh, mass = 1) {
@@ -103,7 +92,6 @@ const LocalMode = () => {
             }
         }
 
-        // Game object creation functions
         const CreateBall = (position, direction = -1) => {
             const radius = 0.1;
             const mesh = new THREE.Mesh(
@@ -237,14 +225,12 @@ const LocalMode = () => {
             }
             return false;
         };
-        
-        // Add this after the collision detection functions and before the animation loop
+
         const checkCollisions = () => {
             if (!paddleRef.current || gameObjectsRef.current.length === 0 || !paddleCPURef.current) return;
             
             const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
-            
-            // Paddle collision
+
             if (twoObjCollide(paddleRef.current, ball) && lastHitAI) {
                 lastHitAI = false;
                 ballSound.volume = Math.min(1, 1);
@@ -267,10 +253,7 @@ const LocalMode = () => {
                 
                 ball.velocity = new THREE.Vector3(0, 0, 0);
                 ball.applyImpulse(new THREE.Vector3(forceX, forceY, -forceZ));
-            }
-            
-            // CPU paddle collision
-            else if (twoObjCollide(paddleCPURef.current, ball) && !lastHitAI) {
+            } else if (twoObjCollide(paddleCPURef.current, ball) && !lastHitAI) {
                 lastHitAI = true;
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
@@ -318,7 +301,6 @@ const LocalMode = () => {
                 }
             }
 
-            // Net collision
             else if (twoObjCollide(netObject, ball)) {
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
@@ -379,6 +361,7 @@ const LocalMode = () => {
             
             const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
             const tableBounds = new THREE.Box3().setFromObject(tableObject.mesh);
+            tableBoundsRef.current = tableBounds;
             
             if (ball.position.z > tableBounds.max.z + 3 && playerSideBounces === 1) {
                 aiScore++;
@@ -400,8 +383,7 @@ const LocalMode = () => {
             
             winCheck();
         };
-        
-        // Event handlers
+
         const handleMouseMove = (event) => {
             mouseCurrent = {
                 x: (event.clientX / window.innerWidth) * 2 - 1,
@@ -429,13 +411,13 @@ const LocalMode = () => {
             if (event.key === 'ArrowRight') {
                 paddleVelocityX = paddleSpeed;
             }
-            if (event.key === 'Z' || event.key === 'z') {
+            if (event.key === 'W' || event.key === 'w') {
                 paddleCpuVelocityY = paddleSpeed;
             }
             if (event.key === 'S' || event.key === 's') {
                 paddleCpuVelocityY = -paddleSpeed;
             }
-            if (event.key === 'Q' || event.key === 'q') {
+            if (event.key === 'A' || event.key === 'a') {
                 paddleCpuVelocityX = paddleSpeed;
             }
             if (event.key === 'D' || event.key === 'd') {
@@ -454,10 +436,10 @@ const LocalMode = () => {
             if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
                 paddleVelocityX = 0;
             }
-            if (event.key === 'Z' || event.key === 'z' || event.key === 'S' || event.key === 's') {
+            if (event.key === 'W' || event.key === 'w' || event.key === 'S' || event.key === 's') {
                 paddleCpuVelocityY = 0;
             }
-            if (event.key === 'Q' || event.key === 'q' || event.key === 'D' || event.key === 'd') {
+            if (event.key === 'A' || event.key === 'a' || event.key === 'D' || event.key === 'd') {
                 paddleCpuVelocityX = 0;
             }
         };
@@ -479,8 +461,7 @@ const LocalMode = () => {
             );
             CreateBall(position);
         };
-        
-        // Lighting setup
+
         const setupLighting = () => {
             const ambientLight = new THREE.AmbientLight(0xffffff, 2.1);
             scene.add(ambientLight);
@@ -496,22 +477,20 @@ const LocalMode = () => {
             directionalLight.position.set(5, 5, 5);
             scene.add(directionalLight);
         };
-        
-        // Window resize handler
+
         const handleResize = () => {
             const width = window.innerWidth;
             const height = window.innerHeight;
             
-            camera.aspect = width / height;
+            camera.aspect = width / (height * 0.5);
             camera.updateProjectionMatrix();
-            splitCamera.aspect = width / height;
+            splitCamera.aspect = width / (height * 0.5);
             splitCamera.updateProjectionMatrix();
             
             renderer.setSize(width, height);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         };
-        
-        // Animation loop
+
         const clock = new THREE.Clock();
         let oldElapsedTime = 0;
         
@@ -521,31 +500,21 @@ const LocalMode = () => {
             const deltaTime = elapsedTime - oldElapsedTime;
             oldElapsedTime = elapsedTime;
             
-            // Update CPU paddle position
-            // if (gameObjectsRef.current.length > 0 && paddleCPURef.current?.mesh) {
-            //     const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
-            //     paddleCPURef.current.mesh.position.x = ball.position.x;
-            //     paddleCPURef.current.mesh.position.y = ball.position.y;
-            //     paddleCPURef.current.mesh.position.z = -10;
-            // }
-            
             if (inGame) {
-                // Update paddle positions based on mouse
                 if (paddleRef.current?.mesh) {
-                    // add half of the window width to center the paddle
                     camera.position.set(
                         0,
                         6.8,
-                        13.2
+                        12.2
                     );
                     camera.lookAt(0, 0, 0);
 
                     splitCamera.position.set(
                         0,
                         6.8,
-                        -13.2
+                        -12.2
                     );
-                    // look at paddleCpu
+
                     splitCamera.lookAt(0, 0, 0);
                     
                     paddleVelocityX = lerp(paddleVelocityX, paddleVelocityX, smoothFactor);
@@ -553,26 +522,27 @@ const LocalMode = () => {
                     paddleCpuVelocityX = lerp(paddleCpuVelocityX, paddleCpuVelocityX, smoothFactor);
                     paddleCpuVelocityY = lerp(paddleCpuVelocityY, paddleCpuVelocityY, smoothFactor);
 
-                    // Update the paddle's position using the smoothed velocities
                     paddleRef.current.mesh.position.x += paddleVelocityX;
                     paddleRef.current.mesh.position.y += paddleVelocityY;
                     paddleCPURef.current.mesh.position.x += paddleCpuVelocityX;
                     paddleCPURef.current.mesh.position.y += paddleCpuVelocityY;
 
                     // // Ensure the paddle stays within bounds
-                    // if (paddleRef.current.mesh.position.x < tableBounds.min.x) {
-                    //     paddleRef.current.mesh.position.x = tableBounds.min.x;
-                    // } else if (paddleRef.current.mesh.position.x > tableBounds.max.x) {
-                    //     paddleRef.current.mesh.position.x = tableBounds.max.x;
-                    // }
+                    if (tableBoundsRef.current) {
+                        console.log(tableBoundsRef.current);
+                        if (paddleRef.current.mesh.position.x < tableBoundsRef.current.min.x) {
+                            paddleRef.current.mesh.position.x = tableBoundsRef.current.min.x;
+                        } else if (paddleRef.current.mesh.position.x > tableBoundsRef.current.max.x) {
+                            paddleRef.current.mesh.position.x = tableBoundsRef.current.max.x;
+                        }
 
-                    // if (paddleRef.current.mesh.position.y < tableBounds.min.y) {
-                    //     paddleRef.current.mesh.position.y = tableBounds.min.y;
-                    // } else if (paddleRef.current.mesh.position.y > tableBounds.max.y) {
-                    //     paddleRef.current.mesh.position.y = tableBounds.max.y;
-                    // }
+                        if (paddleRef.current.mesh.position.y < tableBoundsRef.current.min.y - 0.5) {
+                            paddleRef.current.mesh.position.y = tableBoundsRef.current.min.y - 0.5;
+                        } else if (paddleRef.current.mesh.position.y > tableBoundsRef.current.max.y + 3) {
+                            paddleRef.current.mesh.position.y = tableBoundsRef.current.max.y + 3;
+                        }
+                    }
 
-                    // Paddle rotation animation
                     if (paddleRef.current.mesh.position.x > 0) {
                         gsap.to(paddleRef.current.mesh.rotation, {
                             x: 2.81,
@@ -590,8 +560,7 @@ const LocalMode = () => {
                             ease: "power2.inOut",
                         });
                     }
-                    
-                    // CPU paddle rotation
+
                     if (paddleCPURef.current?.mesh.position.x > 0) {
                         gsap.to(paddleCPURef.current.mesh.rotation, {
                             x: -2.81,
@@ -610,25 +579,22 @@ const LocalMode = () => {
                         });
                     }
                 }
-                
-                // Physics and collision updates
+
                 simulatePhysics(deltaTime);
                 checkCollisions();
                 gameLogic();
-            } else {
-                camera.position.set(-10, 10, 15);
             }
             
             controls.update();
             renderer.setScissorTest(true);
-            // renderer.render(scene, camera);
-            renderer.setViewport(0, 0, window.innerWidth / 2, window.innerHeight);
-            renderer.setScissor(0, 0, window.innerWidth / 2, window.innerHeight);
+            renderer.setViewport(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
+            renderer.setScissor(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
             renderer.render(scene, splitCamera);
 
-            renderer.setViewport(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
-            renderer.setScissor(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
+            renderer.setViewport(0, 0, window.innerWidth, window.innerHeight / 2);
+            renderer.setScissor(0, 0, window.innerWidth, window.innerHeight / 2);
             renderer.render(scene, camera);
+
             requestAnimationFrame(animate);
             renderer.setScissorTest(false);
             if (gameObjectsRef.current.length > 0 && paddleRef.current?.mesh && paddleCPURef.current?.mesh && tableObject.mesh && netObject.mesh) {
@@ -645,28 +611,23 @@ const LocalMode = () => {
             
             }
         };
-        
-        // Initialize scene
+
         const init = () => {
             setupLighting();
             const { netObject, tableObject } = createTableAndNet();
             CreatePaddle();
-            
-            // Add event listeners
+
             window.addEventListener('mousemove', handleMouseMove);
             window.addEventListener('keydown', handleKeyDown);
             window.addEventListener('keyup', handleKeyUp);
             window.addEventListener('click', handleClick);
             window.addEventListener('resize', handleResize);
             
-            // Start animation loop
             animate();
         };
         
-        // Initialize the scene
         init();
 
-        // Cleanup function
         return () => {
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('keydown', handleKeyDown);
@@ -675,7 +636,6 @@ const LocalMode = () => {
             window.removeEventListener('resize', handleResize);
             inGame = false;
             
-            // Dispose of Three.js objects
             scene.traverse((object) => {
                 if (object instanceof THREE.Mesh) {
                     object.geometry.dispose();
@@ -687,9 +647,8 @@ const LocalMode = () => {
             renderer.dispose();
             if (controls) controls.dispose();
         };
-    }, []); // End of useEffect
-    
-    // Component render
+    }, []);
+
     return (
         <>
             <canvas ref={canvasRef} className="webgl" />

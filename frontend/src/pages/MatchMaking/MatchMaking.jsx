@@ -81,7 +81,7 @@ const MatchMaking = () => {
 
         console.log("Match found, navigating to game lobby");
         setTimeout(() => {
-          navigate(`/game-lobby/remote-play/${game_id}`);
+            navigate(`/game-lobby/remote-play/?game_id=${game_id}`);
         }, 5000);
       } else if (data.status === "searching") {
         console.log("Searching for a match...");
