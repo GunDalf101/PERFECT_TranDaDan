@@ -114,51 +114,40 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
         })
 
     async def disconnect(self, code):
-        # Remove the player from the matchmaking queue when disconnected
         if self in self.matchmaking_queue:
             self.matchmaking_queue.remove(self)
 
     async def receive_json(self, content):
-        # Handle incoming messages
         if content.get("type") == "find_match":
-            # Add player to the matchmaking queue
             self.matchmaking_queue.append(self)
 
-            # If there are at least two players, create a match
             if len(self.matchmaking_queue) >= 2:
                 player1 = self
-                player2 = self.matchmaking_queue.pop(0)  # Match with the first player in the queue
+                player2 = self.matchmaking_queue.pop(0)
 
-                # Create the match in the database
                 match = await sync_to_async(self.create_match)(player1, player2)
 
-                # Send match information including the usernames of the players
                 await player1.send_json({
                     "status": "matched",
                     "opponent": player2.scope['user'].username,
                     "game_id": match.id,
-                    "username": player1.scope['user'].username  # Include username
+                    "username": player1.scope['user'].username
                 })
                 await player2.send_json({
                     "status": "matched",
                     "opponent": player1.scope['user'].username,
                     "game_id": match.id,
-                    "username": player2.scope['user'].username  # Include username
+                    "username": player2.scope['user'].username
                 })
 
     def create_match(self, player1, player2):
         """Create a match between two players"""
-        # Ensure both players are authenticated and valid
         if not player1.scope.get('user') or not player2.scope.get('user'):
             raise ValueError("User data missing")
         
-        player1_user = player1.scope['user']  # Correctly get player1's user
-        player2_user = player2.scope['user']  # Correctly get player2's user
-        
-        # Print usernames for debugging
-        print(player1_user.username, player2_user.username)
+        player1_user = player1.scope['user']
+        player2_user = player2.scope['user']
 
-        # Create the match
         match = Match.objects.create(
             player1=player1_user,
             player2=player2_user,
