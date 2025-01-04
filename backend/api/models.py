@@ -70,7 +70,7 @@ class UserRelationship(models.Model):
     user_first_id = models.ForeignKey(User, related_name='user_first', on_delete=models.CASCADE)
     user_second_id = models.ForeignKey(User, related_name='user_second', on_delete=models.CASCADE)
 
-    type = models.IntegerField(unique=True)
+    type = models.IntegerField(unique=False)
 
     class Meta:
         unique_together = ('user_first_id', 'user_second_id')
