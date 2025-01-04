@@ -37,6 +37,7 @@ class FindMatch(APIView):
 
         player1, player2 = queue
         game = Match.objects.create(player1=player1.player, player2=player2.player, status='ongoing')
+        print(request.user)
 
         # player1.delete()
         # player2.delete()

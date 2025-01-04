@@ -30,13 +30,18 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     # 'django.contrib.sites',
     # 'django.contrib.flatpages',
     'background_task',
     'rest_framework',
-    'api'
+    'corsheaders',
+    'api',
+    'chat',
+    'games'
 ]
 
 MIDDLEWARE = [
@@ -145,7 +150,7 @@ docker run -d \
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mydb', 
+        'NAME': 'mydb',
         'USER': 'myuser',
         'PASSWORD': 'mypassword',
         'HOST': 'localhost',
@@ -182,16 +187,7 @@ CACHES = {
 }
 ##
 ### Les Parametres du gondalf
-
-
-INSTALLED_APPS += [
-    'daphne',
-    'channels',
-    'channels_redis',
-    'corsheaders',
-    'chat',
-    'games',
-]
+## unified installed apps.
 
 MIDDLEWARE += [
     'corsheaders.middleware.CorsMiddleware',
@@ -200,7 +196,7 @@ MIDDLEWARE += [
 CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173", 
+    "http://localhost:5173",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
