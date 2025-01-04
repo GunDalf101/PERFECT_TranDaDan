@@ -3,9 +3,6 @@ import { motion } from 'framer-motion';
 import './MatchMaking.css';
 import { Link, useNavigate } from 'react-router-dom';
 import getMyData from '../../api/authServiceMe';
-import axiosInstance from '../../api/axiosInstance';
-
-const API_URL = "/games"; // Replace with your API base URL
 
 const ProfileCard = ({ username, title, picture }) => (
   <div className="card bg-gray-900 p-6 rounded-lg text-center w-full max-w-xs flex flex-col items-center hover-glow">
@@ -32,12 +29,15 @@ const SearchingPlaceholder = () => (
 const MatchMaking = () => {
   const [opponent, setOpponent] = useState(null);
   const [isSearching, setIsSearching] = useState(true);
+  const [socket, setSocket] = useState(null);
   const [isDataReady, setIsDataReady] = useState(false);
+  const [username, setUsername] = useState('');
+  const navigate = useNavigate();
 
-  const userDataRef = useRef(null); // Store user data without causing re-renders
+  const userDataRef = useRef(null);
 
   const userData = {
-    username: userDataRef.current?.username || 'Loading...',
+    username: username || 'Loading...',
     title: 'Jedi Master',
     picture: 'https://randomuser.me',
   };
@@ -46,8 +46,9 @@ const MatchMaking = () => {
     try {
       const data = await getMyData();
       if (data) {
-        userDataRef.current = data; // Update the ref
-        setIsDataReady(true); // Signal that user data is ready
+        userDataRef.current = data;
+        setUsername(data.username);
+        setIsDataReady(true);
         console.log("Fetched user data:", userDataRef.current);
       }
     } catch (error) {
@@ -55,86 +56,56 @@ const MatchMaking = () => {
     }
   };
 
-  const navigate = useNavigate();
-
   useEffect(() => {
     fetchUserData();
   }, []);
 
-  const handleJoinQueue = async () => {
-    try {
-      await axiosInstance.post(`${API_URL}/matchmaking/join/`, { game_type: 'pong' });
-      setIsSearching(true);
-    } catch (error) {
-      console.error(error.response?.data?.message || "An error occurred");
-    }
-  };
-
-  const handleLeaveQueue = async () => {
-    try {
-      await axiosInstance.post(`${API_URL}/matchmaking/leave/`);
-      setIsSearching(false);
-    } catch (error) {
-      console.error(error.response?.data?.message || "An error occurred");
-    }
-  };
-
-  const handleFindMatch = async () => {
-    if (!isSearching) return;
-    try {
-      const response = await axiosInstance.get(`${API_URL}/matchmaking/find/`);
-      if (response.data.status === 'success') {
-        const { player1, player2, game_id } = response.data;
-        const currentUsername = userDataRef.current?.username;
-  
-        // Check if a match is found and assign opponent
-        if (player1 !== currentUsername && player2 !== currentUsername) {
-          // No match found yet
-          console.log('Waiting for match...');
-        } else {
-          console.log('Match found:');
-          setOpponent({
-            username: currentUsername === player1 ? player2 : player1,
-          });
-          setIsSearching(false);
-  
-          // Wait for 2 seconds before navigating to the lobby
-          setTimeout(() => {
-            navigate(`/game-lobby/remote-play/`);
-          }, 2650);
-        }
-      } else {
-        console.log(response.data.message);
-      }
-    } catch (error) {
-      console.error(error || "An error occurred");
-    }
-  };
-
   useEffect(() => {
-    const startMatchmaking = async () => {
-      // Wait until user data is loaded
-      if (!isDataReady) return;
+    if (!isDataReady || !username) return;
 
-      await handleJoinQueue();
+    const ws = new WebSocket(`ws://localhost:8000/ws/matchmaking/?username=${username}`);
 
-      const intervalId = setInterval(async () => {
-        await handleFindMatch();
-      }, 2000);
-
-      return () => {
-        clearInterval(intervalId);
-        handleLeaveQueue();
-      };
+    ws.onopen = () => {
+      console.log("WebSocket connected");
+      ws.send(JSON.stringify({ type: "find_match" }));
     };
 
-    startMatchmaking();
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log("Message received:", data);
 
-    // Cleanup function
+      if (data.status === "matched") {
+        const { opponent, game_id } = data;
+        setOpponent({ username: opponent });
+        setIsSearching(false);
+
+        console.log("Match found, navigating to game lobby");
+        setTimeout(() => {
+            navigate(`/game-lobby/remote-play/?game_id=${game_id}`);
+        }, 5000);
+      } else if (data.status === "searching") {
+        console.log("Searching for a match...");
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("WebSocket disconnected");
+    };
+
+    setSocket(ws);
+
     return () => {
-      handleLeaveQueue();
+      ws.close();
     };
-  }, [isDataReady]); // Ensure matchmaking starts only when data is ready
+  }, [isDataReady, username, navigate]);
+
+  const handleLeaveQueue = () => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      console.log("Leaving queue");
+      socket.send(JSON.stringify({ type: "cancel_match" }));
+      setIsSearching(false);
+    }
+  };
 
   return (
     <div className="match-container text-white flex relative z-0 items-center justify-center min-h-screen">
@@ -146,11 +117,7 @@ const MatchMaking = () => {
 
         {/* Right Side: Opponent Profile */}
         <div className="w-full md:w-1/2 bg-gradient-to-b from-gray-900 to-gray-800 p-6 flex flex-col items-center justify-center">
-          {isSearching ? (
-            <SearchingPlaceholder />
-          ) : (
-            <ProfileCard {...opponent} />
-          )}
+          {isSearching ? <SearchingPlaceholder /> : <ProfileCard {...opponent} />}
         </div>
       </div>
       <div className="absolute bottom-10 w-full flex justify-center">

@@ -20,6 +20,7 @@ class User(AbstractBaseUser):
         blank=True
     )
     avatar_url = models.CharField(max_length=255, blank=True, null=True)
+    channel_name = models.CharField(max_length=255, null=True, blank=True)
     email_token = models.CharField(max_length=32, blank=True, null=True)
     online = models.BooleanField(default=False)
     mfa_enabled = models.BooleanField(default=False)
@@ -39,7 +40,7 @@ class User(AbstractBaseUser):
     def __str__(self):
         fields = [f"{field.name}={getattr(self, field.name)}" for field in self._meta.fields]
         return ", ".join(fields)
-    
+
 class IntraConnection(models.Model):
     user = models.OneToOneField(
         'User',
@@ -67,20 +68,20 @@ class RelationshipType(Enum):
         return [(tag.name, tag.value) for tag in cls]
 
 class UserRelationship(models.Model):
-    user_first_id = models.ForeignKey(User, related_name='user_first', on_delete=models.CASCADE)
-    user_second_id = models.ForeignKey(User, related_name='user_second', on_delete=models.CASCADE)
-    
-    type = models.IntegerField(unique=True)
+    first_user = models.ForeignKey(User, related_name='user_first', on_delete=models.CASCADE)
+    second_user = models.ForeignKey(User, related_name='user_second', on_delete=models.CASCADE)
+
+    type = models.IntegerField(unique=False)
 
     class Meta:
-        unique_together = ('user_first_id', 'user_second_id')
-    
+        unique_together = ('first_user', 'second_user')
+
     def clean(self):
-        if self.user_first_id == self.user_second_id:
+        if self.first_user == self.second_user:
             raise ValueError("A user cannot be in a relationship with themselves.")
-        
-        if self.user_first_id.id > self.user_second_id.id:
-            self.user_first_id, self.user_second_id = self.user_second_id, self.user_first_id
+
+        if self.first_user.id > self.second_user.id:
+            self.first_user, self.second_user = self.second_user, self.first_user
             if self.type == RelationshipType.PENDING_FIRST_SECOND.value:
                 self.type = RelationshipType.PENDING_SECOND_FIRST.value
             elif self.type == RelationshipType.PENDING_SECOND_FIRST.value:
@@ -91,4 +92,4 @@ class UserRelationship(models.Model):
                 self.type = RelationshipType.BLOCK_FIRST_SECOND.value
 
     def __str__(self):
-        return f"Relationship between {self.user_first_id} and {self.user_second_id} is {self.get_type_display()}"
+        return f"Relationship between {self.first_user} and {self.second_user} is {self.get_type_display()}"

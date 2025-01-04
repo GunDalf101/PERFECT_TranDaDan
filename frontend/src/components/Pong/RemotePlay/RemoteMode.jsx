@@ -4,14 +4,16 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import GUI from 'lil-gui';
 import gsap from 'gsap';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 
 const RemoteMode = ({ roomName }) => {
     const [zPosition, setZPosition] = useState(null);
     const ws = useRef(null);
     const enemyPosition = useRef(null);
+    const location = useLocation();
 
     useEffect(() => {
-        const socket = new WebSocket(`ws://localhost:8000/ws/game/1/`);
+        const socket = new WebSocket(`ws://localhost:8000/ws/game/${location.search.split('=')[1]}/`);
         ws.current = socket;
 
         console.log(ws)

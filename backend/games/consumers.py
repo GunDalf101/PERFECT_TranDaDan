@@ -1,5 +1,10 @@
 import json
-from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.generic.websocket import AsyncWebsocketConsumer, AsyncJsonWebsocketConsumer
+from .models import MatchmakingQueue, Match
+from asgiref.sync import sync_to_async
+import asyncio
+import hashlib
+
 
 class PongConsumer(AsyncWebsocketConsumer):
     players = {}
@@ -78,57 +83,71 @@ class PongConsumer(AsyncWebsocketConsumer):
     async def game_update(self, event):
         await self.send(text_data=json.dumps(event["message"]))
 
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from django.contrib.auth import get_user_model
+from .models import Match
+from channels.db import sync_to_async
 
-class MatchmakingConsumer(AsyncWebsocketConsumer):
+class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
+    matchmaking_queue = []
+    player_to_user = {}
+
     async def connect(self):
-        # Player joins the matchmaking room
-        self.room_name = 'matchmaking_room'
-        self.room_group_name = 'matchmaking'
+        username = self.scope['query_string'].decode().split('=')[1]
 
-        # Join the matchmaking group
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
+        try:
+            user = await sync_to_async(get_user_model().objects.get)(username=username)
+        except get_user_model().DoesNotExist:
+            await self.close()
+            return
+        
+        self.scope['user'] = user
 
-        # Accept the WebSocket connection
         await self.accept()
 
-    async def disconnect(self, close_code):
-        # Leave the matchmaking group
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
+        await self.send_json({
+            "status": "searching",
+            "username": user.username
+        })
+
+    async def disconnect(self, code):
+        if self in self.matchmaking_queue:
+            self.matchmaking_queue.remove(self)
+
+    async def receive_json(self, content):
+        if content.get("type") == "find_match":
+            self.matchmaking_queue.append(self)
+
+            if len(self.matchmaking_queue) >= 2:
+                player1 = self
+                player2 = self.matchmaking_queue.pop(0)
+
+                match = await sync_to_async(self.create_match)(player1, player2)
+
+                await player1.send_json({
+                    "status": "matched",
+                    "opponent": player2.scope['user'].username,
+                    "game_id": match.id,
+                    "username": player1.scope['user'].username
+                })
+                await player2.send_json({
+                    "status": "matched",
+                    "opponent": player1.scope['user'].username,
+                    "game_id": match.id,
+                    "username": player2.scope['user'].username
+                })
+
+    def create_match(self, player1, player2):
+        """Create a match between two players"""
+        if not player1.scope.get('user') or not player2.scope.get('user'):
+            raise ValueError("User data missing")
+        
+        player1_user = player1.scope['user']
+        player2_user = player2.scope['user']
+
+        match = Match.objects.create(
+            player1=player1_user,
+            player2=player2_user,
+            status="ongoing"
         )
-
-    async def receive(self, text_data):
-        # Receive player data (can be used to send a specific message, username, etc.)
-        text_data_json = json.loads(text_data)
-        player_username = text_data_json['username']
-
-        # Logic for matchmaking (this could be moved to a database model for storing players waiting)
-        opponent_username = await self.find_opponent(player_username)
-
-        # Send opponent data to both players
-        if opponent_username:
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'send_opponent',
-                    'player_username': player_username,
-                    'opponent_username': opponent_username,
-                }
-            )
-
-    async def send_opponent(self, event):
-        # Send opponent info to both players
-        await self.send(text_data=json.dumps({
-            'player_username': event['player_username'],
-            'opponent_username': event['opponent_username'],
-        }))
-
-    async def find_opponent(self, player_username):
-        # Logic to find an opponent
-        # This could be a queue system in the database or a simple match based on who is online
-        # For now, returning a mock opponent
-        return "OpponentPlayer"
+        return match

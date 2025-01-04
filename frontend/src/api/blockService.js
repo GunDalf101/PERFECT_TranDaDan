@@ -3,7 +3,7 @@ import axiosInstance from './axiosInstance';
 
 const blockUser = async (username) => {
   try {
-    const response = await axiosInstance.post('/blockuser', {username});
+    const response = await axiosInstance.post('/api/blockuser', {username});
     return response.data;
   } catch (error) {
     console.error('Error block user request:', error);
@@ -13,7 +13,7 @@ const blockUser = async (username) => {
 
 const unblockUser = async (username) => {
   try {
-    const response = await axiosInstance.delete('/blockuser', {data : {username}});
+    const response = await axiosInstance.delete('/api/blockuser', {data : {username}});
     return response.data;
   } catch (error) {
     console.error('Error unblock user request:', error);
