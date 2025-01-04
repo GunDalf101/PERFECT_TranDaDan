@@ -47,7 +47,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/Intra/callback/" element={<IntraCallback />} />
-          <Route path="*" element={<Link to="/"/>}></Route>
+{/*           <Route path="*" element={<Link to="/"/>}></Route> */}
         </Routes>
       </BrowserRouter>
     </UserProvider>
