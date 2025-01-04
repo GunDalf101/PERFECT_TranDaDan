@@ -91,4 +91,4 @@ class UserRelationship(models.Model):
                 self.type = RelationshipType.BLOCK_FIRST_SECOND.value
 
     def __str__(self):
-        return f"Relationship between {self.user_first_id} and {self.user_second_id} is {self.get_type_display()}"
+        return f"Relationship between"
