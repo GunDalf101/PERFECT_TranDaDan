@@ -39,7 +39,7 @@ class User(AbstractBaseUser):
     def __str__(self):
         fields = [f"{field.name}={getattr(self, field.name)}" for field in self._meta.fields]
         return ", ".join(fields)
-    
+
 class IntraConnection(models.Model):
     user = models.OneToOneField(
         'User',
@@ -69,16 +69,16 @@ class RelationshipType(Enum):
 class UserRelationship(models.Model):
     user_first_id = models.ForeignKey(User, related_name='user_first', on_delete=models.CASCADE)
     user_second_id = models.ForeignKey(User, related_name='user_second', on_delete=models.CASCADE)
-    
+
     type = models.IntegerField(unique=True)
 
     class Meta:
         unique_together = ('user_first_id', 'user_second_id')
-    
+
     def clean(self):
         if self.user_first_id == self.user_second_id:
             raise ValueError("A user cannot be in a relationship with themselves.")
-        
+
         if self.user_first_id.id > self.user_second_id.id:
             self.user_first_id, self.user_second_id = self.user_second_id, self.user_first_id
             if self.type == RelationshipType.PENDING_FIRST_SECOND.value:

@@ -1,9 +1,7 @@
 
-
-docker stop postgres-db
-docker rm -f postgres-db
 docker pull postgres:latest
 
+docker container stop postgres-db
 docker container rm postgres-db
 docker run -d \
   --name postgres-db \
@@ -15,24 +13,20 @@ docker run -d \
 
 docker pull redis:latest
 
+docker container stop redis-db
 docker container rm redis-db
 docker run -d \
   --name redis-db \
   -p 6379:6379 \
   redis:latest
 
-# sleep 10
+rm db.sqlite3
+
 python manage.py makemigrations
 python manage.py migrate
 
-# export DJANGO_SETTINGS_MODULE=transcendence.settings
-
-
-# daphne transcendence.asgi:application --port 8888
-
-
 echo "!!!!! Run in another terminal: 'python manage.py process_tasks' to receive emails. !!!!!"
-
+export DJANGO_SETTINGS_MODULE=transcendence.settings
 python manage.py runserver 8000
 
 
