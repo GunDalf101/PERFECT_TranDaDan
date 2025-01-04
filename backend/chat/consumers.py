@@ -90,11 +90,11 @@ class DirectMessageConsumer(AsyncWebsocketConsumer):
 
     # Helper method to get or create the conversation between two users
     @database_sync_to_async
-    def get_or_create_conversation(self, user_1, user_2):
+    def get_or_create_conversation(self, first_user, second_user):
         # Create or get the conversation between two users
         conversation, created = Conversation.objects.get_or_create(
-            user_1=user_1,
-            user_2=user_2
+            first_user=first_user,
+            second_user=second_user
         )
         return conversation
 

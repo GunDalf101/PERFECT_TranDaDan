@@ -5,32 +5,32 @@ from django.dispatch import receiver
 from api.models import User, UserRelationship, RelationshipType
 
 class Conversation(models.Model):
-    user_1 = models.ForeignKey(User, related_name='conversations_user_1', on_delete=models.CASCADE)
-    user_2 = models.ForeignKey(User, related_name='conversations_user_2', on_delete=models.CASCADE)
+    first_user = models.ForeignKey(User, related_name='first_user_conversations', on_delete=models.CASCADE)
+    second_user = models.ForeignKey(User, related_name='second_user_conversations', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Conversation between {self.user_1.username} and {self.user_2.username}"
+        return f"Conversation between {self.first_user.username} and {self.second_user.username}"
 
     class Meta:
-        unique_together = ['user_1', 'user_2']
+        unique_together = ['first_user', 'second_user']
 
     def clean(self):
-        if self.user_1.id > self.user_2.id:
-            self.user_1, self.user_2 = self.user_2, self.user_1
+        if self.first_user.id > self.second_user.id:
+            self.first_user, self.second_user = self.second_user, self.first_user
 
     @staticmethod
-    def are_users_friends(user_1, user_2):
+    def are_users_friends(first_user, second_user):
         relationship = UserRelationship.objects.filter(
-            Q(first_user=user_1, second_user=user_2, type=RelationshipType.FRIENDS.value) |
-            Q(first_user=user_2, second_user=user_1, type=RelationshipType.FRIENDS.value)
+            Q(first_user=first_user, second_user=second_user, type=RelationshipType.FRIENDS.value) |
+            Q(first_user=second_user, second_user=first_user, type=RelationshipType.FRIENDS.value)
         ).exists()
 
         return relationship
 
 @receiver(pre_save, sender=Conversation)
 def check_users_are_friends(sender, instance, **kwargs):
-    if not instance.are_users_friends(instance.user_1, instance.user_2):
+    if not instance.are_users_friends(instance.first_user, instance.second_user):
         raise Exception("The users must be friends to start a conversation.")
 
 class Message(models.Model):
@@ -47,7 +47,7 @@ class Message(models.Model):
 
     @staticmethod
     def is_sender_friends_with_recipient(sender, conversation):
-        return Conversation.are_users_friends(sender, conversation.user_1) or Conversation.are_users_friends(sender, conversation.user_2)
+        return Conversation.are_users_friends(sender, conversation.first_user) or Conversation.are_users_friends(sender, conversation.second_user)
 
 
 @receiver(pre_save, sender=Message)

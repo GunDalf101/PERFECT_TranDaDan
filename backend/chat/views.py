@@ -27,15 +27,15 @@ class ChatView(APIView):
             return Response({"error": "You cannot chat with yourself."}, status=status.HTTP_400_BAD_REQUEST)
 
         conversation = Conversation.objects.filter(
-            Q(user_1=request.user, user_2=recipient) |
-            Q(user_1=recipient, user_2=request.user)
+            Q(first_user=request.user, second_user=recipient) |
+            Q(first_user=recipient, second_user=request.user)
         ).first()
 
         if not conversation:
             try:
                 Conversation.objects.create(
-                    user_1=request.user,
-                    user_2=recipient
+                    first_user=request.user,
+                    second_user=recipient
                 )
             except Exception as e:
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
