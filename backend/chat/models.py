@@ -22,8 +22,8 @@ class Conversation(models.Model):
     @staticmethod
     def are_users_friends(user_1, user_2):
         relationship = UserRelationship.objects.filter(
-            Q(user_first_id=user_1, user_second_id=user_2, type=RelationshipType.FRIENDS.value) |
-            Q(user_first_id=user_2, user_second_id=user_1, type=RelationshipType.FRIENDS.value)
+            Q(first_user=user_1, second_user=user_2, type=RelationshipType.FRIENDS.value) |
+            Q(first_user=user_2, second_user=user_1, type=RelationshipType.FRIENDS.value)
         ).exists()
 
         return relationship

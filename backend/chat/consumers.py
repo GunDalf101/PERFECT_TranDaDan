@@ -78,8 +78,8 @@ class DirectMessageConsumer(AsyncWebsocketConsumer):
         # Check if the user is friends with the target user
         try:
             relationship = UserRelationship.objects.get(
-                (models.Q(user_first_id=user) & models.Q(user_second_id=target_user)) |
-                (models.Q(user_first_id=target_user) & models.Q(user_second_id=user))
+                (models.Q(first_user=user) & models.Q(second_user=target_user)) |
+                (models.Q(first_user=target_user) & models.Q(second_user=user))
             )
             # Check if the relationship is FRIENDS
             if relationship.type == RelationshipType.FRIENDS.value:

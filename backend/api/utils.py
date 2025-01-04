@@ -58,7 +58,7 @@ def createRelativeRelation(uid, relationship):
     if relationship.type == RelationshipType.BLOCK_BOTH.value:
         return RelativeRelationshipType.BLOCK_BOTH.value
 
-    you_first = (relationship.user_first_id == uid)
+    you_first = (relationship.first_user == uid)
 
     if (you_first):
         if (relationship.type == RelationshipType.PENDING_FIRST_SECOND.value):
