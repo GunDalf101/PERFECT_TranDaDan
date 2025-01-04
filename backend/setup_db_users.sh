@@ -1,0 +1,1 @@
+docker exec -i postgres-db bash

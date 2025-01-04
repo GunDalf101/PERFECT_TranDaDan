@@ -3,9 +3,9 @@ import { useParams } from "react-router-dom";
 import Navbar from "../../components/Navbar/Logged";
 import NotFound from "../NotFound/NotFound";
 import getUserData from "../../api/authServiceUser";
-import { sendFriendReq, cancelFriendReq, acceptFriendReq} from "../../api/friendService";
+import getMyData from "../../api/authServiceMe"
+import { sendFriendReq, cancelFriendReq, acceptFriendReq, unfriendReq} from "../../api/friendService";
 import { blockUser, unblockUser } from "../../api/blockService";
-// import { blockUser, unblockUser } from "../../api/blockService"; // Assuming you have a service for blocking/unblocking users
 
 function isBlocked(r)
 {
@@ -25,8 +25,11 @@ const User = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        const mydata = await getMyData()
         const data = await getUserData(username);
         setuserdata(data);
+        if(mydata.id == data.id)
+            window.location.href = "/profile"
       } catch (error) {
         console.error("Error fetching user data:", error);
         setError(true);
@@ -41,47 +44,56 @@ const User = () => {
     try {
       await sendFriendReq(username);
       setIsAddHovering(false);
-      setReload(!reload); // Trigger the useEffect to refetch user data
     } catch (error) {
       console.error("Error sending friend request:", error);
     }
+    setReload(!reload); // Trigger the useEffect to refetch user data
   };
 
   const handleCancelReq = async () => {
     try {
         await cancelFriendReq(username);
         setIsAddHovering(false);
-        setReload(!reload); // Trigger the useEffect to refetch user data
-    } catch (error) {
-      console.error("Error sending friend request:", error);
-    }
+      } catch (error) {
+        console.error("Error sending friend request:", error);
+      }
+      setReload(!reload); // Trigger the useEffect to refetch user data
+  };
+
+  const handleUnfriend = async () => {
+    try {
+        await unfriendReq(username);
+        setIsAddHovering(false);
+      } catch (error) {
+        console.error("Error sending friend request:", error);
+      }
+      setReload(!reload); // Trigger the useEffect to refetch user data
   };
 
   const handleAcceptRequest = async () => {
     try {
-      acceptFriendReq(username)
+      await acceptFriendReq(username)
       console.log("Friend request accepted");
-      setReload(!reload);
     } catch (error) {
       console.error("Error accepting friend request:", error);
     }
+    setReload(!reload);
   };
 
   const handleBlockUser = async () => {
     try {
       console.log(userdata.relationship)
-      if (isBlocked(userdata.relationship))
+      if (userdata.relationship == 4)
         await unblockUser(username);
       else
       {
         await blockUser(username);
         window.location.href = '/'
       }
-      console.log(reload)
-      setReload(!reload);
     } catch (error) {
       console.error("Error sending friend request:", error);
     }
+    setReload(!reload);
   };
 
   if (error) return <NotFound />;
@@ -95,6 +107,13 @@ const User = () => {
     { id: 5, opponent: "Player3", result: "Win", score: "3-0" },
   ];
 
+  const friends = [
+    { id: 1, username: "Friend1", avatar: "https://via.placeholder.com/40?text=F1" },
+    { id: 2, username: "Friend2", avatar: "https://via.placeholder.com/40?text=F2" },
+    { id: 3, username: "Friend3", avatar: "https://via.placeholder.com/40?text=F3" },
+    { id: 4, username: "Friend4", avatar: "https://via.placeholder.com/40?text=F4" },
+  ];
+
   const statistics = {
     totalMatches: 10,
     wins: 7,
@@ -102,89 +121,117 @@ const User = () => {
     winRate: "70%",
   };
 
-  return (
+  return(
     <div className="flex flex-col items-center min-h-screen bg-cover bg-center bg-[url('/retro_1.jpeg')] from-darkBackground via-purpleGlow to-neonBlue text-white font-retro">
       <Navbar />
-      {/* Profile Card */}
-      <div className="w-11/12 h-fit m-4 mt-20 p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
-        <div className="flex flex-col items-center">
-          <img
-            src="https://media.licdn.com/dms/image/v2/D4E03AQHoy7si-hZGzQ/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1723469726527?e=1740614400&v=beta&t=yUwzZJlP32P8gwYyIVh4vivqMCCeIiJw5xpYa0IYjDU"
-            alt="Profile"
-            className="w-36 h-36 rounded-full border-4 border-white shadow-[0_0_20px_5px] shadow-neonPink mb-4"
-          />
-          <h2 className="text-3xl text-center text-neonPink">username</h2>
-          {/* Display Username */}
-          <p className="text-center text-3xl text-gray-200 mt-4" style={{ textShadow: "1px 1px 5px rgb(0, 0, 0)" }}>
-            {userdata.username}
-          </p>
-          {/* Display Email */}
-          <p className="text-center text-neonBlue mt-2 text-xl">{userdata.email}</p>
-          {/* Friend Request Button */}
-          {userdata.relationship == 2 ? (
+
+      <div className="flex flex-wrap m-10 justify-between w-11/12 gap-4 mt-20">
+        {/* User Box */}
+        <div className="flex-1 min-w-[300px] h-[460px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
+          {/* Profile Image */}
+          <div className="flex flex-col items-center">
+            <img
+              src="https://media.licdn.com/dms/image/v2/D4E03AQHoy7si-hZGzQ/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1723469726527?e=1740614400&v=beta&t=yUwzZJlP32P8gwYyIVh4vivqMCCeIiJw5xpYa0IYjDU"
+              alt="Profile"
+              className="w-36 h-36 rounded-full border-4 border-white shadow-[0_0_20px_5px] shadow-neonPink mb-4"
+            />
+            <h2 className="text-3xl text-center text-neonPink">username</h2>
+            <p
+              className="text-center text-3xl text-gray-200 mt-4"
+              style={{ textShadow: "1px 1px 5px rgb(0, 0, 0)" }}
+            >
+              {userdata.username}
+            </p>
+            <p className="text-center text-neonBlue mt-2 text-xl">
+              {userdata.email}
+            </p>
+
+            {/* Friend Request Button */}
+           { userdata.relationship == 3 ? (
             <button
-              onClick={handleAcceptRequest}
-              className="mt-4 px-6 py-2 bg-neonBlue text-black font-bold rounded-lg shadow-[0_0_10px_2px] shadow-neonBlue hover:bg-neonPink hover:text-white transition-all"
-            >
-              Accept Request
-            </button>
-            ) : userdata.relationship == 0 ? (
-              // Add Friend Button
-              <button
-                onClick={handleAddFriend}
-                onMouseEnter={() => setIsAddHovering(true)}
-                onMouseLeave={() => setIsAddHovering(false)}
-                className="mt-4 px-6 py-2 rounded-lg text-xl font-bold transition-all duration-300 bg-neonBlue text-black hover:bg-neonPink hover:text-white"
-              >
-                Add Friend
-              </button>
-            ) : userdata.relationship == 1 ? (
-              // Cancel Request Button
-              <button
-                onClick={handleCancelReq} // Assuming the same handler cancels the request
-                onMouseEnter={() => setIsAddHovering(true)}
-                onMouseLeave={() => setIsAddHovering(false)}
-                className="mt-4 px-6 py-2 rounded-lg text-xl font-bold transition-all duration-300 hover:bg-red-600 text-white bg-gray-500"
-              >
-                {isAddHovering ? "Cancel Request" : "Request sent"}
-              </button>
-            ) : null}
-            {/* <button
-              onClick={handleAddFriend}
-              onMouseEnter={() => {
-                setIsAddHovering(true);
-              }}
+              onClick={handleUnfriend} // Assuming this handler unfriends the user
+              onMouseEnter={() => setIsAddHovering(true)}
               onMouseLeave={() => setIsAddHovering(false)}
-              className={`mt-4 px-6 py-2 rounded-lg text-xl font-bold transition-all duration-300 ${
-                userdata.relationship == 0
-                  ? "bg-neonBlue text-black hover:bg-neonPink hover:text-white"
-                  : isAddHovering
-                  ? "bg-neonBlue text-black hover:bg-red-600 hover:text-white"
-                  : "bg-gray-500 text-white"
-              }`}
+              className="mt-4 px-6 py-2 rounded-lg text-green-500 text-xl font-bold transition-all duration-300 bg-transparent border-green-500 border-2 hover:bg-red-600 hover:text-white hover:border-none"
             >
-              {isAddHovering ? "Cancel Request" : "Add Friend"}
-            </button> */}
-          {/* Block Button */}
-          <button
-            onClick={handleBlockUser}
-            onMouseEnter={() => setIsBlockHovering(true)}
-            onMouseLeave={() => setIsBlockHovering(false)}
-            className={`mt-4 px-6 py-2 rounded-lg text-xl font-bold transition-all duration-300 ${
-              !isBlockHovering
-                ? "bg-red-600 text-white hover:bg-gray-800"
-                : "bg-gray-500 text-white"
-            }`}
-          >
-            {isBlocked(userdata.relationship) && isBlockHovering
-              ? "Unblock"
-              : isBlocked(userdata.relationship)
-              ? "Blocked"
-              : "Block"}
-          </button>
+              {isAddHovering ? "Unfriend" : "Friends"}
+            </button>
+            ) :
+           userdata.relationship == 2 ? (
+             <button
+               onClick={handleAcceptRequest}
+               className="mt-4 px-6 py-2 bg-neonBlue text-black font-bold rounded-lg shadow-[0_0_10px_2px] shadow-neonBlue hover:bg-neonPink hover:text-white transition-all"
+             >
+               Accept Request
+             </button>
+             ) : userdata.relationship == 0 ? (
+               // Add Friend Button
+               <button
+                 onClick={handleAddFriend}
+                 onMouseEnter={() => setIsAddHovering(true)}
+                 onMouseLeave={() => setIsAddHovering(false)}
+                 className="items-center mt-4 px-6 py-2 rounded-lg text-xl font-bold transition-all duration-300 bg-neonBlue text-black hover:bg-neonPink hover:text-white flex"
+               >
+                 Add Friend
+               </button>
+             ) : userdata.relationship == 1 ? (
+               // Cancel Request Button
+               <button
+                 onClick={handleCancelReq} // Assuming the same handler cancels the request
+                 onMouseEnter={() => setIsAddHovering(true)}
+                 onMouseLeave={() => setIsAddHovering(false)}
+                 className="mt-4 px-6 py-2 rounded-lg text-xl font-bold transition-all duration-300 hover:bg-red-600 text-white bg-gray-500"
+               >
+                 {isAddHovering ? "Cancel Request" : "Request sent"}
+               </button>
+             ) : null}
+
+           {/* Block Button */}
+           <button
+             onClick={handleBlockUser}
+             onMouseEnter={() => setIsBlockHovering(true)}
+             onMouseLeave={() => setIsBlockHovering(false)}
+             className={`mt-4 px-6 py-2 rounded-lg text-xl font-bold transition-all duration-300 ${
+               !isBlockHovering
+                 ? "bg-red-600 text-white hover:bg-gray-800"
+                 : "bg-gray-500 text-white"
+             }`}
+           >
+             {userdata.relationship == 4 && isBlockHovering
+               ? "Unblock"
+               : userdata.relationship == 4
+               ? "Blocked"
+               : "Block"}
+           </button>
+          </div>
+        </div>
+
+        {/* Friends Box */}
+        <div className="flex-1 min-w-[300px] h-[460px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink overflow-y-auto">
+          <h2 className="text-2xl text-center text-neonPink mb-4">Friends</h2>
+          {userdata.friends && userdata.friends.length > 0 ? (
+            <ul className="space-y-4">
+              {userdata.friends.map((friend) => (
+                <li
+                  key={friend.id}
+                  className="flex items-center gap-4 bg-gray-800 p-3 rounded-lg border border-gray-600 shadow-md hover:shadow-lg transition-shadow duration-300"
+                >
+                  <img
+                    src={friend.avatar}
+                    alt={`${friend.username}'s avatar`}
+                    className="w-12 h-12 rounded-full border-2 border-white"
+                  />
+                  <p className="text-lg text-white font-medium">{friend.username}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-center text-gray-400">No friends to display.</p>
+          )}
         </div>
       </div>
 
+      {/* Match History and Statistics Section */}
       <div className="flex flex-wrap justify-between w-11/12 gap-4">
         {/* Match History Card */}
         <div className="flex-1 min-w-[300px] h-fit p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">

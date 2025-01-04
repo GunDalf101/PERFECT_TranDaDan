@@ -13,7 +13,7 @@ import jwt
 from django.urls import reverse
 from django.utils import timezone
 from django.conf import settings
-from .utils import unset_cookie_header, get_free_username, reset_password_for_user, find_user_id_by_reset_token, minuser, maxuser, createRelativeRelation
+from .utils import unset_cookie_header, get_free_username, reset_password_for_user, find_user_id_by_reset_token, minuser, maxuser, createRelativeRelation, RelativeRelationshipType
 from .serializers import RegisterSerializer, LoginSerializer, RequestResetPasswordSerializer, ResetPasswordSerializer
 from .tasks import send_registration_email
 from .models import IntraConnection
@@ -316,6 +316,22 @@ class UsersMeTestView(UnprotectedView):
 
         return Response(user_data, status=status.HTTP_200_OK)
 
+def getFriendList(user_id):
+    friendList = []
+    relations = UserRelationship.objects.filter(
+        Q(user_first_id=user_id, type=RelativeRelationshipType.FRIENDS.value) | 
+        Q(user_second_id=user_id, type=RelativeRelationshipType.FRIENDS.value)
+    )
+
+    for relation in relations:
+        friend = relation.user_second_id if user_id == relation.user_first_id.id else relation.user_first_id
+        friendList.append({
+            'id': friend.id,
+            'username': friend.username,
+            'avatar': 'https://via.placeholder.com/40'
+        })
+    return friendList
+
 class UserView(APIView):
 
     def get(self, request, username):
@@ -324,10 +340,7 @@ class UserView(APIView):
         except User.DoesNotExist:
             return Response({"error": "User not found."}, status=404)
         current_user = request.user
-
-        if current_user == target_user:
-            return Response({"detail": "You cannot send a friend request to yourself."}, status=status.HTTP_400_BAD_REQUEST)
-
+        
         relationship = UserRelationship.objects.filter(
             Q(first_user=current_user, second_user=target_user) |
             Q(first_user=target_user, second_user=current_user)
@@ -337,12 +350,15 @@ class UserView(APIView):
 
         if relationship:
             relationship_n = createRelativeRelation(current_user, relationship)
-
+        
+        if relationship_n == RelativeRelationshipType.HE_BLOCK.value:
+            return Response({"error": "User not found."}, status=404)
         user_data = {
             'id': target_user.id,
             'username': target_user.username,
             'email': target_user.intra_connection.email if not target_user.email else target_user.email,
-            'relationship': relationship_n
+            'relationship': relationship_n,
+            'friends': getFriendList(target_user.id)
         }
 
         return Response(user_data, status=status.HTTP_200_OK)
@@ -462,7 +478,11 @@ class BlockUser(APIView):
         ).first()
 
         if relationship:
-            if relationship.first_user == current_user:
+            if createRelativeRelation(current_user, relationship) == RelativeRelationshipType.HE_BLOCK.value: #this section used for: if a user has been blocked by another user he can't block him too.
+                return Response({"error": "User not found."}, status=404)
+
+        if relationship:
+            if relationship.user_first_id == current_user:
                 if relationship.type in [RelationshipType.BLOCK_BOTH.value, RelationshipType.BLOCK_FIRST_SECOND.value]:
                     return Response({"detail": "Already blocked that user."}, status=status.HTTP_400_BAD_REQUEST)
                 if relationship.type == RelationshipType.BLOCK_SECOND_FIRST.value:
@@ -539,7 +559,7 @@ class BlockUser(APIView):
 
 class UnfriendView(APIView):
 
-    def delete(self, request, username):
+    def delete(self, request):
         username = request.data.get('username')
         if not username or not isinstance(username, str):
             return Response({"detail": "Username is required."}, status=status.HTTP_400_BAD_REQUEST)
