@@ -5,12 +5,12 @@ import { useUser } from "../../../components/auth/UserContext";
 
 
 const ProfileDropdown = React.forwardRef(({isVisible}, ref) => {
-  const { logout } = useUser(); // Access the logout function from the UserContext
-  const navigate = useNavigate(); // Access navigate for redirecting
+  const { logout } = useUser();
+  const navigate = useNavigate(); 
 
   const handleLogout = () => {
-    logout(); // Call the logout function from UserContext
-    navigate("/"); // Redirect the user to the login page (or home page)
+    logout();
+    navigate("/"); 
   };
 
   return (

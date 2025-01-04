@@ -1,24 +1,24 @@
-import { useState } from "react";
-import { Route, BrowserRouter, Routes, Navigate, Link } from "react-router-dom";
-import Homepage from "./pages/Homepage/Homepage";
-import MainLayout from "./layouts/MainLayout";
-import Login from "./pages/Login/Login";
-import Register from "./pages/Register/Register";
-import GameMode from "./layouts/GameMode/GameMode";
-import GameChoice from "./pages/GameChoice/GameChoice";
-import MatchMaking from "./pages/MatchMaking/MatchMaking";
-import CpuMode from "./components/Pong/CpuMode/CpuMode";
-import LocalMode from "./components/Pong/LocalMode/LocalMode";
-import Profile from "./pages/Profile/Profile";
-import RemoteMode from "./components/Pong/RemotePlay/RemoteMode";
-import IntraCallback from "./components/auth/IntraCallback";
-import ChatApp from "./pages/Chatpage/Chatpage";
-import { ToastContainer } from "react-toastify";
+import { useState } from 'react'
+import { Route, BrowserRouter, Routes, Navigate } from 'react-router-dom'
+import Homepage from './pages/Homepage/Homepage'
+import MainLayout from './layouts/MainLayout'
+import Login from './pages/Login/Login'
+import Register from './pages/Register/Register'
+import GameMode from './layouts/GameMode/GameMode'
+import GameChoice from './pages/GameChoice/GameChoice'
+import MatchMaking from './pages/MatchMaking/MatchMaking'
+import CpuMode from './components/Pong/CpuMode/CpuMode'
+import LocalMode from './components/Pong/LocalMode/LocalMode'
+import Profile from './pages/Profile/Profile'
+import RemoteMode from './components/Pong/RemotePlay/RemoteMode'
+import IntraCallback from './components/auth/IntraCallback'
+import ChatApp from './pages/Chatpage/Chatpage'
+import { ToastContainer } from 'react-toastify'
 
-import User from "./pages/User/User";
-import EditProfile from "./pages/EditProfile/EditProfile";
-import { Edit } from "lucide-react";
-import  {UserProvider }  from "./components/auth/UserContext"; // Import UserProvider
+import User from "./pages/User/User"
+import EditProfile from "./pages/EditProfile/EditProfile"
+// import { Edit } from "lucide-react";
+import  {UserProvider }  from "./components/auth/UserContext" 
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 
 

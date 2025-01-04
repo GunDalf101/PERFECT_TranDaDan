@@ -1,4 +1,4 @@
-import React, {useContext} from 'react'
+import React from 'react'
 import Logged from '../components/Navbar/Logged'
 import NotLogged from '../components/Navbar/NotLogged'
 import { Outlet } from 'react-router-dom'
