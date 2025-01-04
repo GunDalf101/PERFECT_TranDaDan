@@ -5,6 +5,9 @@ class PongConsumer(AsyncWebsocketConsumer):
     players = {}
 
     async def connect(self):
+        self.user = self.scope['user']
+        if not self.user:
+            await self.close()
         self.game_id = self.scope['url_route']['kwargs']['game_id']
         self.room_name = f"game_{self.game_id}"
         
