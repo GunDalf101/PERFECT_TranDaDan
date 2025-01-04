@@ -1,7 +1,18 @@
 import React from "react";
 import styles from "./SubNav.module.scss";
+import { useNavigate } from "react-router-dom";
+import { useUser } from "../../../components/auth/UserContext"; 
+
 
 const ProfileDropdown = React.forwardRef(({isVisible}, ref) => {
+  const { logout } = useUser(); // Access the logout function from the UserContext
+  const navigate = useNavigate(); // Access navigate for redirecting
+
+  const handleLogout = () => {
+    logout(); // Call the logout function from UserContext
+    navigate("/"); // Redirect the user to the login page (or home page)
+  };
+
   return (
     <div
       id="profileDropdown"
@@ -40,6 +51,7 @@ const ProfileDropdown = React.forwardRef(({isVisible}, ref) => {
       </a>
       <a
         href="#"
+        onClick={handleLogout} // Call handleLogout when clicked
         className="block px-4 py-2 hover:bg-pink-500 hover:text-gray-900"
       >
         Sign Out

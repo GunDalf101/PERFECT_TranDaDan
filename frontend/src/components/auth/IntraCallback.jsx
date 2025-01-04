@@ -2,9 +2,15 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 // import axiosInstance from '../../api/axiosInstance';
 import { getUserData } from "../../api/authService42Intra";
+import { useUser } from '../../components/auth/UserContext'
+
 
 const IntraCallback = () => {
 
+  const { login } = useUser();
+  const navigate = useNavigate();
+
+  
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
     const accessToken = queryParams.get("accessToken");
@@ -20,7 +26,8 @@ const IntraCallback = () => {
         const data = await getUserData();
         const userJSON = JSON.stringify(data);
         localStorage.setItem("user", userJSON);
-        window.location.href = "/";
+        login(data);
+        navigate('/'); 
       } catch (error) {
         console.error("Error:", error);
       }

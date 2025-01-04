@@ -29,9 +29,9 @@ const UserList = ({ users, selectedChat, setSelectedChat }) => {
             transition duration-300 
             md:text-sm lg:text-base"
         />
-        <button className="absolute pl-2 right-3 top-1/2 transform -translate-y-1/2 text-blue-300 hover:text-blue-500 transition duration-300">
+        {/* <button className="absolute pl-2 right-3 top-1/2 transform -translate-y-1/2 text-blue-300 hover:text-blue-500 transition duration-300">
           <i className="material-icons-outlined text-3xl md:text-3xl">search</i>
-        </button>
+        </button> */}
       </div>
       <div
         className={`${styles.ulist} transition-all duration-300 ease-in-out rounded-md`}
