@@ -25,12 +25,6 @@
 python3 manage.py makemigrations
 python3 manage.py migrate
 
-# export DJANGO_SETTINGS_MODULE=transcendence.settings
-
-
-# daphne transcendence.asgi:application --port 8888
-
-
 echo "!!!!! Run in another terminal: 'python manage.py process_tasks' to receive emails. !!!!!"
 
 python3 manage.py runserver 8000
