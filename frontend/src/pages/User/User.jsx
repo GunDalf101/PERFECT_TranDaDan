@@ -130,11 +130,20 @@ const User = () => {
         <div className="flex-1 min-w-[300px] h-[460px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
           {/* Profile Image */}
           <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center relative">
             <img
               src="https://media.licdn.com/dms/image/v2/D4E03AQHoy7si-hZGzQ/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1723469726527?e=1740614400&v=beta&t=yUwzZJlP32P8gwYyIVh4vivqMCCeIiJw5xpYa0IYjDU"
               alt="Profile"
               className="w-36 h-36 rounded-full border-4 border-white shadow-[0_0_20px_5px] shadow-neonPink mb-4"
             />
+            {/* Status Dot */}
+            <div
+              className={`absolute top-1 right-1 w-4 h-4 rounded-full border-2 ${
+                userdata.isOnline ? "bg-green-500" : "bg-gray-500"
+              }`}
+              title={userdata.isOnline ? "Online" : "Offline"} // Tooltip for accessibility
+            ></div>
+          </div>
             <h2 className="text-3xl text-center text-neonPink">username</h2>
             <p
               className="text-center text-3xl text-gray-200 mt-4"
@@ -221,7 +230,7 @@ const User = () => {
                     alt={`${friend.username}'s avatar`}
                     className="w-12 h-12 rounded-full border-2 border-white"
                   />
-                  <p className="text-lg text-white font-medium">{friend.username}</p>
+                  <a href={friend.username}><p className="text-lg text-white font-medium">{friend.username}</p></a>
                 </li>
               ))}
             </ul>
