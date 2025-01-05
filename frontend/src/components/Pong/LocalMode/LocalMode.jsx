@@ -130,7 +130,6 @@ const LocalMode = () => {
 
                 scene.add(model);
 
-                // Create CPU paddle
                 paddleCPURef.current = new GameObject(model.clone());
                 paddleCPURef.current.mesh.position.z = -10;
                 scene.add(paddleCPURef.current.mesh);
@@ -140,9 +139,7 @@ const LocalMode = () => {
         let tableObject;
         let netObject;
 
-        // Create table and net
         const createTableAndNet = () => {
-            // Net
             const net = new THREE.Mesh(
                 new THREE.BoxGeometry(1, 1, 1),
                 new THREE.MeshStandardMaterial({
@@ -161,7 +158,6 @@ const LocalMode = () => {
 
             scene.add(net);
 
-            // Table
             const table = new THREE.Mesh(
                 new THREE.BoxGeometry(1, 1, 1),
                 new THREE.MeshStandardMaterial({
@@ -182,37 +178,24 @@ const LocalMode = () => {
             return { netObject, tableObject };
         };
 
-        // Physics simulation
         const simulatePhysics = (deltaTime) => {
             gameObjectsRef.current.forEach(obj => {
-                // Apply gravity
                 obj.velocity.y += -9.82 * deltaTime;
-
-                // Update positions
                 obj.position.x += obj.velocity.x * deltaTime;
                 obj.position.y += obj.velocity.y * deltaTime;
                 obj.position.z += obj.velocity.z * deltaTime;
-
-                // Ground collision
                 if (obj.position.y < 0.5) {
                     obj.velocity.y *= -0.5;
                     obj.position.y = 0.5;
                 }
-
-                // Update mesh position
                 obj.mesh.position.copy(obj.position);
             });
         };
-
-        
-        // Collision detection
         const collisionTimestamps = new Map();
         const collisionDelay = 100;
-        
         const twoObjCollide = (objA, objB) => {
             const boxA = new THREE.Box3().setFromObject(objA.mesh);
             const boxB = new THREE.Box3().setFromObject(objB.mesh);
-            
             if (boxA.intersectsBox(boxB)) {
                 const currentTime = performance.now();
                 const key = `${objA.id}-${objB.id}`;
@@ -225,7 +208,6 @@ const LocalMode = () => {
             }
             return false;
         };
-
         const checkCollisions = () => {
             if (!paddleRef.current || gameObjectsRef.current.length === 0 || !paddleCPURef.current) return;
             
@@ -275,15 +257,11 @@ const LocalMode = () => {
                 ball.velocity = new THREE.Vector3(0, 0, 0);
                 ball.applyImpulse(new THREE.Vector3(forceX, forceY, 16));
             }
-            
-            // Table collision
             else if (twoObjCollide(tableObject, ball)) {
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
                 ballSound.play();
-                
                 ball.velocity.y = -ball.velocity.y;
-                
                 if (ball.position.z < 0) {
                     aiSideBounces++;
                     if (aiSideBounces === 2) {
@@ -299,9 +277,7 @@ const LocalMode = () => {
                         resetBall(1);
                     }
                 }
-            }
-
-            else if (twoObjCollide(netObject, ball)) {
+            } else if (twoObjCollide(netObject, ball)) {
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
                 ballSound.play();
@@ -312,8 +288,6 @@ const LocalMode = () => {
                 ball.position.z += ball.velocity.z * 0.01;
             }
         };
-
-        // Game logic functions
         const resetBall = (direction = 1) => {
             gameObjectsRef.current.forEach(obj => scene.remove(obj.mesh));
             gameObjectsRef.current = [];
@@ -384,13 +358,6 @@ const LocalMode = () => {
             winCheck();
         };
 
-        const handleMouseMove = (event) => {
-            mouseCurrent = {
-                x: (event.clientX / window.innerWidth) * 2 - 1,
-                y: -(event.clientY / window.innerHeight) * 2 + 1
-            };
-        };
-
         const paddleSpeed = 0.08;
         const smoothFactor = 0.05;
         let paddleVelocityX = 0;
@@ -447,7 +414,7 @@ const LocalMode = () => {
         const lerp = (current, target, smoothFactor) => {
             return current + (target - current) * smoothFactor;
         };
-        
+
         const handleClick = () => {
             if (gameObjectsRef.current.length > 0) {
                 gameObjectsRef.current.forEach(obj => scene.remove(obj.mesh));
@@ -516,7 +483,7 @@ const LocalMode = () => {
                     );
 
                     splitCamera.lookAt(0, 0, 0);
-                    
+
                     paddleVelocityX = lerp(paddleVelocityX, paddleVelocityX, smoothFactor);
                     paddleVelocityY = lerp(paddleVelocityY, paddleVelocityY, smoothFactor);
                     paddleCpuVelocityX = lerp(paddleCpuVelocityX, paddleCpuVelocityX, smoothFactor);
@@ -527,7 +494,6 @@ const LocalMode = () => {
                     paddleCPURef.current.mesh.position.x += paddleCpuVelocityX;
                     paddleCPURef.current.mesh.position.y += paddleCpuVelocityY;
 
-                    // // Ensure the paddle stays within bounds
                     if (tableBoundsRef.current) {
                         console.log(tableBoundsRef.current);
                         if (paddleRef.current.mesh.position.x < tableBoundsRef.current.min.x) {
@@ -617,7 +583,6 @@ const LocalMode = () => {
             const { netObject, tableObject } = createTableAndNet();
             CreatePaddle();
 
-            window.addEventListener('mousemove', handleMouseMove);
             window.addEventListener('keydown', handleKeyDown);
             window.addEventListener('keyup', handleKeyUp);
             window.addEventListener('click', handleClick);
@@ -629,7 +594,6 @@ const LocalMode = () => {
         init();
 
         return () => {
-            window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
             window.removeEventListener('click', handleClick);

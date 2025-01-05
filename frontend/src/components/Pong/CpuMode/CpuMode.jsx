@@ -17,7 +17,6 @@ const CpuMode = () => {
     useEffect(() => {
         if (!canvasRef.current) return;
 
-        // Game state
         let playerScore = 0;
         let aiScore = 0;
         const maxScore = 11;
@@ -31,28 +30,19 @@ const CpuMode = () => {
         let lastHitAI = true;
         let mouseCurrent = { x: 0, y: 0 };
 
-        // Scene setup
         const scene = new THREE.Scene();
         sceneRef.current = scene;
 
-        // Bounding boxes
         const ballBoundingBox = new THREE.Box3();
         const paddleBoundingBox = new THREE.Box3();
         const paddleCPUBoundingBox = new THREE.Box3();
         const tableBoundingBox = new THREE.Box3();
         const netBoundingBox = new THREE.Box3();
 
-        // Environment setup
-
         scene.background = null;
-        // scene.background = environmentMapTexture;
-        // scene.environment = environmentMapTexture;
 
-
-        // Audio setup
         const ballSound = new Audio('/sounds/ping_pong.mp3');
 
-        // Camera setup
         const camera = new THREE.PerspectiveCamera(
             75,
             window.innerWidth / window.innerHeight,
@@ -62,7 +52,6 @@ const CpuMode = () => {
         camera.position.set(10, 10, 15);
         scene.add(camera);
 
-        // Renderer setup
         const renderer = new THREE.WebGLRenderer({
             canvas: canvasRef.current
         });
@@ -73,11 +62,9 @@ const CpuMode = () => {
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-        // Controls
         const controls = new OrbitControls(camera, canvasRef.current);
         controls.enableDamping = true;
 
-        // GameObject class
         class GameObject {
             static id = 0;
             constructor(mesh, mass = 1) {
@@ -94,7 +81,6 @@ const CpuMode = () => {
             }
         }
 
-        // Game object creation functions
         const CreateBall = (position, direction = -1) => {
             const radius = 0.1;
             const mesh = new THREE.Mesh(
@@ -576,9 +562,14 @@ const CpuMode = () => {
 
         // Cleanup function
         return () => {
+            // Handle keyboard events
             window.removeEventListener('mousemove', handleMouseMove);
+            // Handle click events
             window.removeEventListener('keydown', handleKeyDown);
+            // Handle window resize events
             window.removeEventListener('click', handleClick);
+
+            // Start the animation loop
             window.removeEventListener('resize', handleResize);
             inGame = false;
             

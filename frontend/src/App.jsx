@@ -32,7 +32,7 @@ function App() {
               <Route index element={<GameChoice />} />
               <Route path="matchmaking" element={<MatchMaking />} />
               <Route path="cpu-mode" element={<CpuMode />} />
-              <Route path="remote-play" element={<RemoteMode />} />
+              <Route path="remote-play/" element={<RemoteMode />} />
               <Route path="local-mode" element={<LocalMode />} />
             </Route>
             <Route path="/login" element={<Login />} />

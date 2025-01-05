@@ -32,6 +32,7 @@ const MatchMaking = () => {
   const [socket, setSocket] = useState(null);
   const [isDataReady, setIsDataReady] = useState(false);
   const [username, setUsername] = useState('');
+  const [matchFound, setMatchFound] = useState(false);
   const navigate = useNavigate();
 
   const userDataRef = useRef(null);
@@ -75,27 +76,53 @@ const MatchMaking = () => {
       console.log("Message received:", data);
 
       if (data.status === "matched") {
-        const { opponent, game_id } = data;
-        setOpponent({ username: opponent });
+        setMatchFound(true);
+        setOpponent({ 
+          username: data.opponent,
+          title: 'Opponent',
+          picture: 'https://randomuser.me' 
+        });
         setIsSearching(false);
 
-        console.log("Match found, navigating to game lobby");
+        // Store game session data in localStorage or state management
+        console.log("Match found:", data);
+        const gameSession = {
+          gameId: data.game_id,
+          username: username,
+          opponent: data.opponent,
+          isPlayer1: username === data.player1
+        };
+        localStorage.setItem('gameSession', JSON.stringify(gameSession));
+
+        // Navigate to remote-play within game-lobby
         setTimeout(() => {
-            navigate(`/game-lobby/remote-play/?game_id=${game_id}`);
-        }, 5000);
+          navigate('/game-lobby/remote-play', { 
+            state: gameSession
+          });
+        }, 3000);
       } else if (data.status === "searching") {
         console.log("Searching for a match...");
       }
     };
 
     ws.onclose = () => {
-      console.log("WebSocket disconnected");
+      if (!matchFound) {
+        console.log("WebSocket disconnected");
+        setIsSearching(false);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
+      setIsSearching(false);
     };
 
     setSocket(ws);
 
     return () => {
-      ws.close();
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
     };
   }, [isDataReady, username, navigate]);
 
@@ -104,7 +131,9 @@ const MatchMaking = () => {
       console.log("Leaving queue");
       socket.send(JSON.stringify({ type: "cancel_match" }));
       setIsSearching(false);
+      socket.close();
     }
+    navigate('/game-lobby');
   };
 
   return (
@@ -117,15 +146,32 @@ const MatchMaking = () => {
 
         {/* Right Side: Opponent Profile */}
         <div className="w-full md:w-1/2 bg-gradient-to-b from-gray-900 to-gray-800 p-6 flex flex-col items-center justify-center">
-          {isSearching ? <SearchingPlaceholder /> : <ProfileCard {...opponent} />}
+          {isSearching ? (
+            <SearchingPlaceholder />
+          ) : opponent ? (
+            <ProfileCard {...opponent} />
+          ) : (
+            <div className="text-center text-gray-400">
+              No opponent found
+            </div>
+          )}
         </div>
       </div>
+      
       <div className="absolute bottom-10 w-full flex justify-center">
-        <Link to="/game-lobby">
-          <button id="cancel-button" className="cancel-button" onClick={handleLeaveQueue}>
+        {!matchFound && (
+          <button 
+            className="cancel-button"
+            onClick={handleLeaveQueue}
+          >
             Cancel Matchmaking
           </button>
-        </Link>
+        )}
+        {matchFound && (
+          <div className="text-cyan-400 text-xl animate-pulse">
+            Match found! Preparing game...
+          </div>
+        )}
       </div>
     </div>
   );
