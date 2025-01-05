@@ -19,6 +19,7 @@ const Logged = () => {
   useClickOutside(searchRef, () => setSearchVisible(false));
 
   useEffect(() => {
+    
     const handleScroll = () => {
       setScrolled(window.scrollY > 100);
     };
@@ -30,7 +31,7 @@ const Logged = () => {
   return (
     <nav
       id="navbar"
-      className={`navbar ${scrolled ? 'scrolled' : ''} fixed top-0 w-full flex flex-column justify-between items-center px-4 sm:px-10 z-10`}
+      className={`navbar ${scrolled ? 'scrolled' : ''} fixed top-0 w-full flex flex-row justify-between items-center px-4 sm:px-10 z-10`}
     >
       <div className="flex items-center">
         <button

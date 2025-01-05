@@ -14,7 +14,8 @@ axiosInstance.interceptors.request.use(config => {
     if (token) {
       // Set the auth cookie with the token
       document.cookie = `auth=${token}; path=/`;
-    }
+    }else
+      localStorage.removeItem('access_token');
     return config;
   }, error => {
     return Promise.reject(error);

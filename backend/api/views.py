@@ -319,12 +319,13 @@ class UsersMeTestView(UnprotectedView):
 def getFriendList(user_id):
     friendList = []
     relations = UserRelationship.objects.filter(
-        Q(user_first_id=user_id, type=RelativeRelationshipType.FRIENDS.value) | 
-        Q(user_second_id=user_id, type=RelativeRelationshipType.FRIENDS.value)
+        Q(first_user_id=user_id, type=RelativeRelationshipType.FRIENDS.value) | 
+        Q(second_user_id=user_id, type=RelativeRelationshipType.FRIENDS.value)
     )
 
     for relation in relations:
-        friend = relation.user_second_id if user_id == relation.user_first_id.id else relation.user_first_id
+        friend_id = relation.second_user_id if user_id == relation.first_user_id else relation.first_user_id
+        friend = User.objects.get(id=friend_id)
         friendList.append({
             'id': friend.id,
             'username': friend.username,
@@ -358,6 +359,7 @@ class UserView(APIView):
             'username': target_user.username,
             'email': target_user.intra_connection.email if not target_user.email else target_user.email,
             'relationship': relationship_n,
+            'isOnline': target_user.online,
             'friends': getFriendList(target_user.id)
         }
 
@@ -586,3 +588,17 @@ class UnfriendView(APIView):
         return Response({"detail": "Friend removed."}, status=status.HTTP_204_NO_CONTENT)
 
 
+class FriendsView(APIView):
+
+    def get(self, request):
+        rels = UserRelationship.objects.filter(
+            Q(first_user=request.user) |
+            Q(second_user=request.user),
+            Q(type=RelationshipType.FRIENDS.value)
+        )
+
+        friends_usernames = [
+            rel.second_user.username if rel.first_user == request.user else rel.first_user.username
+            for rel in rels
+        ]
+        return Response({"friends": friends_usernames}, status=status.HTTP_200_OK)

@@ -10,9 +10,9 @@ from django.db.models import Q
 User = get_user_model()
 
 class MessagePagination(PageNumberPagination):
-    page_size = 100
+    page_size = 50
     page_size_query_param = 'page_size'
-    max_page_size = 100
+    max_page_size = 50
 
 class ChatView(APIView):
     pagination_class = MessagePagination

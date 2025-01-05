@@ -3,7 +3,7 @@ import { MoreVertical, Smile, Send } from "lucide-react";
 import styles from "../styles.module.scss";
 
 const ChatContent = ({
-  users,
+  friends,
   messages,
   selectedChat,
   newMessage,
@@ -12,7 +12,7 @@ const ChatContent = ({
   handleSidebarToggle,
 }) => {
   const chatBodyRef = useRef(null);
-  const selectedUser = users.find((user) => user.id === selectedChat);
+  const selectedUser = friends.find((friend) => friend.id === selectedChat);
 
   useEffect(() => {
     if (chatBodyRef.current) {
@@ -23,7 +23,7 @@ const ChatContent = ({
   if (!selectedUser) return null;
 
   return (
-    <div className={`${styles.chat_content} `}>
+    <div className={`${styles.chat_content}`}>
       <div className="h-16 border-b px-6 flex justify-between">
         <div className="flex gap-2 items-center">
           <div className="w-14 h-14 rounded-full bg-gray-300 flex items-center justify-center">
@@ -53,13 +53,13 @@ const ChatContent = ({
       </div>
       <div
         ref={chatBodyRef}
-        className="flex-1 overflow-y-auto   flex flex-col-reverse gap-y-4 py-4 px-1 "
+        className="flex-1 overflow-y-auto flex flex-col-reverse gap-y-4 py-4 px-1"
       >
         {messages
           .filter(
             (message) =>
               message.sender === selectedUser.name ||
-              message.recever === selectedUser.name
+              message.receiver === selectedUser.name
           )
           .map((message) => (
             <div
@@ -67,7 +67,7 @@ const ChatContent = ({
               className={`flex items-center space-x-1 ${
                 message.sender === selectedUser.name
                   ? "justify-end"
-                  : "justify-start"
+                  : "justify-start space-y-reverse"
               }`}
             >
               {message.sender !== selectedUser.name && (
@@ -80,19 +80,12 @@ const ChatContent = ({
               <div
                 className={`max-w-[70%] p-3 ${
                   message.sender === selectedUser.name
-                    ? "bg-blue-500 text-white rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl "
-                    : "bg-gray-200 text-black rounded-tl-2xl rounded-tr-2xl rounded-br-2xl "
+                    ? "bg-blue-500 text-white rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl"
+                    : "bg-gray-200 text-black rounded-tl-2xl rounded-tr-2xl rounded-br-2xl"
                 }`}
               >
                 {message.text}
               </div>
-              {message.sender === selectedUser.name && (
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                  <span className="text-blue-400 font-semibold">
-                    {selectedUser.name[0]}
-                  </span>
-                </div>
-              )}
             </div>
           ))}
       </div>
@@ -108,12 +101,6 @@ const ChatContent = ({
             placeholder="Type a message..."
             className="w-full p-3 rounded-lg border text-stone-950 focus:outline-none focus:border-blue-500 pr-12"
           />
-          {/* <button
-            type="button"
-            className="absolute right-2 top-2 p-2 rounded-full"
-          >
-            <Smile className="w-5 h-5 text-gray-500" />
-          </button> */}
         </div>
 
         <button
@@ -126,4 +113,5 @@ const ChatContent = ({
     </div>
   );
 };
+
 export default ChatContent;
