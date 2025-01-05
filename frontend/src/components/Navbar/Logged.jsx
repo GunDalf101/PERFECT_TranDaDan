@@ -19,6 +19,7 @@ const Logged = () => {
   useClickOutside(searchRef, () => setSearchVisible(false));
 
   useEffect(() => {
+    
     const handleScroll = () => {
       setScrolled(window.scrollY > 100);
     };

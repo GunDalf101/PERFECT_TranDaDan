@@ -2,8 +2,8 @@ import React from "react";
 import ProfileDropdown from "./ProfileDropdown";
 // import { useClickOutside } from "../../../hooks/useClickOutside";
 import { useState, useRef,useEffect } from "react";
-import { getUserData } from "../../../api/authService42Intra";
-
+// import { getUserData } from "../../../api/authService42Intra";
+import { useUser } from "../../auth/UserContext";
 
 export const useClickOutside = (refs, callback) => {
 
@@ -29,8 +29,8 @@ const ProfileIcon = () => {
     const profileRef = useRef();
     const buttonRef = useRef();
     useClickOutside([profileRef, buttonRef], setProfileDropdown);
-    const storedUserJSON = localStorage.getItem("user");
-    const user = storedUserJSON ? JSON.parse(storedUserJSON) : null;
+    const {user} = useUser();
+    const _user = user ? JSON.parse(user) : null;
     const parseIntraConnection = (intraStr) => {
       try {
         const parsed = JSON.parse(intraStr);
@@ -40,7 +40,7 @@ const ProfileIcon = () => {
         return null;
       }
     };
-    const intraData = user?.intra_connection ? parseIntraConnection(user.intra_connection) : null;
+    const intraData = _user?.intra_connection ? parseIntraConnection(_user.intra_connection) : null;
   return (
     <div className="relative py-1 ">
       <button id="profileButton" ref={buttonRef} className="focus:outline-none rounded-full border-2  border-pink-500" onClick={() => setProfileDropdown(prev => !prev)}>

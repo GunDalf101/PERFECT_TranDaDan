@@ -2,40 +2,26 @@ import React, { useState } from "react";
 import styles from "../styles.module.scss";
 import imag1 from "./1189258767129399428.webp";
 
-const UserList = ({ users, selectedChat, setSelectedChat }) => {
+const UserList = ({ friends, selectedChat, setSelectedChat }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  
-  const filteredUsers = users.filter((user) =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase())
-    // user.lastMessage.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = friends.filter((friend) =>
+    friend.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
-  };
 
   return (
     <div className={`${styles.chat_sidebar} h-full`}>
-      <div className="hidden pl-1 pr-4
-       md:flex relative flex-1 items-center w-full max-w-md mx-auto h-[70px]">
+      <div className="hidden pl-1 pr-4 md:flex relative flex-1 items-center w-full max-w-md mx-auto h-[70px]">
         <input
           type="text"
           placeholder="Search..."
           value={searchTerm}
-          onChange={handleSearch}
-          className="w-full p-3 py-3 text-fuchsia-400 bg-gray-600 border-[2px] border-blue-300 rounded-lg
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-            transition duration-300 
-            md:text-sm lg:text-base"
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full p-3 py-3 text-fuchsia-400 bg-gray-600 border-[2px] border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300 md:text-sm lg:text-base"
         />
-        {/* <button className="absolute pl-2 right-3 top-1/2 transform -translate-y-1/2 text-blue-300 hover:text-blue-500 transition duration-300">
-          <i className="material-icons-outlined text-3xl md:text-3xl">search</i>
-        </button> */}
       </div>
-      <div
-        className={`${styles.ulist} transition-all duration-300 ease-in-out rounded-md`}
-      >
+
+      <div className={`${styles.ulist} transition-all duration-300 ease-in-out rounded-md`}>
         {filteredUsers.length > 0 ? (
           filteredUsers.map((user) => (
             <div
@@ -64,7 +50,7 @@ const UserList = ({ users, selectedChat, setSelectedChat }) => {
                     `}
                   >
                     <img
-                      src={imag1}
+                      src={user.avatar || "https://via.placeholder.com/40"}
                       className={`w-full h-full object-cover rounded-full`}
                       alt={`${user.name}'s avatar`}
                     />
@@ -78,6 +64,7 @@ const UserList = ({ users, selectedChat, setSelectedChat }) => {
                     `}
                   />
                 </div>
+
                 <div className="flex-1 overflow-hidden">
                   <div className="flex justify-between items-start">
                     <h3 className="font-medium text-blue-300 truncate text-sm md:text-base">

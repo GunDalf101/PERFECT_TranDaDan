@@ -28,10 +28,10 @@ class Conversation(models.Model):
 
         return relationship
 
-@receiver(pre_save, sender=Conversation)
-def check_users_are_friends(sender, instance, **kwargs):
-    if not instance.are_users_friends(instance.first_user, instance.second_user):
-        raise Exception("The users must be friends to start a conversation.")
+# @receiver(pre_save, sender=Conversation)
+# def check_users_are_friends(sender, instance, **kwargs):
+#     if not instance.are_users_friends(instance.first_user, instance.second_user):
+#         raise Exception("The users must be friends to start a conversation.")
 
 class Message(models.Model):
     conversation = models.ForeignKey(Conversation, related_name='messages', on_delete=models.CASCADE)
@@ -50,7 +50,7 @@ class Message(models.Model):
         return Conversation.are_users_friends(sender, conversation.first_user) or Conversation.are_users_friends(sender, conversation.second_user)
 
 
-@receiver(pre_save, sender=Message)
-def check_if_sender_is_friends(sender, instance, **kwargs):
-    if not instance.is_sender_friends_with_recipient(instance.sender, instance.conversation):
-        raise Exception("You must be friends with the recipient to send a message.")
+# @receiver(pre_save, sender=Message)
+# def check_if_sender_is_friends(sender, instance, **kwargs):
+#     if not instance.is_sender_friends_with_recipient(instance.sender, instance.conversation):
+#         raise Exception("You must be friends with the recipient to send a message.")
