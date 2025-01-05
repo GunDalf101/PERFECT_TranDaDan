@@ -13,39 +13,45 @@ import Profile from './pages/Profile/Profile'
 import RemoteMode from './components/Pong/RemotePlay/RemoteMode'
 import IntraCallback from './components/auth/IntraCallback'
 import ChatApp from './pages/Chatpage/Chatpage'
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer } from 'react-toastify'
 
-import User from './pages/User/User'
-import EditProfile from './pages/EditProfile/EditProfile'
-import { Edit } from 'lucide-react'
+import User from "./pages/User/User"
+import EditProfile from "./pages/EditProfile/EditProfile"
+// import { Edit } from "lucide-react";
+import  {UserProvider }  from "./components/auth/UserContext" 
+import ProtectedRoute from "./components/auth/ProtectedRoute"
+
 
 function App() {
-
   return (
-    <BrowserRouter>
+    <UserProvider>
+      <BrowserRouter>
         <ToastContainer position="top-right" autoClose={3000} />
         <Routes>
-            <Route path="/" element={<MainLayout />}>
-              <Route index element={<Homepage />} />
-            </Route>
-            <Route path="/game-lobby" element={<GameMode />}>
-              <Route index element={<GameChoice />} />
-              <Route path="matchmaking" element={<MatchMaking />} />
-              <Route path="cpu-mode" element={<CpuMode />} />
-              <Route path="remote-play" element={<RemoteMode />} />
-              <Route path="local-mode" element={<LocalMode />} />
-            </Route>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            
-            <Route path="/profile" element={<Profile />}/>
-            <Route path="/profile/edit" element={<EditProfile />}/>
-            <Route path="/user/:username" element={<User />} />
-            <Route path='/chat' element={<ChatApp/>}/>
-            <Route path="/Intra/callback/" element={<IntraCallback />} />
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<Homepage />} />
+          </Route>
+          {/* <Route element={<ProtectedRoute/>}> */}
+          <Route path="/game-lobby" element={<GameMode />}>
+            <Route index element={<GameChoice />} />
+            <Route path="matchmaking" element={<MatchMaking />} />
+            <Route path="cpu-mode" element={<CpuMode />} />
+            <Route path="remote-play" element={<RemoteMode />} />
+            <Route path="local-mode" element={<LocalMode />} />
+          </Route>
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/edit" element={<EditProfile />} />
+          <Route path="/user/:username" element={<User />} />
+          <Route path="/chat" element={<ChatApp />} />
+          {/* </Route> */}
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/Intra/callback/" element={<IntraCallback />} />
+{/*           <Route path="*" element={<Link to="/"/>}></Route> */}
         </Routes>
-    </BrowserRouter>
-  )
+      </BrowserRouter>
+    </UserProvider>
+  );
 }
 
-export default App
+export default App;

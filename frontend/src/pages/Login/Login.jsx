@@ -6,9 +6,13 @@ import { toast } from 'react-toastify';
 import LoginAx from "../../api/authServiceLogin";
 import { getUserData } from "../../api/authService42Intra";
 
+import { useUser } from '../../components/auth/UserContext'
 
 const Login = () => {
 	const [loading, setLoading] = useState(false);
+	const { login } = useUser();
+	const navigate = useNavigate();
+	
 	const [formData, setFormData] = useState({
 		email: "",
 		password: "",
@@ -42,7 +46,8 @@ const Login = () => {
 			const data = await getUserData();
 			const userJSON = JSON.stringify(data);
 			localStorage.setItem("user", userJSON);
-			window.location.href = "/";
+			login(data);
+			navigate('/'); 
 
 		} catch (err) {
 			if (err.response?.data) {
