@@ -79,6 +79,7 @@ function App() {
             }
           />
           <Route path="/Intra/callback/" element={<IntraCallback />} />
+{/*           <Route path="*" element={<Link to="/"/>}></Route> */}
         </Routes>
       </UserProvider>
     </BrowserRouter>
