@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import JoinQueue, FindMatch, SubmitGameResult, LeaveQueue, CancelMatch, GetMatch
+from .views import JoinQueue, FindMatch, SubmitGameResult, LeaveQueue, CancelMatch, GetMatch, GetUserMatch
 
 urlpatterns = [
     path('matchmaking/join/', JoinQueue.as_view(), name='join_queue'),
@@ -8,4 +8,5 @@ urlpatterns = [
     path('game/result/', SubmitGameResult.as_view(), name='submit_game_result'),
     path('game/cancel/', CancelMatch.as_view(), name='cancel_match'),
     path('game/get/', GetMatch.as_view(), name='get_match'),
+    path('usermatches/<int:userid>', GetUserMatch.as_view(), name='get_user_match'),
 ]

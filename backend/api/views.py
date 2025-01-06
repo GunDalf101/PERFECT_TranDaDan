@@ -324,8 +324,7 @@ def getFriendList(user_id):
     )
 
     for relation in relations:
-        friend_id = relation.second_user_id if user_id == relation.first_user_id else relation.first_user_id
-        friend = User.objects.get(id=friend_id)
+        friend = relation.second_user if user_id == relation.first_user_id else relation.first_user
         friendList.append({
             'id': friend.id,
             'username': friend.username,
@@ -354,6 +353,7 @@ class UserView(APIView):
         
         if relationship_n == RelativeRelationshipType.HE_BLOCK.value:
             return Response({"error": "User not found."}, status=404)
+
         user_data = {
             'id': target_user.id,
             'username': target_user.username,
@@ -484,7 +484,7 @@ class BlockUser(APIView):
                 return Response({"error": "User not found."}, status=404)
 
         if relationship:
-            if relationship.user_first_id == current_user:
+            if relationship.first_user == current_user:
                 if relationship.type in [RelationshipType.BLOCK_BOTH.value, RelationshipType.BLOCK_FIRST_SECOND.value]:
                     return Response({"detail": "Already blocked that user."}, status=status.HTTP_400_BAD_REQUEST)
                 if relationship.type == RelationshipType.BLOCK_SECOND_FIRST.value:
