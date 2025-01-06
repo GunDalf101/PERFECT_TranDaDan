@@ -5,7 +5,7 @@ import SearchBar from "../SearchBar/SearchBar";
 import ProfileIcon from "./ProfileIcon";
 import Notifications from "./Notifications";
 import { Link } from "react-router-dom";
-import { getUserData } from "../../../api/authService42Intra";
+// import { getUserData } from "../../../api/authService42Intra";
 
 
 const Navbar = () => {

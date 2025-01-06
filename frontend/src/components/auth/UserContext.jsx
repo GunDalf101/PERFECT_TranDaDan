@@ -1,42 +1,56 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-
+import getMyData from '../../api/authServiceMe'
 
 const UserContext = createContext({
   user: null,
-  login: () => {},
-  logout: () => {},
+  login: () => { },
+  logout: () => { },
   isAuthenticated: false
 });
 
-
 const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem('user');
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    const storedIsAuthenticated = localStorage.getItem('isAuthenticated');
-    return storedIsAuthenticated === 'true';
-  });
+  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  
   useEffect(() => {
-    console.log('useEffect: isAuthenticated updated:', isAuthenticated);
-  }, [isAuthenticated]); 
+    const checkAuthStatus = async () => {
+      const accessToken = localStorage.getItem('access_token');
+
+      if (!accessToken) {
+        setIsAuthenticated(false);
+        setUser(null);
+        return;
+      }
+
+      try {
+        const data = await getMyData(); 
+        const userJSON = JSON.stringify(data);
+        setUser(userJSON);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error('Error validating token:', error);
+        setIsAuthenticated(false);
+        setUser(null);
+        localStorage.removeItem('access_token'); 
+      }
+    };
+
+    checkAuthStatus();
+  }, [user,isAuthenticated]);
+
+
 
   const login = (userData) => {
+    setUser(userData);
     setIsAuthenticated(true);
-    localStorage.setItem('isAuthenticated', 'true');
+    // localStorage.setItem('isAuthenticated', 'true');
   };
 
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    
-    localStorage.removeItem('user');
-    localStorage.removeItem('isAuthenticated');
+    // localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('access_token');
-    // localStorage.removeItem('oauth2_state');
   };
 
   const contextValue = {
@@ -45,7 +59,7 @@ const UserProvider = ({ children }) => {
     logout,
     isAuthenticated
   };
-  
+
   return (
     <UserContext.Provider value={contextValue}>
       {children}

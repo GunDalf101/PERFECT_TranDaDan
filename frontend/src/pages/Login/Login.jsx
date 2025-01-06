@@ -4,7 +4,7 @@ import alogo from "../../assets/image/42_Logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
 import LoginAx from "../../api/authServiceLogin";
-import { getUserData } from "../../api/authService42Intra";
+import getMyData from "../../api/authServiceMe";
 
 import { useUser } from '../../components/auth/UserContext'
 
@@ -43,10 +43,9 @@ const Login = () => {
 			const response = await LoginAx(formData);
 			const { access_token } = response.data;
 			localStorage.setItem('access_token', access_token);
-			const data = await getUserData();
-			const userJSON = JSON.stringify(data);
-			localStorage.setItem("user", userJSON);
-			login(data);
+			const data = await getMyData(); 
+			const userJSON = JSON.stringify(data);                                                                                                                                         
+			login(userJSON);
 			navigate('/'); 
 
 		} catch (err) {
@@ -137,7 +136,7 @@ const Login = () => {
 							)}
 						</div>
 						<div className="text-right w-full mb-5">
-							<Link to="#" className="text-sm text-[#00d4ff] hover:text-gray-400">
+							<Link className="text-sm text-[#00d4ff] hover:text-gray-400">
 								Forgot Password?
 							</Link>
 						</div>

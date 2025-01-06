@@ -11,10 +11,12 @@ User = get_user_model()
 
 class DirectMessageConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        self.user_group_name = None
         # Store the user making the request
         self.user = self.scope['user']
         if not self.user:
             await self.close()
+            return
 
         # Accept the WebSocket connection
         await self.accept()
@@ -34,10 +36,11 @@ class DirectMessageConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         print("???")
         # Cleanup when the connection is closed
-        await self.channel_layer.group_discard(
-            self.user_group_name,
-            self.channel_name
-        )
+        if self.user_group_name:
+            await self.channel_layer.group_discard(
+                self.user_group_name,
+                self.channel_name
+            )
 
     async def receive(self, text_data):
         # Parse the incoming JSON data
@@ -59,9 +62,9 @@ class DirectMessageConsumer(AsyncWebsocketConsumer):
             return
 
         # Check if the user is friends with the target user
-        if not await self.is_friend(self.user, target_user):
-            await self.send_error("Not friends")
-            return
+        # if not await self.is_friend(self.user, target_user):
+        #     await self.send_error("Not friends")
+        #     return
 
         # Get or create the conversation
         conversation = await self.get_or_create_conversation(self.user, target_user)

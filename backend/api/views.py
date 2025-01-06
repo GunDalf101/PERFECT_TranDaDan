@@ -588,3 +588,17 @@ class UnfriendView(APIView):
         return Response({"detail": "Friend removed."}, status=status.HTTP_204_NO_CONTENT)
 
 
+class FriendsView(APIView):
+
+    def get(self, request):
+        rels = UserRelationship.objects.filter(
+            Q(first_user=request.user) |
+            Q(second_user=request.user),
+            Q(type=RelationshipType.FRIENDS.value)
+        )
+
+        friends_usernames = [
+            rel.second_user.username if rel.first_user == request.user else rel.first_user.username
+            for rel in rels
+        ]
+        return Response({"friends": friends_usernames}, status=status.HTTP_200_OK)

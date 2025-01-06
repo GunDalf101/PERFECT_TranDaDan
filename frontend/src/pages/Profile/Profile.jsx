@@ -2,9 +2,11 @@ import styles from "./Profile.module.scss";
 import Navbar from "../../components/Navbar/Logged";
 import { useState, useEffect } from "react";
 import getMyData from "../../api/authServiceMe";
+import getMatches from "../../api/gameService"
 
 const Profile = () => {
   const [mydata, setMyData] = useState(null);
+  const [mymatches, setMymatches] = useState(null);
 
   // Local test friend list
   const friends = [
@@ -20,9 +22,12 @@ const Profile = () => {
       try {
         const data = await getMyData();
         setMyData(data);
+        console.log(mydata)
+        const matches = await getMatches(data.id);
+        setMymatches(matches)
       } catch (error) {
         console.error("Error fetching user data:", error);
-        window.location.href = "/login";
+        // window.location.href = "/login";
       }
     };
 
@@ -85,9 +90,9 @@ const Profile = () => {
         {/* Friends Box */}
         <div className="flex-1 min-w-[300px] h-[400px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink overflow-y-auto">
           <h2 className="text-2xl text-center text-neonPink mb-4">Friends</h2>
-          {friends && friends.length > 0 ? (
+          {mydata.friends && mydata.friends.length > 0 ? (
             <ul className="space-y-4">
-              {friends.map((friend) => (
+              {mydata.friends.map((friend) => (
                 <li
                   key={friend.id}
                   className="flex items-center gap-4 bg-gray-800 p-3 rounded-lg border border-gray-600 shadow-md hover:shadow-lg transition-shadow duration-300"
@@ -113,6 +118,7 @@ const Profile = () => {
         <div className="flex-1 min-w-[300px] h-fit p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
           <h2 className="text-2xl text-center text-neonPink mb-4">Match History</h2>
           <div className="overflow-x-auto">
+          {mydata.friends && mydata.friends.length > 0 ? (
             <table className="w-full text-center text-white border-collapse">
               <thead>
                 <tr className="bg-neonBlue text-black">
@@ -123,16 +129,19 @@ const Profile = () => {
                 </tr>
               </thead>
               <tbody>
-                {matchHistory.map((match) => (
+                {mymatches.map((match) => (
                   <tr key={match.id} className="odd:bg-gray-800 even:bg-gray-700">
                     <td className="p-2 border border-white">{match.id}</td>
-                    <td className="p-2 border border-white">{match.opponent}</td>
+                    <td className="p-2 border border-white">{match.player1}</td>
                     <td className="p-2 border border-white">{match.result}</td>
                     <td className="p-2 border border-white">{match.score}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            ):(
+              <p className="text-center text-gray-400">No matches to display.</p>
+            )}
           </div>
         </div>
 

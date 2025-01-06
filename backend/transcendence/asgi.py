@@ -21,7 +21,7 @@ application = ProtocolTypeRouter({
     "http": app,
     "websocket": JWTAuthMiddleware(
         URLRouter(
-            websocket_urlpatterns# + [path('ws/chat/', consumers.DirectMessageConsumer.as_asgi())]
+            websocket_urlpatterns + [path('ws/chat/', consumers.DirectMessageConsumer.as_asgi())]
         )
     ),
 })
