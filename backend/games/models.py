@@ -1,7 +1,6 @@
 from django.db import models
 from django.conf import settings
 
-
 class Match(models.Model):
     id = models.AutoField(primary_key=True)
     game_type = models.CharField(max_length=10, default='pong')
