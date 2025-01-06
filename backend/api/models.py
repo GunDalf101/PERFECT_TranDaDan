@@ -2,6 +2,9 @@ from django.db import models
 from django.core.validators import RegexValidator, EmailValidator
 from django.contrib.auth.models import AbstractBaseUser
 from enum import Enum
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+import pyotp
 
 from .managers import UserManager
 
@@ -40,6 +43,11 @@ class User(AbstractBaseUser):
     def __str__(self):
         fields = [f"{field.name}={getattr(self, field.name)}" for field in self._meta.fields]
         return ", ".join(fields)
+
+@receiver(pre_save, sender=User)
+def set_mfa_totp_secret(sender, instance, **kwargs):
+    if not instance.mfa_totp_secret:
+        instance.mfa_totp_secret = pyotp.random_base32()
 
 class IntraConnection(models.Model):
     user = models.OneToOneField(

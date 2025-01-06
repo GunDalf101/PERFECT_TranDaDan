@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 from .authentication import NoAuthenticationOnly
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 import requests
 import random
 import string
@@ -163,24 +163,35 @@ class MFATOTPView(APIView):
 
 class SecurityMFATOTP(APIView):
 
+    def get(self, request):
+        current_user = request.user
+        if current_user.mfa_enabled:
+            return Response({"error": "this user has 2FA enabled."}, status=status.HTTP_400_BAD_REQUEST)
+        secret_totp = current_user.mfa_totp_secret
+        url_qr = pyotp.totp.TOTP(secret_totp).provisioning_uri(current_user.username, issuer_name='TranDanDan')
+        svg_buffer = io.BytesIO()
+        pyqrcode.create(url_qr).svg(svg_buffer, scale=8)
+        svg_buffer.seek(0)
+        return HttpResponse(svg_buffer.read(), content_type='image/svg+xml')
+
     def put(self, request):
         current_user = request.user
-
+        data = request.data
         if current_user.mfa_enabled:
             return Response({
                 "error": "MFA is already enabled for this user."
             }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
-        secret_totp = pyotp.random_base32()
-        url_qr = pyotp.totp.TOTP(secret_totp).provisioning_uri(current_user.username, issuer_name='TranDanDan')
-        svg_buffer = io.BytesIO()
-        pyqrcode.create(url_qr).svg(svg_buffer, scale=8)
-        current_user.mfa_totp_secret = secret_totp
+        secret_totp = current_user.mfa_totp_secret
+        if not data.get("code") or not isinstance(data.get("code"), str) or not data.get("code").isnumeric() or not pyotp.totp.TOTP(secret_totp).verify(data.get("code")):
+            return Response({
+                "error": "Invalid code."
+            }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
         current_user.mfa_enabled = True
         current_user.save()
         return Response({
             "user_id": current_user.id,
-            "mfa_enabled": current_user.mfa_enabled,
-            "svg": svg_buffer.getvalue().decode()
+            "mfa_enabled": current_user.mfa_enabled
         }, status=status.HTTP_200_OK)
 
     def delete(self, request):
@@ -192,7 +203,7 @@ class SecurityMFATOTP(APIView):
             }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
         current_user.mfa_enabled = False
-        current_user.mfa_totp_secret = ''
+        current_user.mfa_totp_secret = None
         current_user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -319,7 +330,7 @@ class UsersMeTestView(UnprotectedView):
 def getFriendList(user_id):
     friendList = []
     relations = UserRelationship.objects.filter(
-        Q(first_user_id=user_id, type=RelativeRelationshipType.FRIENDS.value) | 
+        Q(first_user_id=user_id, type=RelativeRelationshipType.FRIENDS.value) |
         Q(second_user_id=user_id, type=RelativeRelationshipType.FRIENDS.value)
     )
 
@@ -340,7 +351,7 @@ class UserView(APIView):
         except User.DoesNotExist:
             return Response({"error": "User not found."}, status=404)
         current_user = request.user
-        
+
         relationship = UserRelationship.objects.filter(
             Q(first_user=current_user, second_user=target_user) |
             Q(first_user=target_user, second_user=current_user)
@@ -350,7 +361,7 @@ class UserView(APIView):
 
         if relationship:
             relationship_n = createRelativeRelation(current_user, relationship)
-        
+
         if relationship_n == RelativeRelationshipType.HE_BLOCK.value:
             return Response({"error": "User not found."}, status=404)
 
