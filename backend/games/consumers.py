@@ -58,7 +58,8 @@ class PongConsumer(AsyncWebsocketConsumer):
     async def game_loop(self):
         try:
             while True:
-                # self.update_game_state()
+                self.update_game_state()
+                # await self.broadcast_game_state()
                 
                 await asyncio.sleep(self.delta_time)
         except asyncio.CancelledError:
@@ -96,12 +97,13 @@ class PongConsumer(AsyncWebsocketConsumer):
 
     def update_game_state(self):
         # Update ball position
-        self.game_state['ball_position']['x'] += self.game_state['ball_velocity']['x'] * self.delta_time
-        self.game_state['ball_position']['y'] += self.game_state['ball_velocity']['y'] * self.delta_time
+        # self.game_state['ball_position']['x'] += self.game_state['ball_velocity']['x'] * self.delta_time
+        # self.game_state['ball_position']['y'] += self.game_state['ball_velocity']['y'] * self.delta_time
 
         # Example collision check
-        if self.game_state['ball_position']['y'] > 10 or self.game_state['ball_position']['y'] < -10:
-            self.game_state['ball_velocity']['y'] *= -1
+        # if self.game_state['ball_position']['y'] > 10 or self.game_state['ball_position']['y'] < -10:
+        #     self.game_state['ball_velocity']['y'] *= -1
+        return
 
     def update_paddle_position(self, data):
         # // paddleRef.current.mesh.position.z = 11 - Math.abs((2 * mouseCurrent.x));

@@ -63,6 +63,7 @@ const RemoteMode = () => {
 
         const handleGameState = (state) => {
             updatePaddlePositions(state);
+            updateBallPosition(state);
         };
         const updatePaddlePositions = (state) => {
             const paddleOpponent = paddleOpponentRef.current;
@@ -83,6 +84,15 @@ const RemoteMode = () => {
                     paddleOpponent.mesh.position.y = state.paddle1_position.y;
                     paddleOpponent.mesh.position.z = state.paddle1_position.z;
                 }
+            }
+        };
+
+        const updateBallPosition = (state) => {
+            const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
+            if (ball) {
+                ball.mesh.position.x = state.ball_position.x;
+                ball.mesh.position.y = state.ball_position.y;
+                ball.mesh.position.z = state.ball_position.z;
             }
         };
 
@@ -133,7 +143,7 @@ const RemoteMode = () => {
             }
         }
 
-        const CreateBall = (position, direction = -1) => {
+        const CreateBall = () => {
             const radius = 0.1;
             const mesh = new THREE.Mesh(
                 new THREE.SphereGeometry(radius),
@@ -144,12 +154,11 @@ const RemoteMode = () => {
             );
             mesh.castShadow = true;
             mesh.receiveShadow = true;
-            mesh.position.copy(position);
 
             const ballObject = new GameObject(mesh);
             scene.add(mesh);
 
-            ballObject.applyImpulse(new THREE.Vector3(0, 4, 14 * -direction));
+            // ballObject.applyImpulse(new THREE.Vector3(0, 4, 14 * -direction));
             gameObjectsRef.current.push(ballObject);
         };
 
@@ -272,15 +281,7 @@ const RemoteMode = () => {
         const animate = () => {
             const elapsedTime = clock.getElapsedTime();
             const deltaTime = elapsedTime - oldElapsedTime;
-            oldElapsedTime = elapsedTime;
-            
-            // Update CPU paddle position
-            if (gameObjectsRef.current.length > 0 && paddleOpponentRef.current?.mesh) {
-                const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
-                paddleOpponentRef.current.mesh.position.x = ball.position.x;
-                paddleOpponentRef.current.mesh.position.y = ball.position.y;
-                paddleOpponentRef.current.mesh.position.z = -10;
-            }
+            oldElapsedTime = elapsedTime;* 
             
             if (true) {
                 // Update paddle positions based on mouse
@@ -371,6 +372,7 @@ const RemoteMode = () => {
             setupLighting();
             const { netObject, tableObject } = createTableAndNet();
             CreatePaddle();
+            CreateBall();
             
             // Add event listeners
             window.addEventListener('mousemove', handleMouseMove);
