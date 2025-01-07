@@ -1,7 +1,7 @@
 import React from "react";
 
 const NotifDropdown = React.forwardRef(({isVisible}, ref) => {
-    console.log("NotifDropdown isVisible: ", isVisible);
+    // console.log("NotifDropdown isVisible: ", isVisible);
   return isVisible? (
     <div
       id="notificationDropdown"

@@ -1,20 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { Search } from "lucide-react";
 import styles from "../styles.module.scss";
-import imag1 from "./1189258767129399428.webp";
 
-const UserList = ({ friends, selectedChat, setSelectedChat }) => {
+const UserList = ({ friends, selectedChat, setSelectedChat, messages }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredUsers = friends.filter((friend) =>
+  const friendsWithLastMessage = useMemo(() => {
+    return friends.map(friend => {
+      const lastMessage = messages
+        .filter(msg => msg.sender === friend.name || msg.receiver === friend.id)
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+
+      return {
+        ...friend,
+        lastMessage: lastMessage?.text || "",
+        lastMessageTime: lastMessage?.timestamp ? new Date(lastMessage.timestamp).toLocaleTimeString([], { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        }) : ""
+      };
+    });
+  }, [friends, messages]);
+
+
+  const filteredUsers = friendsWithLastMessage.filter(friend =>
     friend.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleUserClick = (userId) => {
+    setSelectedChat(userId);
+  };
 
   return (
     <div className={`${styles.chat_sidebar} h-full`}>
       <div className="hidden pl-1 pr-4 md:flex relative flex-1 items-center w-full max-w-md mx-auto h-[70px]">
         <input
           type="text"
-          placeholder="Search..."
+          placeholder="Search chats..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full p-3 py-3 text-fuchsia-400 bg-gray-600 border-[2px] border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300 md:text-sm lg:text-base"
@@ -26,16 +48,13 @@ const UserList = ({ friends, selectedChat, setSelectedChat }) => {
           filteredUsers.map((user) => (
             <div
               key={user.id}
-              onClick={() => setSelectedChat(user.id)}
+              onClick={() => handleUserClick(user.id)}
               className={`
                 md:p-[1rem] rounded-md border cursor-pointer 
                 transition-all duration-300 ease-in-out 
-                transform hover:scale-[1] active:scale-[0.98]
-                ${
-                  selectedChat === user.id
-                    ? "bg-blue-100 shadow-md"
-                    : "hover:bg-blue-100 hover:shadow-sm"
-                }
+                hover:bg-blue-100 hover:shadow-sm
+                active:scale-[0.98]
+                ${selectedChat === user.id ? "bg-blue-200 shadow-md" : "bg-transparent"}
               `}
             >
               <div className="flex items-center space-x-3 gap-2">
@@ -50,8 +69,8 @@ const UserList = ({ friends, selectedChat, setSelectedChat }) => {
                     `}
                   >
                     <img
-                      src={user.avatar || "https://via.placeholder.com/40"}
-                      className={`w-full h-full object-cover rounded-full`}
+                      src={user.avatar || "/api/placeholder/40/40"}
+                      className="w-full h-full object-cover rounded-full"
                       alt={`${user.name}'s avatar`}
                     />
                   </div>
@@ -67,16 +86,18 @@ const UserList = ({ friends, selectedChat, setSelectedChat }) => {
 
                 <div className="flex-1 overflow-hidden">
                   <div className="flex justify-between items-start">
-                    <h3 className="font-medium text-blue-300 truncate text-sm md:text-base">
+                    <h3 className={`font-medium truncate text-sm md:text-base ${selectedChat === user.id ? 'text-blue-600' : 'text-blue-300'}`}>
                       {user.name}
                     </h3>
                     <span className="text-xs text-blue-400 ml-2">
                       {user.lastMessageTime}
                     </span>
                   </div>
-                  <p className="text-xs md:text-sm text-blue-500 opacity-70 truncate">
-                    {user.lastMessage}
-                  </p>
+                  {user.lastMessage && (
+                    <p className="text-xs md:text-sm text-blue-500 opacity-70 truncate">
+                      {user.lastMessage}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

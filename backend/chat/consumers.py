@@ -6,6 +6,7 @@ from api.models import UserRelationship, RelationshipType
 from .models import Message, Conversation
 from django.db import models
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 
 User = get_user_model()
 
@@ -14,6 +15,7 @@ class DirectMessageConsumer(AsyncWebsocketConsumer):
         self.user_group_name = None
         # Store the user making the request
         self.user = self.scope['user']
+        print(self.user)
         if not self.user:
             await self.close()
             return
@@ -47,7 +49,6 @@ class DirectMessageConsumer(AsyncWebsocketConsumer):
         body = json.loads(text_data)
         username = body.get('username', None)
         content = body.get('content', None)
-
         # Check if the necessary fields are present
         if not username or not content or not isinstance(content, str) or not isinstance(username, str):
             await self.send_error("Missing required fields")
@@ -95,10 +96,16 @@ class DirectMessageConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_or_create_conversation(self, first_user, second_user):
         # Create or get the conversation between two users
-        conversation, created = Conversation.objects.get_or_create(
-            first_user=first_user,
-            second_user=second_user
-        )
+        conversation = Conversation.objects.filter(
+            Q(first_user=first_user, second_user=second_user) |
+            Q(first_user=second_user, second_user=first_user)
+        ).first()
+        if not conversation:
+            conversation = Conversation.objects.create(
+                first_user=first_user,
+                second_user=second_user
+            )
+            return conversation
         return conversation
 
     # Helper method to save the message to the database
@@ -130,6 +137,7 @@ class DirectMessageConsumer(AsyncWebsocketConsumer):
             'error': error_message
         }))
 
+    
     # Handle incoming messages for other types, if needed
     async def chat_message(self, event):
         # Forward the message to the connected user

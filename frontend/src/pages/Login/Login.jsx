@@ -43,8 +43,8 @@ const Login = () => {
 			const response = await LoginAx(formData);
 			const { access_token } = response.data;
 			localStorage.setItem('access_token', access_token);
-			const data = await getMyData(); 
-			const userJSON = JSON.stringify(data);                                                                                                                                         
+			const data = await getMyData();
+			const userJSON = JSON.stringify(data);
 			login(userJSON);
 			navigate('/'); 
 

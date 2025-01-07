@@ -33,7 +33,7 @@ class ChatView(APIView):
 
         if not conversation:
             try:
-                Conversation.objects.create(
+                conversation = Conversation.objects.create(
                     first_user=request.user,
                     second_user=recipient
                 )
