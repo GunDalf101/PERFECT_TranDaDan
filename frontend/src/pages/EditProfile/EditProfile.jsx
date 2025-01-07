@@ -1,13 +1,12 @@
 import styles from "./EditProfile.module.scss";
 import Navbar from "../../components/Navbar/Logged";
 import { useState } from "react";
-// import updateProfileData from "../../api/updateProfileService";
 
 const EditProfile = () => {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
-    avatar: "",
+    avatar: "", // URL or image file preview
   });
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -15,6 +14,17 @@ const EditProfile = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setFormData((prev) => ({ ...prev, avatar: reader.result })); // Update the avatar state with the file preview
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -37,8 +47,36 @@ const EditProfile = () => {
         <h1 className="text-3xl text-neonPink mb-6">Edit Profile</h1>
 
         <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
+          <div className="flex flex-col items-center relative group">
+            <div className="relative w-32 h-32">
+              <img
+                src={
+                  formData.avatar ||
+                  "https://via.placeholder.com/150?text=Your+Avatar"
+                } // Default avatar if none is set
+                alt="Profile Avatar"
+                className="w-full h-full rounded-full border-4 border-neonPink object-cover"
+              />
+              <label
+                htmlFor="avatar-upload"
+                className="absolute inset-0 flex items-center text-center justify-center bg-black bg-opacity-70 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              >
+                <span className="text-sm text-white">Upload New Avatar</span>
+              </label>
+              <input
+                type="file"
+                id="avatar-upload"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="hidden"
+              />
+            </div>
+          </div>
+
           <div className="flex flex-col">
-            <label htmlFor="username" className="text-neonBlue">Username</label>
+            <label htmlFor="username" className="text-neonBlue">
+              Username
+            </label>
             <input
               type="text"
               id="username"
@@ -51,7 +89,9 @@ const EditProfile = () => {
           </div>
 
           <div className="flex flex-col">
-            <label htmlFor="email" className="text-neonBlue">Email</label>
+            <label htmlFor="email" className="text-neonBlue">
+              Email
+            </label>
             <input
               type="email"
               id="email"
@@ -60,18 +100,6 @@ const EditProfile = () => {
               onChange={handleInputChange}
               className="p-2 rounded bg-gray-800 text-white border border-gray-600"
               required
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label htmlFor="avatar" className="text-neonBlue">Avatar URL</label>
-            <input
-              type="text"
-              id="avatar"
-              name="avatar"
-              value={formData.avatar}
-              onChange={handleInputChange}
-              className="p-2 rounded bg-gray-800 text-white border border-gray-600"
             />
           </div>
 

@@ -8,6 +8,8 @@ from django.utils.timezone import now
 from .models import MatchmakingQueue, Match
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db.models import Q
+
 
 User = get_user_model()
 
@@ -76,6 +78,30 @@ class GetMatch(APIView):
             })
         except Match.DoesNotExist:
             return Response({"status": "error", "message": "Game not found"}, status=status.HTTP_404_NOT_FOUND)
+
+class GetUserMatch(APIView):
+
+    def get(self, request, userid):
+
+        matches = Match.objects.filter(
+            Q(player1=userid) |
+            Q(player2=userid)
+        )
+
+        if not matches:
+            Response({"no matches"}, status=200)
+
+        matches = []
+        for _match in matches:
+            matches.append({
+                'id': Match.id,
+                'p1': Match.player1,
+                'p2': Match.player2,
+                'score1': Match.score_player1,
+                'score2': Match.score_player2,
+                'result': 'win' if Match.winner == userid else 'lose'
+            })
+        return Response(matches, status=200)
 
 class CancelMatch(APIView):
     permission_classes = [IsAuthenticated]

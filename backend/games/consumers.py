@@ -1,87 +1,135 @@
+# game/consumers.py
+from channels.generic.websocket import AsyncWebsocketConsumer
 import json
-from channels.generic.websocket import AsyncWebsocketConsumer, AsyncJsonWebsocketConsumer
-from .models import MatchmakingQueue, Match
-from asgiref.sync import sync_to_async
 import asyncio
-import hashlib
-
+import math
 
 class PongConsumer(AsyncWebsocketConsumer):
-    players = {}
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.room_group_name = None
+        self.game_state = {}
+        self.game_loop_task = None
+        self.delta_time = 1 / 60  # 60 FPS
+        self.player_number = None
 
     async def connect(self):
         self.game_id = self.scope['url_route']['kwargs']['game_id']
-        self.room_name = f"game_{self.game_id}"
-        
-        if not hasattr(self.channel_layer, "rooms"):
-            self.channel_layer.rooms = {}
-        if self.room_name not in self.channel_layer.rooms:
-            self.channel_layer.rooms[self.room_name] = {"players": []}
-            
-        players = self.channel_layer.rooms[self.room_name]["players"]
-
+        self.room_group_name = f'pong_{self.game_id}'
+        # Add the user to the room group
         await self.channel_layer.group_add(
-            self.room_name,
+            self.room_group_name,
             self.channel_name
         )
         await self.accept()
-        if len(players) < 2:
-            self.player_z = 10 if len(players) == 0 else -10
-            players.append(self.player_z)
-            await self.send(text_data=json.dumps({"action": "player_join", "player_z": self.player_z}))
-        else:
-            await self.close()
-            return
-        
+
+        # Initialize game state and start the game loop if not already running
+        if not self.game_loop_task:
+            self.initialize_game_state()
+            self.game_loop_task = asyncio.create_task(self.game_loop())
 
     async def disconnect(self, close_code):
-        players = self.channel_layer.rooms[self.room_name]["players"]
-        players.remove(self.player_z)
+        # Remove the user from the room group
         await self.channel_layer.group_discard(
-            self.room_name,
+            self.room_group_name,
             self.channel_name
         )
+        # Stop the game loop if needed
+        if self.game_loop_task:
+            self.game_loop_task.cancel()
+            try:
+                await self.game_loop_task
+            except asyncio.CancelledError:
+                pass
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        action = data.get("action")
-        print(f"Received data: {data}")
+        if 'type' in data and data['type'] == 'init':
+            if data['isPlayer1']:
+                self.player_number = 'player1'
+                self.game_state['player1'] = data['username']
+            else:
+                self.game_state['player1'] = data['opponent']
+                self.player_number = 'player2'
+        if 'type' in data and data['type'] == 'mouse_move':
+            self.update_paddle_position(data)
+            await self.broadcast_game_state()
+
+    async def game_loop(self):
+        try:
+            while True:
+                self.update_game_state()
+                # await self.broadcast_game_state()
+                
+                await asyncio.sleep(self.delta_time)
+        except asyncio.CancelledError:
+            pass
+
+    def initialize_game_state(self):
+        # print("way way ?")
+        self.game_state = {
+            'game_id': self.game_id,
+            'player1': None,
+            'ball_position': {
+                'x': 0,
+                'y': 5.0387,
+                'z': -8
+            },
+            'ball_velocity': {
+                'x': 0,
+                'y': 4,
+                'z': 14
+            },
+            'paddle1_position': {
+                'x': 0,
+                'y': 4.0387,
+                'z': 10
+            },
+            'paddle2_position': {
+                'x': 0,
+                'y': 4.0387,
+                'z': -10
+            },
+            'scores': {'player1': 0, 'player2': 0},
+            'rounds_won': {'player1': 0, 'player2': 0},
+            'winner': None
+        }
+
+    def update_game_state(self):
+        # Update ball position
+        # self.game_state['ball_position']['x'] += self.game_state['ball_velocity']['x'] * self.delta_time
+        # self.game_state['ball_position']['y'] += self.game_state['ball_velocity']['y'] * self.delta_time
+
+        # Example collision check
+        # if self.game_state['ball_position']['y'] > 10 or self.game_state['ball_position']['y'] < -10:
+        #     self.game_state['ball_velocity']['y'] *= -1
+        return
+
+    def update_paddle_position(self, data):
+        # // paddleRef.current.mesh.position.z = 11 - Math.abs((2 * mouseCurrent.x));
+        if self.player_number == 'player1':
+            self.game_state['paddle1_position']['x'] = 5.5 * data['mouse_position']['x']
+            self.game_state['paddle1_position']['z'] = 11 - abs(data['mouse_position']['x'] * 2)
+            self.game_state['paddle1_position']['y'] = 5.03 + data['mouse_position']['y']
+        elif self.player_number == 'player2':
+            self.game_state['paddle2_position']['x'] = -5.5 * data['mouse_position']['x']
+            self.game_state['paddle2_position']['z'] = -11 + abs(data['mouse_position']['x'] * 2)
+            self.game_state['paddle2_position']['y'] = 5.03 + data['mouse_position']['y']
+
+    async def broadcast_game_state(self):
         await self.channel_layer.group_send(
-            self.room_name,
+            self.room_group_name,
             {
-                "type": "game_update",
-                "message": data
+                'type': 'send_game_state',
+                'state': self.game_state
             }
         )
-        
-        if action == "update_game_state":
-            await self.channel_layer.group_send(
-                self.room_name,
-                {
-                    "type": "game_state_update",
-                    "message": data
-                }
-            )
 
-        if action == "move":
-            await self.channel_layer.group_send(
-                self.room_name,
-                {
-                    "type": "game_update",
-                    "message": data
-                }
-            )
-        elif action == "start":
-            await self.channel_layer.group_send(
-                self.room_name,
-                {
-                    "type": "game_update",
-                    "message": data
-                }
-            )
-
-    async def game_update(self, event):
-        await self.send(text_data=json.dumps(event["message"]))
+    async def send_game_state(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'game_state',
+            'state': event['state']
+        }))
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.contrib.auth import get_user_model
@@ -128,13 +176,15 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
                     "status": "matched",
                     "opponent": player2.scope['user'].username,
                     "game_id": match.id,
-                    "username": player1.scope['user'].username
+                    "username": player1.scope['user'].username,
+                    "player1": player1.scope['user'].username
                 })
                 await player2.send_json({
                     "status": "matched",
                     "opponent": player1.scope['user'].username,
                     "game_id": match.id,
-                    "username": player2.scope['user'].username
+                    "username": player2.scope['user'].username,
+                    "player1": player1.scope['user'].username
                 })
 
     def create_match(self, player1, player2):
