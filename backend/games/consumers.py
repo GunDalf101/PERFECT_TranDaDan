@@ -200,4 +200,7 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
             player2=player2_user,
             status="ongoing"
         )
+        print("----------------------")
+        print(match)
+        print("----------------------")
         return match

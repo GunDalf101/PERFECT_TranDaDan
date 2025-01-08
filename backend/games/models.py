@@ -29,7 +29,7 @@ class Match(models.Model):
     
 
     def __str__(self):
-        return f"{self.player1} vs {self.player2}"
+        return f"{self.player1.username} vs {self.player2.username}"
     
 class MatchmakingQueue(models.Model):
     id = models.AutoField(primary_key=True)
