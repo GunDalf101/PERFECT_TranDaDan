@@ -15,6 +15,9 @@ import IntraCallback from "./components/auth/IntraCallback";
 import ChatApp from "./pages/Chatpage/Chatpage";
 import { ToastContainer } from "react-toastify";
 import QuadraMode from "./components/Pong/QuadraMode/QuadraMode";
+import TournamentBracket from "./pages/Tournament/Tournament";
+import QuadraRegister from "./pages/QuadraRegister/QuadraRegister";
+import LocalRegister from "./pages/LocalRegister/LocalRegister";
 
 import User from "./pages/User/User";
 import EditProfile from "./pages/EditProfile/EditProfile";
@@ -45,6 +48,9 @@ function App() {
             <Route path="remote-play" element={<RemoteMode />} />
             <Route path="local-mode" element={<LocalMode />} />
             <Route path="quadra-mode" element={<QuadraMode />} />
+            <Route path="tournament" element={<TournamentBracket />} />
+            <Route path="quadra-register" element={<QuadraRegister />} />
+            <Route path="local-register" element={<LocalRegister />} />
           </Route>
           <Route
             path="/profile"

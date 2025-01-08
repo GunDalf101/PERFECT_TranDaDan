@@ -5,8 +5,12 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import GUI from 'lil-gui';
 import gsap from 'gsap';
 import { split } from 'three/src/nodes/TSL.js';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const QuadraMode = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const {teams} = location.state;
     const canvasRef = useRef(null);
     const sceneRef = useRef(null);
     const gameObjectsRef = useRef([]);
@@ -16,6 +20,8 @@ const QuadraMode = () => {
     const paddleRefP4 = useRef(null);
     const [scores, setScores] = useState({ player: 0, ai: 0 });
     const [matches, setMatches] = useState({ player: 0, ai: 0 });
+    const [gameOver, setGameOver] = useState(false);
+    const [winner, setWinner] = useState(null);
     let tableBoundsRef = useRef(null);
 
     useEffect(() => {
@@ -50,7 +56,7 @@ const QuadraMode = () => {
 
         const cameraP1 = new THREE.PerspectiveCamera(
             75,
-            window.innerWidth / (window.innerHeight * 0.5),
+            window.innerWidth * 0.5 / window.innerHeight,
             0.1,
             100
         );
@@ -58,7 +64,7 @@ const QuadraMode = () => {
         scene.add(cameraP1);
         const cameraP2 = new THREE.PerspectiveCamera(
             75,
-            window.innerWidth / (window.innerHeight * 0.5),
+            window.innerWidth * 0.5 / window.innerHeight,
             0.1,
             100
         )
@@ -138,7 +144,8 @@ const QuadraMode = () => {
                 const model = gltf.scene;
                 paddleRefP1.current = new GameObject(model);
                 model.scale.set(1.8, 1.8, 1.8);
-                model.position.y = 4.0387;
+                model.position.x = 1.2;
+                model.position.y = 5;
                 model.position.z = 10;
 
                 model.traverse((child) => {
@@ -151,12 +158,15 @@ const QuadraMode = () => {
                 scene.add(model);
 
                 paddleRefP2.current = new GameObject(model.clone());
+                paddleRefP2.current.mesh.position.x = -1.2;
                 paddleRefP2.current.mesh.position.z = -10;
                 scene.add(paddleRefP2.current.mesh);
                 paddleRefP3.current = new GameObject(model.clone());
+                paddleRefP3.current.mesh.position.x = 1.2;
                 paddleRefP3.current.mesh.position.z = -10;
                 scene.add(paddleRefP3.current.mesh);
                 paddleRefP4.current = new GameObject(model.clone());
+                paddleRefP4.current.mesh.position.x = -1.2;
                 paddleRefP4.current.mesh.position.z = 10;
                 scene.add(paddleRefP4.current.mesh);
             });
@@ -389,10 +399,16 @@ const QuadraMode = () => {
                     
                     if (playerGamesWon >= Math.ceil(maxGames / 2) ||
                     aiGamesWon >= Math.ceil(maxGames / 2)) {
-                        isGameOver = true;
+                        setGameOver(true);
                         inGame = false;
-                        playerGamesWon = 0;
-                        aiGamesWon = 0;
+                        const winningTeam = playerGamesWon > aiGamesWon ? 'red' : 'blue';
+                        setWinner(winningTeam);
+                        navigate('/game-lobby/quadra-register', {
+                            state: {
+                                winner: winningTeam,
+                                teams: teams
+                            }
+                        });
                     }
                     
                     updateScore();
@@ -559,9 +575,9 @@ const QuadraMode = () => {
             const width = window.innerWidth;
             const height = window.innerHeight;
             
-            cameraP1.aspect = width / (height * 0.5);
+            cameraP1.aspect = width * 0.5 / height;
             cameraP1.updateProjectionMatrix();
-            cameraP2.aspect = width / (height * 0.5);
+            cameraP2.aspect = width * 0.5 / height;
             cameraP2.updateProjectionMatrix();
             
             renderer.setSize(width, height);
@@ -705,13 +721,25 @@ const QuadraMode = () => {
             }
             
             controls.update();
+            // renderer.setScissorTest(true);
+            // renderer.setViewport(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
+            // renderer.setScissor(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
+            // renderer.render(scene, cameraP2);
+
+            // renderer.setViewport(0, 0, window.innerWidth, window.innerHeight / 2);
+            // renderer.setScissor(0, 0, window.innerWidth, window.innerHeight / 2);
+            // renderer.render(scene, cameraP1);
+
+            // requestAnimationFrame(animate);
+            // renderer.setScissorTest(false);
             renderer.setScissorTest(true);
-            renderer.setViewport(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
-            renderer.setScissor(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
+
+            renderer.setViewport(0, 0, window.innerWidth / 2, window.innerHeight);
+            renderer.setScissor(0, 0, window.innerWidth / 2, window.innerHeight);
             renderer.render(scene, cameraP2);
 
-            renderer.setViewport(0, 0, window.innerWidth, window.innerHeight / 2);
-            renderer.setScissor(0, 0, window.innerWidth, window.innerHeight / 2);
+            renderer.setViewport(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
+            renderer.setScissor(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
             renderer.render(scene, cameraP1);
 
             requestAnimationFrame(animate);
@@ -769,44 +797,96 @@ const QuadraMode = () => {
     return (
         <>
             <canvas ref={canvasRef} className="webgl" />
-            <div
-                style={{
-                    position: 'absolute',
-                    top: '10px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    color: 'white',
-                    fontSize: '24px'
-                }}
-                >
-                Player: {scores.player} | AI: {scores.ai}
+            
+            {/* Retro Navbar for Teams */}
+            <div className="absolute top-10 left-1/2 transform -translate-x-1/2 flex items-center justify-between w-full max-w-5xl px-8 py-6 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full border-4 border-neon-cyan shadow-glow">
+                
+                {/* Red Team Avatars */}
+                <div className="flex items-center space-x-4">
+                    {teams.red.map((player, index) => (
+                        <div key={`red-${index}`} className="flex items-center space-x-2">
+                            <div className="w-12 h-12 rounded-full overflow-hidden border-4 border-rose-400 neon-glow-rose">
+                                {player.image && (
+                                    <img 
+                                        src={player.image} 
+                                        alt={player.nickname}
+                                        className="w-full h-full object-cover"
+                                    />
+                                )}
+                            </div>
+                            <span className="text-rose-400 text-sm pixel-font">{player.nickname}</span>
+                        </div>
+                    ))}
+                </div>
+                
+                {/* Score and Rounds Display - Centered Between Teams */}
+                <div className="flex flex-col items-center space-y-3">
+                    {/* Score Display */}
+                    <div className="text-neon-white text-2xl pixel-font animate-glow">
+                        Red Team: {scores.player} | Blue Team: {scores.ai}
+                    </div>
+                    
+                    {/* Rounds Display */}
+                    <div className="text-neon-white text-xl pixel-font">
+                        ROUNDS - Red Team: {matches.player} | Blue Team: {matches.ai}
+                    </div>
+                </div>
+                
+                {/* Blue Team Avatars */}
+                <div className="flex items-center space-x-4">
+                    {teams.blue.map((player, index) => (
+                        <div key={`blue-${index}`} className="flex items-center space-x-2 justify-end">
+                            <span className="text-cyan-400 text-sm pixel-font">{player.nickname}</span>
+                            <div className="w-12 h-12 rounded-full overflow-hidden border-4 border-cyan-400 neon-glow-cyan">
+                                {player.image && (
+                                    <img 
+                                        src={player.image} 
+                                        alt={player.nickname}
+                                        className="w-full h-full object-cover"
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
-            <div
-                style={{
-                    position: 'absolute',
-                    top: '50px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    color: 'white',
-                    fontSize: '24px'
-                }}
-            >
-                PlayerMatches: {matches.player} | AI: {matches.ai}
+            
+            {/* Controls Info */}
+            <div className="absolute bottom-4 left-4 text-white text-sm space-y-1">
+                <p className="pixel-font">Red Team Controls:</p>
+                <p className="pixel-font">Player 1: Arrow Keys</p>
+                <p className="pixel-font">Player 2: WASD</p>
             </div>
-            <div
-                style={{
-                    position: 'absolute',
-                    bottom: '20px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    color: 'white',
-                    fontSize: '16px'
-                }}
-            >
+            
+            <div className="absolute bottom-4 right-4 text-white text-sm space-y-1 text-right">
+                <p className="pixel-font">Blue Team Controls:</p>
+                <p className="pixel-font">Player 1: IJKL</p>
+                <p className="pixel-font">Player 2: Numpad 8456</p>
+            </div>
+            
+            <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-neon-white text-lg pixel-font animate-flicker">
                 Press ENTER to start/pause game
             </div>
+            
+            {/* Game Over Modal */}
+            {gameOver && (
+                <div className="absolute inset-0 bg-black/90 flex items-center justify-center">
+                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-lg text-center border-2 border-neon-white neon-glow-white">
+                        <Swords className={`w-16 h-16 mx-auto mb-4 ${winner === 'red' ? 'text-rose-400' : 'text-cyan-400'} animate-pulse`} />
+                        <div className={`text-2xl font-bold ${winner === 'red' ? 'text-rose-400' : 'text-cyan-400'} pixel-font animate-glow`}>
+                            {winner.toUpperCase()} TEAM WINS!
+                        </div>
+                        <button
+                            onClick={() => navigate('/game-lobby/quadra-register')}
+                            className="mt-4 bg-transparent text-neon-white border-2 border-cyan-400 px-6 py-2 rounded-lg
+                                hover:bg-cyan-400/20 transition-all duration-300 pixel-font"
+                        >
+                            Back to Lobby
+                        </button>
+                    </div>
+                </div>
+            )}
         </>
     );
 };
-
 export default QuadraMode;
