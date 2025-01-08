@@ -6,12 +6,14 @@ import GUI from 'lil-gui';
 import gsap from 'gsap';
 import { split } from 'three/src/nodes/TSL.js';
 
-const LocalMode = () => {
+const QuadraMode = () => {
     const canvasRef = useRef(null);
     const sceneRef = useRef(null);
     const gameObjectsRef = useRef([]);
-    const paddleRef = useRef(null);
-    const paddleCPURef = useRef(null);
+    const paddleRefP1 = useRef(null);
+    const paddleRefP2 = useRef(null);
+    const paddleRefP3 = useRef(null);
+    const paddleRefP4 = useRef(null);
     const [scores, setScores] = useState({ player: 0, ai: 0 });
     const [matches, setMatches] = useState({ player: 0, ai: 0 });
     let tableBoundsRef = useRef(null);
@@ -46,22 +48,40 @@ const LocalMode = () => {
 
         const ballSound = new Audio('/sounds/ping_pong.mp3');
 
-        const camera = new THREE.PerspectiveCamera(
+        const cameraP1 = new THREE.PerspectiveCamera(
             75,
             window.innerWidth / (window.innerHeight * 0.5),
             0.1,
             100
         );
-        camera.position.set(10, 10, 15);
-        scene.add(camera);
-        const splitCamera = new THREE.PerspectiveCamera(
+        cameraP1.position.set(10, 10, 15);
+        scene.add(cameraP1);
+        const cameraP2 = new THREE.PerspectiveCamera(
             75,
             window.innerWidth / (window.innerHeight * 0.5),
             0.1,
             100
         )
-        splitCamera.position.set(-10, 10, 15);
-        scene.add(splitCamera);
+        cameraP2.position.set(-10, 10, 15);
+        scene.add(cameraP2);
+
+        // const cameraP3 = new THREE.PerspectiveCamera(
+        //     75,
+        //     window.innerWidth / (window.innerHeight * 0.5),
+        //     0.1,
+        //     100
+        // )
+        // cameraP3.position.set(-10, 10, 15);
+        // scene.add(cameraP3);
+
+        // const cameraP4 = new THREE.PerspectiveCamera(
+        //     75,
+        //     window.innerWidth / (window.innerHeight * 0.5),
+        //     0.1,
+        //     100
+        // )
+        // cameraP4.position.set(-10, 10, 15);
+        // scene.add(cameraP4);
 
         const renderer = new THREE.WebGLRenderer({
             canvas: canvasRef.current
@@ -73,7 +93,7 @@ const LocalMode = () => {
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-        const controls = new OrbitControls(camera, canvasRef.current);
+        const controls = new OrbitControls(cameraP1, canvasRef.current);
         controls.enableDamping = true;
 
         class GameObject {
@@ -116,7 +136,7 @@ const LocalMode = () => {
             const loader = new GLTFLoader();
             loader.load('/models/paddle_test.gltf', (gltf) => {
                 const model = gltf.scene;
-                paddleRef.current = new GameObject(model);
+                paddleRefP1.current = new GameObject(model);
                 model.scale.set(1.8, 1.8, 1.8);
                 model.position.y = 4.0387;
                 model.position.z = 10;
@@ -130,9 +150,15 @@ const LocalMode = () => {
 
                 scene.add(model);
 
-                paddleCPURef.current = new GameObject(model.clone());
-                paddleCPURef.current.mesh.position.z = -10;
-                scene.add(paddleCPURef.current.mesh);
+                paddleRefP2.current = new GameObject(model.clone());
+                paddleRefP2.current.mesh.position.z = -10;
+                scene.add(paddleRefP2.current.mesh);
+                paddleRefP3.current = new GameObject(model.clone());
+                paddleRefP3.current.mesh.position.z = -10;
+                scene.add(paddleRefP3.current.mesh);
+                paddleRefP4.current = new GameObject(model.clone());
+                paddleRefP4.current.mesh.position.z = 10;
+                scene.add(paddleRefP4.current.mesh);
             });
         };
 
@@ -209,17 +235,17 @@ const LocalMode = () => {
             return false;
         };
         const checkCollisions = () => {
-            if (!paddleRef.current || gameObjectsRef.current.length === 0 || !paddleCPURef.current) return;
+            if (!paddleRefP1.current || gameObjectsRef.current.length === 0 || !paddleRefP2.current || !paddleRefP3.current || !paddleRefP4.current) return;
             
             const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
 
-            if (twoObjCollide(paddleRef.current, ball) && lastHitAI) {
+            if (twoObjCollide(paddleRefP1.current, ball) && lastHitAI) {
                 lastHitAI = false;
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
                 ballSound.play();
                 
-                const paddleBox = new THREE.Box3().setFromObject(paddleRef.current.mesh);
+                const paddleBox = new THREE.Box3().setFromObject(paddleRefP1.current.mesh);
                 const ballWidth = ball.position.x - paddleBox.min.x;
                 const paddleWidth = paddleBox.max.x - paddleBox.min.x;
                 const hitDirection = ballWidth / paddleWidth;
@@ -235,13 +261,13 @@ const LocalMode = () => {
                 
                 ball.velocity = new THREE.Vector3(0, 0, 0);
                 ball.applyImpulse(new THREE.Vector3(forceX, forceY, -forceZ));
-            } else if (twoObjCollide(paddleCPURef.current, ball) && !lastHitAI) {
+            } else if (twoObjCollide(paddleRefP2.current, ball) && !lastHitAI) {
                 lastHitAI = true;
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
                 ballSound.play();
                 
-                const paddleBox = new THREE.Box3().setFromObject(paddleCPURef.current.mesh);
+                const paddleBox = new THREE.Box3().setFromObject(paddleRefP2.current.mesh);
                 const ballWidth = ball.position.x - paddleBox.min.x;
                 const paddleWidth = paddleBox.max.x - paddleBox.min.x;
                 const hitDirection = ballWidth / paddleWidth;
@@ -250,14 +276,58 @@ const LocalMode = () => {
                 const ballHeight = ball.position.y - paddleBox.min.y;
                 const paddleHeight = paddleBox.max.y - paddleBox.min.y;
                 let forceY = Math.log(ballHeight / paddleHeight + 1) * 6 + 2;
+                let forceZ = Math.log(ballHeight / paddleHeight + 1) * 13 + 10;
                 
                 playerSideBounces = 0;
                 aiSideBounces = 0;
                 
                 ball.velocity = new THREE.Vector3(0, 0, 0);
-                ball.applyImpulse(new THREE.Vector3(forceX, forceY, 16));
-            }
-            else if (twoObjCollide(tableObject, ball)) {
+                ball.applyImpulse(new THREE.Vector3(forceX, forceY, forceZ));
+            } else if (twoObjCollide(paddleRefP3.current, ball) && !lastHitAI) {
+                lastHitAI = true;
+                ballSound.volume = Math.min(1, 1);
+                ballSound.currentTime = 0;
+                ballSound.play();
+                
+                const paddleBox = new THREE.Box3().setFromObject(paddleRefP3.current.mesh);
+                const ballWidth = ball.position.x - paddleBox.min.x;
+                const paddleWidth = paddleBox.max.x - paddleBox.min.x;
+                const hitDirection = ballWidth / paddleWidth;
+                
+                let forceX = (hitDirection - paddleWidth / 2) * 3;
+                const ballHeight = ball.position.y - paddleBox.min.y;
+                const paddleHeight = paddleBox.max.y - paddleBox.min.y;
+                let forceY = Math.log(ballHeight / paddleHeight + 1) * 6 + 2;
+                let forceZ = Math.log(ballHeight / paddleHeight + 1) * 13 + 10;
+                
+                playerSideBounces = 0;
+                aiSideBounces = 0;
+                
+                ball.velocity = new THREE.Vector3(0, 0, 0);
+                ball.applyImpulse(new THREE.Vector3(forceX, forceY, forceZ));
+            } else if (twoObjCollide(paddleRefP4.current, ball) && lastHitAI) {
+                lastHitAI = false;
+                ballSound.volume = Math.min(1, 1);
+                ballSound.currentTime = 0;
+                ballSound.play();
+                
+                const paddleBox = new THREE.Box3().setFromObject(paddleRefP4.current.mesh);
+                const ballWidth = ball.position.x - paddleBox.min.x;
+                const paddleWidth = paddleBox.max.x - paddleBox.min.x;
+                const hitDirection = ballWidth / paddleWidth;
+                
+                let forceX = -(hitDirection - paddleWidth / 2) * 3;
+                const ballHeight = ball.position.y - paddleBox.min.y;
+                const paddleHeight = paddleBox.max.y - paddleBox.min.y;
+                let forceY = Math.log(ballHeight / paddleHeight + 1) * 6 + 2;
+                let forceZ = Math.log(ballHeight / paddleHeight + 1) * 13 + 10;
+                
+                playerSideBounces = 0;
+                aiSideBounces = 0;
+                
+                ball.velocity = new THREE.Vector3(0, 0, 0);
+                ball.applyImpulse(new THREE.Vector3(forceX, forceY, -forceZ));
+            } else if (twoObjCollide(tableObject, ball)) {
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
                 ballSound.play();
@@ -360,35 +430,63 @@ const LocalMode = () => {
 
         const paddleSpeed = 0.08;
         const smoothFactor = 0.05;
-        let paddleVelocityX = 0;
-        let paddleVelocityY = 0;
-        let paddleCpuVelocityY = 0;
-        let paddleCpuVelocityX = 0;
+        let paddleP1VelocityX = 0;
+        let paddleP1VelocityY = 0;
+        let paddleP2VelocityY = 0;
+        let paddleP2VelocityX = 0;
+        let paddleP3VelocityY = 0;
+        let paddleP3VelocityX = 0;
+        let paddleP4VelocityY = 0;
+        let paddleP4VelocityX = 0;
 
         const handleKeyDown = (event) => {
             if (event.key === 'ArrowUp') {
-                paddleVelocityY = paddleSpeed;
+                paddleP1VelocityY = paddleSpeed;
             }
             if (event.key === 'ArrowDown') {
-                paddleVelocityY = -paddleSpeed;
+                paddleP1VelocityY = -paddleSpeed;
             }
             if (event.key === 'ArrowLeft') {
-                paddleVelocityX = -paddleSpeed;
+                paddleP1VelocityX = -paddleSpeed;
             }
             if (event.key === 'ArrowRight') {
-                paddleVelocityX = paddleSpeed;
+                paddleP1VelocityX = paddleSpeed;
             }
             if (event.key === 'W' || event.key === 'w') {
-                paddleCpuVelocityY = paddleSpeed;
+                paddleP2VelocityY = paddleSpeed;
             }
             if (event.key === 'S' || event.key === 's') {
-                paddleCpuVelocityY = -paddleSpeed;
+                paddleP2VelocityY = -paddleSpeed;
             }
             if (event.key === 'A' || event.key === 'a') {
-                paddleCpuVelocityX = paddleSpeed;
+                paddleP2VelocityX = paddleSpeed;
             }
             if (event.key === 'D' || event.key === 'd') {
-                paddleCpuVelocityX = -paddleSpeed;
+                paddleP2VelocityX = -paddleSpeed;
+            }
+            if (event.key === 'I' || event.key === 'i') {
+                paddleP3VelocityY = paddleSpeed;
+            }
+            if (event.key === 'K' || event.key === 'k') {
+                paddleP3VelocityY = -paddleSpeed;
+            }
+            if (event.key === 'J' || event.key === 'j') {
+                paddleP3VelocityX = paddleSpeed;
+            }
+            if (event.key === 'L' || event.key === 'l') {
+                paddleP3VelocityX = -paddleSpeed;
+            }
+            if (event.key === '8') {
+                paddleP4VelocityY = paddleSpeed;
+            }
+            if (event.key === '5') {
+                paddleP4VelocityY = -paddleSpeed;
+            }
+            if (event.key === '6') {
+                paddleP4VelocityX = paddleSpeed;
+            }
+            if (event.key === '4') {
+                paddleP4VelocityX = -paddleSpeed;
             }
             if (event.key === 'Enter') {
                 inGame = !inGame;
@@ -398,16 +496,28 @@ const LocalMode = () => {
 
         const handleKeyUp = (event) => {
             if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-                paddleVelocityY = 0;
+                paddleP1VelocityY = 0;
             }
             if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-                paddleVelocityX = 0;
+                paddleP1VelocityX = 0;
             }
             if (event.key === 'W' || event.key === 'w' || event.key === 'S' || event.key === 's') {
-                paddleCpuVelocityY = 0;
+                paddleP2VelocityY = 0;
             }
             if (event.key === 'A' || event.key === 'a' || event.key === 'D' || event.key === 'd') {
-                paddleCpuVelocityX = 0;
+                paddleP2VelocityX = 0;
+            }
+            if (event.key === 'I' || event.key === 'i' || event.key === 'K' || event.key === 'k') {
+                paddleP3VelocityY = 0;
+            }
+            if (event.key === 'J' || event.key === 'j' || event.key === 'L' || event.key === 'l') {
+                paddleP3VelocityX = 0;
+            }
+            if (event.key === '8' || event.key === '5') {
+                paddleP4VelocityY = 0;
+            }
+            if (event.key === '4' || event.key === '6') {
+                paddleP4VelocityX = 0;
             }
         };
 
@@ -449,10 +559,10 @@ const LocalMode = () => {
             const width = window.innerWidth;
             const height = window.innerHeight;
             
-            camera.aspect = width / (height * 0.5);
-            camera.updateProjectionMatrix();
-            splitCamera.aspect = width / (height * 0.5);
-            splitCamera.updateProjectionMatrix();
+            cameraP1.aspect = width / (height * 0.5);
+            cameraP1.updateProjectionMatrix();
+            cameraP2.aspect = width / (height * 0.5);
+            cameraP2.updateProjectionMatrix();
             
             renderer.setSize(width, height);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -468,49 +578,56 @@ const LocalMode = () => {
             oldElapsedTime = elapsedTime;
             
             if (inGame) {
-                if (paddleRef.current?.mesh) {
-                    camera.position.set(
+                if (paddleRefP1.current?.mesh) {
+                    cameraP1.position.set(
                         0,
                         6.8,
                         12.2
                     );
-                    camera.lookAt(0, 0, 0);
+                    cameraP1.lookAt(0, 0, 0);
 
-                    splitCamera.position.set(
+                    cameraP2.position.set(
                         0,
                         6.8,
                         -12.2
                     );
 
-                    splitCamera.lookAt(0, 0, 0);
+                    cameraP2.lookAt(0, 0, 0);
 
-                    paddleVelocityX = lerp(paddleVelocityX, paddleVelocityX, smoothFactor);
-                    paddleVelocityY = lerp(paddleVelocityY, paddleVelocityY, smoothFactor);
-                    paddleCpuVelocityX = lerp(paddleCpuVelocityX, paddleCpuVelocityX, smoothFactor);
-                    paddleCpuVelocityY = lerp(paddleCpuVelocityY, paddleCpuVelocityY, smoothFactor);
+                    paddleP1VelocityX = lerp(paddleP1VelocityX, paddleP1VelocityX, smoothFactor);
+                    paddleP1VelocityY = lerp(paddleP1VelocityY, paddleP1VelocityY, smoothFactor);
+                    paddleP2VelocityX = lerp(paddleP2VelocityX, paddleP2VelocityX, smoothFactor);
+                    paddleP2VelocityY = lerp(paddleP2VelocityY, paddleP2VelocityY, smoothFactor);
+                    paddleP3VelocityY = lerp(paddleP3VelocityY, paddleP3VelocityY, smoothFactor);
+                    paddleP3VelocityY = lerp(paddleP3VelocityY, paddleP3VelocityY, smoothFactor);
+                    paddleP4VelocityY = lerp(paddleP4VelocityY, paddleP4VelocityY, smoothFactor);
+                    paddleP4VelocityY = lerp(paddleP4VelocityY, paddleP4VelocityY, smoothFactor);
 
-                    paddleRef.current.mesh.position.x += paddleVelocityX;
-                    paddleRef.current.mesh.position.y += paddleVelocityY;
-                    paddleCPURef.current.mesh.position.x += paddleCpuVelocityX;
-                    paddleCPURef.current.mesh.position.y += paddleCpuVelocityY;
+                    paddleRefP1.current.mesh.position.x += paddleP1VelocityX;
+                    paddleRefP1.current.mesh.position.y += paddleP1VelocityY;
+                    paddleRefP2.current.mesh.position.x += paddleP2VelocityX;
+                    paddleRefP2.current.mesh.position.y += paddleP2VelocityY;
+                    paddleRefP3.current.mesh.position.x += paddleP3VelocityX;
+                    paddleRefP3.current.mesh.position.y += paddleP3VelocityY;
+                    paddleRefP4.current.mesh.position.x += paddleP4VelocityX;
+                    paddleRefP4.current.mesh.position.y += paddleP4VelocityY;
 
                     if (tableBoundsRef.current) {
-                        console.log(tableBoundsRef.current);
-                        if (paddleRef.current.mesh.position.x < tableBoundsRef.current.min.x) {
-                            paddleRef.current.mesh.position.x = tableBoundsRef.current.min.x;
-                        } else if (paddleRef.current.mesh.position.x > tableBoundsRef.current.max.x) {
-                            paddleRef.current.mesh.position.x = tableBoundsRef.current.max.x;
+                        if (paddleRefP1.current.mesh.position.x < tableBoundsRef.current.min.x) {
+                            paddleRefP1.current.mesh.position.x = tableBoundsRef.current.min.x;
+                        } else if (paddleRefP1.current.mesh.position.x > tableBoundsRef.current.max.x) {
+                            paddleRefP1.current.mesh.position.x = tableBoundsRef.current.max.x;
                         }
 
-                        if (paddleRef.current.mesh.position.y < tableBoundsRef.current.min.y - 0.5) {
-                            paddleRef.current.mesh.position.y = tableBoundsRef.current.min.y - 0.5;
-                        } else if (paddleRef.current.mesh.position.y > tableBoundsRef.current.max.y + 3) {
-                            paddleRef.current.mesh.position.y = tableBoundsRef.current.max.y + 3;
+                        if (paddleRefP1.current.mesh.position.y < tableBoundsRef.current.min.y - 0.5) {
+                            paddleRefP1.current.mesh.position.y = tableBoundsRef.current.min.y - 0.5;
+                        } else if (paddleRefP1.current.mesh.position.y > tableBoundsRef.current.max.y + 3) {
+                            paddleRefP1.current.mesh.position.y = tableBoundsRef.current.max.y + 3;
                         }
                     }
 
-                    if (paddleRef.current.mesh.position.x > 0) {
-                        gsap.to(paddleRef.current.mesh.rotation, {
+                    if (paddleRefP1.current.mesh.position.x > 0) {
+                        gsap.to(paddleRefP1.current.mesh.rotation, {
                             x: 2.81,
                             y: 2.96,
                             z: 2.81,
@@ -518,7 +635,25 @@ const LocalMode = () => {
                             ease: "power2.inOut",
                         });
                     } else {
-                        gsap.to(paddleRef.current.mesh.rotation, {
+                        gsap.to(paddleRefP1.current.mesh.rotation, {
+                            x: 2.81,
+                            y: 6.28,
+                            z: 2.81,
+                            duration: 0.095,
+                            ease: "power2.inOut",
+                        });
+                    }
+                    
+                    if (paddleRefP4.current.mesh.position.x > 0) {
+                        gsap.to(paddleRefP4.current.mesh.rotation, {
+                            x: 2.81,
+                            y: 2.96,
+                            z: 2.81,
+                            duration: 0.095,
+                            ease: "power2.inOut",
+                        });
+                    } else {
+                        gsap.to(paddleRefP4.current.mesh.rotation, {
                             x: 2.81,
                             y: 6.28,
                             z: 2.81,
@@ -527,8 +662,8 @@ const LocalMode = () => {
                         });
                     }
 
-                    if (paddleCPURef.current?.mesh.position.x > 0) {
-                        gsap.to(paddleCPURef.current.mesh.rotation, {
+                    if (paddleRefP2.current?.mesh.position.x > 0) {
+                        gsap.to(paddleRefP2.current.mesh.rotation, {
                             x: -2.81,
                             y: 2.96,
                             z: 2.81,
@@ -536,7 +671,25 @@ const LocalMode = () => {
                             ease: "power2.inOut",
                         });
                     } else {
-                        gsap.to(paddleCPURef.current.mesh.rotation, {
+                        gsap.to(paddleRefP2.current.mesh.rotation, {
+                            x: -2.81,
+                            y: 6.28,
+                            z: 2.81,
+                            duration: 0.095,
+                            ease: "power2.inOut",
+                        });
+                    }
+
+                    if (paddleRefP3.current?.mesh.position.x > 0) {
+                        gsap.to(paddleRefP3.current.mesh.rotation, {
+                            x: -2.81,
+                            y: 2.96,
+                            z: 2.81,
+                            duration: 0.095,
+                            ease: "power2.inOut",
+                        });
+                    } else {
+                        gsap.to(paddleRefP3.current.mesh.rotation, {
                             x: -2.81,
                             y: 6.28,
                             z: 2.81,
@@ -555,15 +708,15 @@ const LocalMode = () => {
             renderer.setScissorTest(true);
             renderer.setViewport(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
             renderer.setScissor(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
-            renderer.render(scene, splitCamera);
+            renderer.render(scene, cameraP2);
 
             renderer.setViewport(0, 0, window.innerWidth, window.innerHeight / 2);
             renderer.setScissor(0, 0, window.innerWidth, window.innerHeight / 2);
-            renderer.render(scene, camera);
+            renderer.render(scene, cameraP1);
 
             requestAnimationFrame(animate);
             renderer.setScissorTest(false);
-            if (gameObjectsRef.current.length > 0 && paddleRef.current?.mesh && paddleCPURef.current?.mesh && tableObject.mesh && netObject.mesh) {
+            if (gameObjectsRef.current.length > 0 && paddleRefP1.current?.mesh && paddleRefP2.current?.mesh && tableObject.mesh && netObject.mesh) {
 
                 tableBoundingBox.setFromObject(tableObject.mesh);
                 netBoundingBox.setFromObject(netObject.mesh);
@@ -656,4 +809,4 @@ const LocalMode = () => {
     );
 };
 
-export default LocalMode;
+export default QuadraMode;

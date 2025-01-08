@@ -343,12 +343,13 @@ const RemoteMode = () => {
                 const ballHeight = ball.position.y - paddleBox.min.y;
                 const paddleHeight = paddleBox.max.y - paddleBox.min.y;
                 let forceY = Math.log(ballHeight / paddleHeight + 1) * 6 + 2;
+                let forceZ = Math.log(ballHeight / paddleHeight + 1) * 13 + 10;
                 
                 playerSideBounces = 0;
                 aiSideBounces = 0;
                 
                 ball.velocity = new THREE.Vector3(0, 0, 0);
-                ball.applyImpulse(new THREE.Vector3(forceX, forceY, 16));
+                ball.applyImpulse(new THREE.Vector3(forceX, forceY, forceZ));
             }
             
             // Table collision
