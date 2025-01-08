@@ -69,8 +69,8 @@ const UserList = ({ friends, selectedChat, setSelectedChat, messages }) => {
                     `}
                   >
                     <img
-                      src={user.avatar || "/api/placeholder/40/40"}
-                      className="w-full h-full object-cover rounded-full"
+                      src={user.avatar || "./default_profile.webp"}
+                      className={`w-full h-full object-cover rounded-full`}
                       alt={`${user.name}'s avatar`}
                     />
                   </div>

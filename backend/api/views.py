@@ -310,7 +310,8 @@ class UsersMeView(APIView):
             'id': user.id,
             'username': user.username,
             'email': user.email,
-            'intra_connection': ic
+            'intra_connection': ic,
+            'friends': getFriendList(user.id)
         }
 
         return Response(user_data, status=status.HTTP_200_OK)
@@ -339,7 +340,7 @@ def getFriendList(user_id):
         friendList.append({
             'id': friend.id,
             'username': friend.username,
-            'avatar': 'https://via.placeholder.com/40'
+            'avatar': './default_profile.webp'
         })
     return friendList
 

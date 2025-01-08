@@ -1,15 +1,29 @@
 import styles from "./EditProfile.module.scss";
 import Navbar from "../../components/Navbar/Logged";
-import { useState } from "react";
+import getMyData from "../../api/authServiceMe";
+import { useState, useEffect } from "react";
 
 const EditProfile = () => {
   const [formData, setFormData] = useState({
-    username: "",
-    email: "",
+    username: "wgfgsfg",
+    email: "sgfdgsfg",
     avatar: "", // URL or image file preview
   });
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const mydata = await getMyData()
+        setFormData(mydata)
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchUserData();
+  }, []); // Add reload dependency
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
