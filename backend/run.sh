@@ -33,8 +33,8 @@
 #   -p 6379:6379 \
 #   redis:latest
 
-docker start postgres-db
-docker start redis-db
+# docker start postgres-db
+# docker start redis-db
 
 # sleep 10
 python3 manage.py makemigrations
