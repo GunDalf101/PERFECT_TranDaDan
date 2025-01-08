@@ -65,9 +65,6 @@ class PongConsumer(AsyncWebsocketConsumer):
         PongConsumer.shared_games[self.game_id]['ball_position']['x'] = data['ball_position']['x']
         PongConsumer.shared_games[self.game_id]['ball_position']['y'] = data['ball_position']['y']
         PongConsumer.shared_games[self.game_id]['ball_position']['z'] = data['ball_position']['z']
-        # PongConsumer.shared_games[self.game_id]['ball_velocity']['x'] = data['ball_velocity']['x']
-        # PongConsumer.shared_games[self.game_id]['ball_velocity']['y'] = data['ball_velocity']['y']
-        # PongConsumer.shared_games[self.game_id]['ball_velocity']['z'] = data['ball_velocity']['z']
 
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -95,6 +92,9 @@ class PongConsumer(AsyncWebsocketConsumer):
                 await asyncio.sleep(self.delta_time)
         except asyncio.CancelledError:
             pass
+        except Exception as e:
+            print(f"Error in game loop for {self.game_id}: {e}")
+            raise
 
     def initialize_game_state(self):
         PongConsumer.shared_games[self.game_id] = {
@@ -125,18 +125,64 @@ class PongConsumer(AsyncWebsocketConsumer):
             'winner': None
         }
 
-    def update_game_state(self):
-        pass
+    def calculate_score(self):
+        zBall = PongConsumer.shared_games[self.game_id]['ball_position']['z']
+        tableZBound = 12
+        if zBall > tableZBound:
+            PongConsumer.shared_games[self.game_id]['scores']['player2'] += 1
+        elif zBall < -tableZBound:
+            PongConsumer.shared_games[self.game_id]['scores']['player1'] += 1
+    
+    def win_check(self):
+        player1_score = PongConsumer.shared_games[self.game_id]['scores']['player1']
+        player2_score = PongConsumer.shared_games[self.game_id]['scores']['player2']
+        player1_games = PongConsumer.shared_games[self.game_id]['rounds_won']['player1']
+        player2_games = PongConsumer.shared_games[self.game_id]['rounds_won']['player2']
 
+        max_score = 11
+        max_games = 3
+
+        if player1_score >= max_score or player2_score >= max_score:
+            if abs(player1_score - player2_score) >= 2:
+                if player1_score > player2_score:
+                    player1_games += 1
+                else:
+                    player2_games += 1
+
+                player1_score = 0
+                player2_score = 0
+
+                if player1_games >= (max_games + 1) // 2 or player2_games >= (max_games + 1) // 2:
+                    if player1_games >= (max_games + 1) // 2:
+                        PongConsumer.shared_games[self.game_id]['winner'] = PongConsumer.shared_games[self.game_id]['player1']
+                    else:
+                        PongConsumer.shared_games[self.game_id]['winner'] = PongConsumer.shared_games[self.game_id]['player2']
+                    player1_games = 0
+                    player2_games = 0
+
+        PongConsumer.shared_games[self.game_id]['scores']['player1'] = player1_score
+        PongConsumer.shared_games[self.game_id]['scores']['player2'] = player2_score
+        PongConsumer.shared_games[self.game_id]['rounds_won']['player1'] = player1_games
+        PongConsumer.shared_games[self.game_id]['rounds_won']['player2'] = player2_games
+        print("player1_score", player1_score)
+        print("player2_score", player2_score)
+        print("player1_games", player1_games)
+        print("player2_games", player2_games)
+
+
+
+    def update_game_state(self):
+        self.calculate_score()
+        self.win_check()
     def update_paddle_position(self, data):
         if self.player_number == 'player1':
             PongConsumer.shared_games[self.game_id]['paddle1_position']['x'] = 5.5 * data['mouse_position']['x']
             PongConsumer.shared_games[self.game_id]['paddle1_position']['z'] = 11 - abs(data['mouse_position']['x'] * 2)
-            PongConsumer.shared_games[self.game_id]['paddle1_position']['y'] = 5.03 + data['mouse_position']['y']
+            PongConsumer.shared_games[self.game_id]['paddle1_position']['y'] = 5.03 + data['mouse_position']['y'] * 2
         elif self.player_number == 'player2':
             PongConsumer.shared_games[self.game_id]['paddle2_position']['x'] = -5.5 * data['mouse_position']['x']
             PongConsumer.shared_games[self.game_id]['paddle2_position']['z'] = -11 + abs(data['mouse_position']['x'] * 2)
-            PongConsumer.shared_games[self.game_id]['paddle2_position']['y'] = 5.03 + data['mouse_position']['y']
+            PongConsumer.shared_games[self.game_id]['paddle2_position']['y'] = 5.03 + data['mouse_position']['y'] * 2
 
     async def broadcast_game_state(self):
         await self.channel_layer.group_send(

@@ -68,7 +68,9 @@ const RemoteMode = () => {
 
         const handleGameState = (state) => {
             updatePaddlePositions(state);
-            updateBallPosition(state);
+            if (state.player1 !== username) {
+                updateBallPosition(state);
+            }
         };
         const updatePaddlePositions = (state) => {
             const paddleOpponent = paddleOpponentRef.current;
@@ -94,7 +96,7 @@ const RemoteMode = () => {
 
         const updateBallPosition = (state) => {
             const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
-            if (ball && state.player1 !== username) {
+            if (ball) {
                 ball.mesh.position.x = state.ball_position.x;
                 ball.mesh.position.y = state.ball_position.y;
                 ball.mesh.position.z = state.ball_position.z;
@@ -131,6 +133,9 @@ const RemoteMode = () => {
         renderer.setClearAlpha(0);
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        const controls = new OrbitControls(camera, canvasRef.current);
+        controls.enableDamping = true;
 
         class GameObject {
             static id = 0;
@@ -386,6 +391,7 @@ const RemoteMode = () => {
 
         const handleClick = () => {
             inGame = true;
+            controls.enableRotate = !inGame;
         }
 
         // Game logic functions
@@ -441,19 +447,19 @@ const RemoteMode = () => {
             const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
             const tableBounds = new THREE.Box3().setFromObject(tableObject.mesh);
             
-            if (ball.position.z > tableBounds.max.z + 3 && playerSideBounces === 1) {
+            if (ball.position.z > tableBounds.max.z + 10 && playerSideBounces === 1) {
                 aiScore++;
                 updateScore();
                 resetBall(-1);
-            } else if (ball.position.z < tableBounds.min.z - 3 && aiSideBounces === 1) {
+            } else if (ball.position.z < tableBounds.min.z - 10 && aiSideBounces === 1) {
                 playerScore++;
                 updateScore();
                 resetBall(1);
-            } else if (ball.position.z > tableBounds.max.z + 3 && playerSideBounces === 0) {
+            } else if (ball.position.z > tableBounds.max.z + 10 && playerSideBounces === 0) {
                 playerScore++;
                 updateScore();
                 resetBall(1);
-            } else if (ball.position.z < tableBounds.min.z - 3 && aiSideBounces === 0) {
+            } else if (ball.position.z < tableBounds.min.z - 10 && aiSideBounces === 0) {
                 aiScore++;
                 updateScore();
                 resetBall(-1);
@@ -514,7 +520,7 @@ const RemoteMode = () => {
                     if (isPlayer1) {
                         camera.position.set(
                             4 * mouseCurrent.x,
-                            6.8 + (0.4 * mouseCurrent.y),
+                            6.8 + (1 * mouseCurrent.y),
                             12.8
                         );
                         if (ws && ws.readyState === WebSocket.OPEN)
@@ -522,14 +528,17 @@ const RemoteMode = () => {
                     } else {
                         camera.position.set(
                             -4 * mouseCurrent.x,
-                            6.8 + (0.4 * mouseCurrent.y),
+                            6.8 + (1 * mouseCurrent.y),
                             -12.8
                         );
                     }
-                    camera.lookAt(0, 0, 0);
+                    // look at paddle
+
 
                     const primaryPaddleRef = isPlayer1 ? paddleRef : paddleOpponentRef;
                     const opponentPaddleRef = isPlayer1 ? paddleOpponentRef : paddleRef;
+
+                    camera.lookAt(primaryPaddleRef.current.mesh.position);
 
                     // Primary paddle rotation logic
                     if (primaryPaddleRef.current?.mesh.position.x > 0) {
@@ -575,6 +584,7 @@ const RemoteMode = () => {
                 }
 
             }
+            controls.update();
             
             renderer.render(scene, camera);
             requestAnimationFrame(animate);
@@ -627,6 +637,7 @@ const RemoteMode = () => {
                 }
             });
             renderer.dispose();
+            if (controls) controls.dispose();
         };
 
         

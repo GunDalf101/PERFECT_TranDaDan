@@ -358,6 +358,7 @@ const CpuMode = () => {
             
             const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
             const tableBounds = new THREE.Box3().setFromObject(tableObject.mesh);
+            console.log(tableBounds)
             
             if (ball.position.z > tableBounds.max.z + 3 && playerSideBounces === 1) {
                 aiScore++;
