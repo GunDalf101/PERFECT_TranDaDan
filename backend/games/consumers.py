@@ -1,73 +1,103 @@
-# game/consumers.py
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 import asyncio
 import math
 
+
 class PongConsumer(AsyncWebsocketConsumer):
+    # Shared state between all consumer instances
+    shared_games = {}
+    game_loops = {}
+    active_connections = {}  # Track number of connections per game
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.room_group_name = None
-        self.game_state = {}
-        self.game_loop_task = None
-        self.delta_time = 1 / 60  # 60 FPS
         self.player_number = None
+        self.game_id = None
+        self.delta_time = 1/60 # 60 FPS
 
     async def connect(self):
         self.game_id = self.scope['url_route']['kwargs']['game_id']
         self.room_group_name = f'pong_{self.game_id}'
-        # Add the user to the room group
+        
+        # Increment connection counter for this game
+        PongConsumer.active_connections[self.game_id] = PongConsumer.active_connections.get(self.game_id, 0) + 1
+        
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
         await self.accept()
 
-        # Initialize game state and start the game loop if not already running
-        if not self.game_loop_task:
+        # Initialize shared game state if it doesn't exist
+        if self.game_id not in PongConsumer.shared_games:
             self.initialize_game_state()
-            self.game_loop_task = asyncio.create_task(self.game_loop())
+            # Start game loop only once per game
+            if self.game_id not in PongConsumer.game_loops:
+                PongConsumer.game_loops[self.game_id] = asyncio.create_task(self.game_loop())
 
     async def disconnect(self, close_code):
-        # Remove the user from the room group
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
-        # Stop the game loop if needed
-        if self.game_loop_task:
-            self.game_loop_task.cancel()
-            try:
-                await self.game_loop_task
-            except asyncio.CancelledError:
-                pass
+        
+        # Decrement connection counter and cleanup if last player
+        if self.game_id in PongConsumer.active_connections:
+            PongConsumer.active_connections[self.game_id] -= 1
+            if PongConsumer.active_connections[self.game_id] <= 0:
+                # Clean up game resources
+                if self.game_id in PongConsumer.game_loops:
+                    PongConsumer.game_loops[self.game_id].cancel()
+                    try:
+                        await PongConsumer.game_loops[self.game_id]
+                    except asyncio.CancelledError:
+                        pass
+                    del PongConsumer.game_loops[self.game_id]
+                
+                if self.game_id in PongConsumer.shared_games:
+                    del PongConsumer.shared_games[self.game_id]
+                
+                del PongConsumer.active_connections[self.game_id]
+
+    def update_ball_position(self, data):
+        PongConsumer.shared_games[self.game_id]['ball_position']['x'] = data['ball_position']['x']
+        PongConsumer.shared_games[self.game_id]['ball_position']['y'] = data['ball_position']['y']
+        PongConsumer.shared_games[self.game_id]['ball_position']['z'] = data['ball_position']['z']
+        # PongConsumer.shared_games[self.game_id]['ball_velocity']['x'] = data['ball_velocity']['x']
+        # PongConsumer.shared_games[self.game_id]['ball_velocity']['y'] = data['ball_velocity']['y']
+        # PongConsumer.shared_games[self.game_id]['ball_velocity']['z'] = data['ball_velocity']['z']
 
     async def receive(self, text_data):
         data = json.loads(text_data)
         if 'type' in data and data['type'] == 'init':
             if data['isPlayer1']:
                 self.player_number = 'player1'
-                self.game_state['player1'] = data['username']
+                PongConsumer.shared_games[self.game_id]['player1'] = data['username']
             else:
-                self.game_state['player1'] = data['opponent']
+                PongConsumer.shared_games[self.game_id]['player1'] = data['opponent']
                 self.player_number = 'player2'
+            await self.broadcast_game_state()
+            
         if 'type' in data and data['type'] == 'mouse_move':
             self.update_paddle_position(data)
+            await self.broadcast_game_state()
+        if 'type' in data and data['type'] == 'ball_position':
+            self.update_ball_position(data)
             await self.broadcast_game_state()
 
     async def game_loop(self):
         try:
             while True:
                 self.update_game_state()
-                # await self.broadcast_game_state()
-                
+                await self.broadcast_game_state()
                 await asyncio.sleep(self.delta_time)
         except asyncio.CancelledError:
             pass
 
     def initialize_game_state(self):
-        # print("way way ?")
-        self.game_state = {
+        PongConsumer.shared_games[self.game_id] = {
             'game_id': self.game_id,
             'player1': None,
             'ball_position': {
@@ -96,32 +126,24 @@ class PongConsumer(AsyncWebsocketConsumer):
         }
 
     def update_game_state(self):
-        # Update ball position
-        # self.game_state['ball_position']['x'] += self.game_state['ball_velocity']['x'] * self.delta_time
-        # self.game_state['ball_position']['y'] += self.game_state['ball_velocity']['y'] * self.delta_time
-
-        # Example collision check
-        # if self.game_state['ball_position']['y'] > 10 or self.game_state['ball_position']['y'] < -10:
-        #     self.game_state['ball_velocity']['y'] *= -1
-        return
+        pass
 
     def update_paddle_position(self, data):
-        # // paddleRef.current.mesh.position.z = 11 - Math.abs((2 * mouseCurrent.x));
         if self.player_number == 'player1':
-            self.game_state['paddle1_position']['x'] = 5.5 * data['mouse_position']['x']
-            self.game_state['paddle1_position']['z'] = 11 - abs(data['mouse_position']['x'] * 2)
-            self.game_state['paddle1_position']['y'] = 5.03 + data['mouse_position']['y']
+            PongConsumer.shared_games[self.game_id]['paddle1_position']['x'] = 5.5 * data['mouse_position']['x']
+            PongConsumer.shared_games[self.game_id]['paddle1_position']['z'] = 11 - abs(data['mouse_position']['x'] * 2)
+            PongConsumer.shared_games[self.game_id]['paddle1_position']['y'] = 5.03 + data['mouse_position']['y']
         elif self.player_number == 'player2':
-            self.game_state['paddle2_position']['x'] = -5.5 * data['mouse_position']['x']
-            self.game_state['paddle2_position']['z'] = -11 + abs(data['mouse_position']['x'] * 2)
-            self.game_state['paddle2_position']['y'] = 5.03 + data['mouse_position']['y']
+            PongConsumer.shared_games[self.game_id]['paddle2_position']['x'] = -5.5 * data['mouse_position']['x']
+            PongConsumer.shared_games[self.game_id]['paddle2_position']['z'] = -11 + abs(data['mouse_position']['x'] * 2)
+            PongConsumer.shared_games[self.game_id]['paddle2_position']['y'] = 5.03 + data['mouse_position']['y']
 
     async def broadcast_game_state(self):
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'send_game_state',
-                'state': self.game_state
+                'state': PongConsumer.shared_games[self.game_id]
             }
         )
 

@@ -43,13 +43,11 @@ const UserProvider = ({ children }) => {
   const login = (userData) => {
     setUser(userData);
     setIsAuthenticated(true);
-    // localStorage.setItem('isAuthenticated', 'true');
   };
 
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    // localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('access_token');
   };
 

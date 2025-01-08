@@ -2,22 +2,19 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import GUI from 'lil-gui';
 import gsap from 'gsap';
+import { split } from 'three/src/nodes/TSL.js';
 
-const RemoteMode = () => {
+const LocalMode = () => {
     const canvasRef = useRef(null);
     const sceneRef = useRef(null);
-    const websocketRef = useRef(null);
     const gameObjectsRef = useRef([]);
     const paddleRef = useRef(null);
-    const paddleOpponentRef = useRef(null);
+    const paddleCPURef = useRef(null);
     const [scores, setScores] = useState({ player: 0, ai: 0 });
     const [matches, setMatches] = useState({ player: 0, ai: 0 });
-    
-    // Get game session from localStorage
-    const gameSession = JSON.parse(localStorage.getItem('gameSession'));
-    const { gameId, username, opponent, isPlayer1 } = gameSession;
-    const [gameStatus, setGameStatus] = useState('waiting');
+    let tableBoundsRef = useRef(null);
 
     useEffect(() => {
         if (!canvasRef.current) return;
@@ -34,103 +31,50 @@ const RemoteMode = () => {
         let inGame = false;
         let lastHitAI = true;
         let mouseCurrent = { x: 0, y: 0 };
-        const ballSound = new Audio('/sounds/ping_pong.mp3');
-
-        console.log(gameId, username, opponent, isPlayer1);
-        // const ws = new WebSocket(
-        //     `ws://localhost:8000/ws/game/${gameId}/?username=${username}`
-        // );
-        // websocketRef.current = ws;
-
-        // ws.onopen = () => {
-        //     console.log('WebSocket connection opened');
-        //     const initData = {
-        //         type: 'init',
-        //         username: username,
-        //         opponent: opponent,
-        //         isPlayer1: isPlayer1
-        //     }
-        //     ws.send(JSON.stringify(initData));
-        // };
-
-        // ws.onmessage = (event) => {
-        //     const data = JSON.parse(event.data);
-
-        //     if (data.type === 'game_state') {
-        //         handleGameState(data.state);
-        //     }
-
-        // };
-
-        // ws.onclose = () => {
-        //     console.log('WebSocket connection closed');
-        // };
-
-        const handleGameState = (state) => {
-            updatePaddlePositions(state);
-            // updateBallPosition(state);
-        };
-        const updatePaddlePositions = (state) => {
-            const paddleOpponent = paddleOpponentRef.current;
-            const paddlePlayer = paddleRef.current;
-            if (paddleOpponent && paddlePlayer) {
-                if (state.player1 === username) {
-                    paddlePlayer.mesh.position.x = state.paddle1_position.x;
-                    paddlePlayer.mesh.position.y = state.paddle1_position.y;
-                    paddlePlayer.mesh.position.z = state.paddle1_position.z;
-                    paddleOpponent.mesh.position.x = state.paddle2_position.x;
-                    paddleOpponent.mesh.position.y = state.paddle2_position.y;
-                    paddleOpponent.mesh.position.z = state.paddle2_position.z;
-                } else {
-                    paddlePlayer.mesh.position.x = state.paddle2_position.x;
-                    paddlePlayer.mesh.position.y = state.paddle2_position.y;
-                    paddlePlayer.mesh.position.z = state.paddle2_position.z;
-                    paddleOpponent.mesh.position.x = state.paddle1_position.x;
-                    paddleOpponent.mesh.position.y = state.paddle1_position.y;
-                    paddleOpponent.mesh.position.z = state.paddle1_position.z;
-                }
-            }
-        };
-
-        const updateBallPosition = (state) => {
-            const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
-            if (ball && state.player1 !== username) {
-                ball.mesh.position.x = state.ball_position.x;
-                ball.mesh.position.y = state.ball_position.y;
-                ball.mesh.position.z = state.ball_position.z;
-            }
-        };
 
         const scene = new THREE.Scene();
         sceneRef.current = scene;
 
-        const paddleOpponentBoundingBox = new THREE.Box3();
-        const paddlePlayerBoundingBox = new THREE.Box3();
+        const ballBoundingBox = new THREE.Box3();
+        const paddleBoundingBox = new THREE.Box3();
+        const paddleCPUBoundingBox = new THREE.Box3();
         const tableBoundingBox = new THREE.Box3();
         const netBoundingBox = new THREE.Box3();
 
-
         scene.background = null;
+
+
+        const ballSound = new Audio('/sounds/ping_pong.mp3');
 
         const camera = new THREE.PerspectiveCamera(
             75,
-            window.innerWidth / window.innerHeight,
+            window.innerWidth / (window.innerHeight * 0.5),
             0.1,
             100
         );
         camera.position.set(10, 10, 15);
         scene.add(camera);
+        const splitCamera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / (window.innerHeight * 0.5),
+            0.1,
+            100
+        )
+        splitCamera.position.set(-10, 10, 15);
+        scene.add(splitCamera);
 
         const renderer = new THREE.WebGLRenderer({
             canvas: canvasRef.current
         });
-        
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.setClearColor(0x000000, 0);
         renderer.setClearAlpha(0);
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        const controls = new OrbitControls(camera, canvasRef.current);
+        controls.enableDamping = true;
 
         class GameObject {
             static id = 0;
@@ -149,7 +93,6 @@ const RemoteMode = () => {
         }
 
         const CreateBall = (position, direction = -1) => {
-            console.log('create ball');
             const radius = 0.1;
             const mesh = new THREE.Mesh(
                 new THREE.SphereGeometry(radius),
@@ -168,6 +111,7 @@ const RemoteMode = () => {
             ballObject.applyImpulse(new THREE.Vector3(0, 4, 14 * -direction));
             gameObjectsRef.current.push(ballObject);
         };
+
         const CreatePaddle = () => {
             const loader = new GLTFLoader();
             loader.load('/models/paddle_test.gltf', (gltf) => {
@@ -186,9 +130,9 @@ const RemoteMode = () => {
 
                 scene.add(model);
 
-                paddleOpponentRef.current = new GameObject(model.clone());
-                paddleOpponentRef.current.mesh.position.z = -10;
-                scene.add(paddleOpponentRef.current.mesh);
+                paddleCPURef.current = new GameObject(model.clone());
+                paddleCPURef.current.mesh.position.z = -10;
+                scene.add(paddleCPURef.current.mesh);
             });
         };
 
@@ -236,48 +180,22 @@ const RemoteMode = () => {
 
         const simulatePhysics = (deltaTime) => {
             gameObjectsRef.current.forEach(obj => {
-                // Scale gravity by deltaTime
-                const gravity = -9.82;
-                obj.velocity.y += gravity * deltaTime;
-        
-                // Apply air resistance
-                const airResistance = 1;
-                obj.velocity.multiplyScalar(airResistance);
-        
-                // Update positions with scaled velocities
-                const scaledVelocity = obj.velocity.clone().multiplyScalar(deltaTime);
-                obj.position.add(scaledVelocity);
-        
-                // Ground collision with energy loss
+                obj.velocity.y += -9.82 * deltaTime;
+                obj.position.x += obj.velocity.x * deltaTime;
+                obj.position.y += obj.velocity.y * deltaTime;
+                obj.position.z += obj.velocity.z * deltaTime;
                 if (obj.position.y < 0.5) {
                     obj.velocity.y *= -0.5;
                     obj.position.y = 0.5;
                 }
-        
-                // Update mesh position
                 obj.mesh.position.copy(obj.position);
-        
-                // Sync ball position if we're player1
-                // if (isPlayer1 && ws && ws.readyState === WebSocket.OPEN) {
-                //     ws.send(JSON.stringify({
-                //         type: 'ball_state',
-                //         position: obj.position,
-                //         velocity: obj.velocity
-                //     }));
-                // }
             });
         };
-        
-
-        
-        // Collision detection
         const collisionTimestamps = new Map();
         const collisionDelay = 100;
-        
         const twoObjCollide = (objA, objB) => {
             const boxA = new THREE.Box3().setFromObject(objA.mesh);
             const boxB = new THREE.Box3().setFromObject(objB.mesh);
-            
             if (boxA.intersectsBox(boxB)) {
                 const currentTime = performance.now();
                 const key = `${objA.id}-${objB.id}`;
@@ -290,19 +208,16 @@ const RemoteMode = () => {
             }
             return false;
         };
-        
-        // Add this after the collision detection functions and before the animation loop
         const checkCollisions = () => {
-            if (!paddleRef.current || gameObjectsRef.current.length === 0 || !paddleOpponentRef.current) return;
+            if (!paddleRef.current || gameObjectsRef.current.length === 0 || !paddleCPURef.current) return;
             
             const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
-            
-            // Paddle collision
+
             if (twoObjCollide(paddleRef.current, ball) && lastHitAI) {
                 lastHitAI = false;
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
-                // ballSound.play();
+                ballSound.play();
                 
                 const paddleBox = new THREE.Box3().setFromObject(paddleRef.current.mesh);
                 const ballWidth = ball.position.x - paddleBox.min.x;
@@ -320,16 +235,13 @@ const RemoteMode = () => {
                 
                 ball.velocity = new THREE.Vector3(0, 0, 0);
                 ball.applyImpulse(new THREE.Vector3(forceX, forceY, -forceZ));
-            }
-            
-            // CPU paddle collision
-            else if (twoObjCollide(paddleOpponentRef.current, ball) && !lastHitAI) {
+            } else if (twoObjCollide(paddleCPURef.current, ball) && !lastHitAI) {
                 lastHitAI = true;
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
-                // ballSound.play();
+                ballSound.play();
                 
-                const paddleBox = new THREE.Box3().setFromObject(paddleOpponentRef.current.mesh);
+                const paddleBox = new THREE.Box3().setFromObject(paddleCPURef.current.mesh);
                 const ballWidth = ball.position.x - paddleBox.min.x;
                 const paddleWidth = paddleBox.max.x - paddleBox.min.x;
                 const hitDirection = ballWidth / paddleWidth;
@@ -345,15 +257,11 @@ const RemoteMode = () => {
                 ball.velocity = new THREE.Vector3(0, 0, 0);
                 ball.applyImpulse(new THREE.Vector3(forceX, forceY, 16));
             }
-            
-            // Table collision
             else if (twoObjCollide(tableObject, ball)) {
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
-                // ballSound.play();
-                
+                ballSound.play();
                 ball.velocity.y = -ball.velocity.y;
-                
                 if (ball.position.z < 0) {
                     aiSideBounces++;
                     if (aiSideBounces === 2) {
@@ -369,13 +277,10 @@ const RemoteMode = () => {
                         resetBall(1);
                     }
                 }
-            }
-
-            // Net collision
-            else if (twoObjCollide(netObject, ball)) {
+            } else if (twoObjCollide(netObject, ball)) {
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
-                // ballSound.play();
+                ballSound.play();
 
                 ball.velocity.z = -ball.velocity.z * 0.5;
                 ball.velocity.x += (Math.random() - 0.5) * 0.2;
@@ -383,33 +288,12 @@ const RemoteMode = () => {
                 ball.position.z += ball.velocity.z * 0.01;
             }
         };
-
-        const handleClick = () => {
-            
-            if (gameObjectsRef.current.length > 0) {
-                gameObjectsRef.current.forEach(obj => scene.remove(obj.mesh));
-                gameObjectsRef.current = [];
-            }
-            lastHitAI = true;
-            const position = new THREE.Vector3(
-                (Math.random() - 0.5) * 4,
-                5.0387,
-                -8
-            );
-            CreateBall(position);
-        }
-
-        // Game logic functions
         const resetBall = (direction = 1) => {
-            gameObjectsRef.current.forEach(obj => {
-                scene.remove(obj.mesh);
-                obj.mesh.geometry.dispose();
-                obj.mesh.material.dispose();
-            });
+            gameObjectsRef.current.forEach(obj => scene.remove(obj.mesh));
             gameObjectsRef.current = [];
             
             const position = new THREE.Vector3(0, 5.0387, 8 * direction);
-            // CreateBall(position, direction);
+            CreateBall(position, direction);
 
             lastHitAI = direction === -1;
             playerSideBounces = 0;
@@ -451,6 +335,7 @@ const RemoteMode = () => {
             
             const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
             const tableBounds = new THREE.Box3().setFromObject(tableObject.mesh);
+            tableBoundsRef.current = tableBounds;
             
             if (ball.position.z > tableBounds.max.z + 3 && playerSideBounces === 1) {
                 aiScore++;
@@ -473,14 +358,75 @@ const RemoteMode = () => {
             winCheck();
         };
 
-        const handleMouseMove = (event) => {
-            mouseCurrent = {
-                x: (event.clientX / window.innerWidth) * 2 - 1,
-                y: -(event.clientY / window.innerHeight) * 2 + 1
-            };
-            // if (ws && ws.readyState === WebSocket.OPEN) {
-            //     ws.send(JSON.stringify({ type: 'mouse_move', mouse_position: mouseCurrent }));
-            // }
+        const paddleSpeed = 0.08;
+        const smoothFactor = 0.05;
+        let paddleVelocityX = 0;
+        let paddleVelocityY = 0;
+        let paddleCpuVelocityY = 0;
+        let paddleCpuVelocityX = 0;
+
+        const handleKeyDown = (event) => {
+            if (event.key === 'ArrowUp') {
+                paddleVelocityY = paddleSpeed;
+            }
+            if (event.key === 'ArrowDown') {
+                paddleVelocityY = -paddleSpeed;
+            }
+            if (event.key === 'ArrowLeft') {
+                paddleVelocityX = -paddleSpeed;
+            }
+            if (event.key === 'ArrowRight') {
+                paddleVelocityX = paddleSpeed;
+            }
+            if (event.key === 'W' || event.key === 'w') {
+                paddleCpuVelocityY = paddleSpeed;
+            }
+            if (event.key === 'S' || event.key === 's') {
+                paddleCpuVelocityY = -paddleSpeed;
+            }
+            if (event.key === 'A' || event.key === 'a') {
+                paddleCpuVelocityX = paddleSpeed;
+            }
+            if (event.key === 'D' || event.key === 'd') {
+                paddleCpuVelocityX = -paddleSpeed;
+            }
+            if (event.key === 'Enter') {
+                inGame = !inGame;
+                controls.enableRotate = !inGame;
+            }
+        };
+
+        const handleKeyUp = (event) => {
+            if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+                paddleVelocityY = 0;
+            }
+            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                paddleVelocityX = 0;
+            }
+            if (event.key === 'W' || event.key === 'w' || event.key === 'S' || event.key === 's') {
+                paddleCpuVelocityY = 0;
+            }
+            if (event.key === 'A' || event.key === 'a' || event.key === 'D' || event.key === 'd') {
+                paddleCpuVelocityX = 0;
+            }
+        };
+
+        const lerp = (current, target, smoothFactor) => {
+            return current + (target - current) * smoothFactor;
+        };
+
+        const handleClick = () => {
+            if (gameObjectsRef.current.length > 0) {
+                gameObjectsRef.current.forEach(obj => scene.remove(obj.mesh));
+                gameObjectsRef.current = [];
+            }
+            lastHitAI = true;
+            const position = new THREE.Vector3(
+                (Math.random() - 0.5) * 4,
+                5.0387,
+                -8
+            );
+            CreateBall(position);
         };
 
         const setupLighting = () => {
@@ -503,13 +449,15 @@ const RemoteMode = () => {
             const width = window.innerWidth;
             const height = window.innerHeight;
             
-            camera.aspect = width / height;
+            camera.aspect = width / (height * 0.5);
             camera.updateProjectionMatrix();
+            splitCamera.aspect = width / (height * 0.5);
+            splitCamera.updateProjectionMatrix();
             
             renderer.setSize(width, height);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         };
-        
+
         const clock = new THREE.Clock();
         let oldElapsedTime = 0;
         
@@ -519,32 +467,50 @@ const RemoteMode = () => {
             const deltaTime = elapsedTime - oldElapsedTime;
             oldElapsedTime = elapsedTime;
             
-            if (true) {
+            if (inGame) {
                 if (paddleRef.current?.mesh) {
-                    const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
-                    if (isPlayer1) {
-                        camera.position.set(
-                            4 * mouseCurrent.x,
-                            6.8 + (0.4 * mouseCurrent.y),
-                            12.8
-                        );
-                        // if (ws && ws.readyState === WebSocket.OPEN)
-                        //     ws.send(JSON.stringify({ type: 'ball_position', ball_position: { x: ball.position.x, y: ball.position.y, z: ball.position.z } }));
-                    } else {
-                        camera.position.set(
-                            -4 * mouseCurrent.x,
-                            6.8 + (0.4 * mouseCurrent.y),
-                            -12.8
-                        );
-                    }
+                    camera.position.set(
+                        0,
+                        6.8,
+                        12.2
+                    );
                     camera.lookAt(0, 0, 0);
 
-                    const primaryPaddleRef = isPlayer1 ? paddleRef : paddleOpponentRef;
-                    const opponentPaddleRef = isPlayer1 ? paddleOpponentRef : paddleRef;
+                    splitCamera.position.set(
+                        0,
+                        6.8,
+                        -12.2
+                    );
 
-                    // Primary paddle rotation logic
-                    if (primaryPaddleRef.current?.mesh.position.x > 0) {
-                        gsap.to(primaryPaddleRef.current.mesh.rotation, {
+                    splitCamera.lookAt(0, 0, 0);
+
+                    paddleVelocityX = lerp(paddleVelocityX, paddleVelocityX, smoothFactor);
+                    paddleVelocityY = lerp(paddleVelocityY, paddleVelocityY, smoothFactor);
+                    paddleCpuVelocityX = lerp(paddleCpuVelocityX, paddleCpuVelocityX, smoothFactor);
+                    paddleCpuVelocityY = lerp(paddleCpuVelocityY, paddleCpuVelocityY, smoothFactor);
+
+                    paddleRef.current.mesh.position.x += paddleVelocityX;
+                    paddleRef.current.mesh.position.y += paddleVelocityY;
+                    paddleCPURef.current.mesh.position.x += paddleCpuVelocityX;
+                    paddleCPURef.current.mesh.position.y += paddleCpuVelocityY;
+
+                    if (tableBoundsRef.current) {
+                        console.log(tableBoundsRef.current);
+                        if (paddleRef.current.mesh.position.x < tableBoundsRef.current.min.x) {
+                            paddleRef.current.mesh.position.x = tableBoundsRef.current.min.x;
+                        } else if (paddleRef.current.mesh.position.x > tableBoundsRef.current.max.x) {
+                            paddleRef.current.mesh.position.x = tableBoundsRef.current.max.x;
+                        }
+
+                        if (paddleRef.current.mesh.position.y < tableBoundsRef.current.min.y - 0.5) {
+                            paddleRef.current.mesh.position.y = tableBoundsRef.current.min.y - 0.5;
+                        } else if (paddleRef.current.mesh.position.y > tableBoundsRef.current.max.y + 3) {
+                            paddleRef.current.mesh.position.y = tableBoundsRef.current.max.y + 3;
+                        }
+                    }
+
+                    if (paddleRef.current.mesh.position.x > 0) {
+                        gsap.to(paddleRef.current.mesh.rotation, {
                             x: 2.81,
                             y: 2.96,
                             z: 2.81,
@@ -552,7 +518,7 @@ const RemoteMode = () => {
                             ease: "power2.inOut",
                         });
                     } else {
-                        gsap.to(primaryPaddleRef.current.mesh.rotation, {
+                        gsap.to(paddleRef.current.mesh.rotation, {
                             x: 2.81,
                             y: 6.28,
                             z: 2.81,
@@ -561,8 +527,8 @@ const RemoteMode = () => {
                         });
                     }
 
-                    if (opponentPaddleRef.current?.mesh.position.x > 0) {
-                        gsap.to(opponentPaddleRef.current.mesh.rotation, {
+                    if (paddleCPURef.current?.mesh.position.x > 0) {
+                        gsap.to(paddleCPURef.current.mesh.rotation, {
                             x: -2.81,
                             y: 2.96,
                             z: 2.81,
@@ -570,7 +536,7 @@ const RemoteMode = () => {
                             ease: "power2.inOut",
                         });
                     } else {
-                        gsap.to(opponentPaddleRef.current.mesh.rotation, {
+                        gsap.to(paddleCPURef.current.mesh.rotation, {
                             x: -2.81,
                             y: 6.28,
                             z: 2.81,
@@ -579,18 +545,26 @@ const RemoteMode = () => {
                         });
                     }
                 }
-                if (isPlayer1) {
-                    simulatePhysics(deltaTime);
-                    checkCollisions();
-                    gameLogic();
-                }
 
+                simulatePhysics(deltaTime);
+                checkCollisions();
+                gameLogic();
             }
             
+            controls.update();
+            renderer.setScissorTest(true);
+            renderer.setViewport(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
+            renderer.setScissor(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
+            renderer.render(scene, splitCamera);
+
+            renderer.setViewport(0, 0, window.innerWidth, window.innerHeight / 2);
+            renderer.setScissor(0, 0, window.innerWidth, window.innerHeight / 2);
             renderer.render(scene, camera);
+
             requestAnimationFrame(animate);
-            if (gameObjectsRef.current.length >= 0 && paddleRef.current?.mesh && paddleOpponentRef.current?.mesh && tableObject.mesh && netObject.mesh) {
-                
+            renderer.setScissorTest(false);
+            if (gameObjectsRef.current.length > 0 && paddleRef.current?.mesh && paddleCPURef.current?.mesh && tableObject.mesh && netObject.mesh) {
+
                 tableBoundingBox.setFromObject(tableObject.mesh);
                 netBoundingBox.setFromObject(netObject.mesh);
                 if (!isBoundingBoxVisible) {
@@ -603,32 +577,29 @@ const RemoteMode = () => {
             
             }
         };
-        
-        // Initialize scene
+
         const init = () => {
             setupLighting();
             const { netObject, tableObject } = createTableAndNet();
             CreatePaddle();
-            CreateBall(new THREE.Vector3(0, 5.0387, -8));
-            
-            // Add event listeners
-            window.addEventListener('mousemove', handleMouseMove);
-            window.addEventListener('resize', handleResize);
+
+            window.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('keyup', handleKeyUp);
             window.addEventListener('click', handleClick);
+            window.addEventListener('resize', handleResize);
             
-            // Start animation loop
             animate();
         };
         
-        // Initialize the scene
         init();
 
         return () => {
-            // ws.close();
-            console.log('WebSocket connection closed');
-            window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('resize', handleResize);
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
             window.removeEventListener('click', handleClick);
+            window.removeEventListener('resize', handleResize);
+            inGame = false;
+            
             scene.traverse((object) => {
                 if (object instanceof THREE.Mesh) {
                     object.geometry.dispose();
@@ -636,12 +607,10 @@ const RemoteMode = () => {
                     object.material.dispose();
                 }
             });
+            
             renderer.dispose();
+            if (controls) controls.dispose();
         };
-
-        
-
-
     }, []);
 
     return (
@@ -687,4 +656,4 @@ const RemoteMode = () => {
     );
 };
 
-export default RemoteMode;
+export default LocalMode;
