@@ -4,6 +4,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from api.models import User, UserRelationship, RelationshipType
 
+
 class Conversation(models.Model):
     first_user = models.ForeignKey(User, related_name='first_user_conversations', on_delete=models.CASCADE)
     second_user = models.ForeignKey(User, related_name='second_user_conversations', on_delete=models.CASCADE)
@@ -18,6 +19,11 @@ class Conversation(models.Model):
     def clean(self):
         if self.first_user.id > self.second_user.id:
             self.first_user, self.second_user = self.second_user, self.first_user
+
+    def save(self, *args, **kwargs):
+        print("AAAAA")
+        self.clean()
+        super().save(*args, **kwargs)
 
     @staticmethod
     def are_users_friends(first_user, second_user):
