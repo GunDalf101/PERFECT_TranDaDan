@@ -2,6 +2,10 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 import asyncio
 import math
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from django.contrib.auth import get_user_model
+from .models import Match
+from channels.db import database_sync_to_async, sync_to_async
 
 
 class PongConsumer(AsyncWebsocketConsumer):
@@ -72,17 +76,104 @@ class PongConsumer(AsyncWebsocketConsumer):
             if data['isPlayer1']:
                 self.player_number = 'player1'
                 PongConsumer.shared_games[self.game_id]['player1'] = data['username']
+                PongConsumer.shared_games[self.game_id]['player2'] = data['opponent']
             else:
                 PongConsumer.shared_games[self.game_id]['player1'] = data['opponent']
+                PongConsumer.shared_games[self.game_id]['player2'] = data['username']
                 self.player_number = 'player2'
             await self.broadcast_game_state()
             
         if 'type' in data and data['type'] == 'mouse_move':
             self.update_paddle_position(data)
             await self.broadcast_game_state()
-        if 'type' in data and data['type'] == 'ball_position':
+        elif 'type' in data and data['type'] == 'ball_position':
             self.update_ball_position(data)
             await self.broadcast_game_state()
+        elif data['type'] == 'score_update':
+            self.update_scores(data)
+            await self.broadcast_game_state()
+        
+        elif data['type'] == 'game_won':
+            self.handle_game_won(data)
+            await self.broadcast_game_state()
+        
+        elif data['type'] == 'match_complete':
+            await self.handle_match_complete(data)
+            await self.broadcast_game_state()
+
+    def update_scores(self, data):
+        game_state = PongConsumer.shared_games[self.game_id]
+        game_state['scores'] = data['scores']
+        
+        if 'scoring_history' not in game_state:
+            game_state['scoring_history'] = []
+        game_state['scoring_history'].append({
+            'scorer': data['scoringPlayer'],
+            'score': data['scores']
+        })
+
+    def handle_game_won(self, data):
+        game_state = PongConsumer.shared_games[self.game_id]
+        game_state['rounds_won'] = data['matches']
+        game_state['current_game_winner'] = data['winner']
+        
+        # Reset scores for next game
+        game_state['scores'] = {'player1': 0, 'player2': 0}
+
+    async def handle_match_complete(self, data):
+        game_state = PongConsumer.shared_games[self.game_id]
+        game_state['winner'] = data['winner']
+        game_state['final_score'] = data['finalScore']
+        
+        # Update match record in database
+        await self.update_match_record(data)
+        
+        # Reset game state
+        game_state['scores'] = {'player1': 0, 'player2': 0}
+        game_state['rounds_won'] = {'player1': 0, 'player2': 0}
+
+    @database_sync_to_async
+    def get_user_by_username(self, username):
+        User = get_user_model()
+        try:
+            return User.objects.get(username=username)
+        except User.DoesNotExist:
+            return None
+
+    def get_user_from_player_number(self, player_number):
+        game_state = PongConsumer.shared_games[self.game_id]
+        if player_number == 'player1':
+            return game_state['player1']
+        return game_state.get('player2')
+
+    @database_sync_to_async
+    def update_match_record(self, data):
+        try:
+            match = Match.objects.get(id=self.game_id)
+            winner_username = self.get_user_from_player_number(data['winner'])
+            print(winner_username)
+            winner_user = get_user_model().objects.get(username=winner_username)
+            
+            match.winner = winner_user
+            match.final_score = f"{data['finalScore']['player1']}-{data['finalScore']['player2']}"
+            match.status = "completed"
+            match.save()
+        except Match.DoesNotExist:
+            print(f"Match {self.game_id} not found")
+        except get_user_model().DoesNotExist:
+            print(f"Winner user {winner_username} not found")
+
+    async def handle_match_complete(self, data):
+        game_state = PongConsumer.shared_games[self.game_id]
+        game_state['winner'] = data['winner']
+        game_state['final_score'] = data['finalScore']
+        
+        # Update match record in database
+        await self.update_match_record(data)
+        
+        # Reset game state
+        game_state['scores'] = {'player1': 0, 'player2': 0}
+        game_state['rounds_won'] = {'player1': 0, 'player2': 0}
 
     async def game_loop(self):
         try:
@@ -100,6 +191,7 @@ class PongConsumer(AsyncWebsocketConsumer):
         PongConsumer.shared_games[self.game_id] = {
             'game_id': self.game_id,
             'player1': None,
+            'player2': None,
             'ball_position': {
                 'x': 0,
                 'y': 5.0387,
@@ -125,55 +217,10 @@ class PongConsumer(AsyncWebsocketConsumer):
             'winner': None
         }
 
-    def calculate_score(self):
-        zBall = PongConsumer.shared_games[self.game_id]['ball_position']['z']
-        tableZBound = 12
-        if zBall > tableZBound:
-            PongConsumer.shared_games[self.game_id]['scores']['player2'] += 1
-        elif zBall < -tableZBound:
-            PongConsumer.shared_games[self.game_id]['scores']['player1'] += 1
-    
-    def win_check(self):
-        player1_score = PongConsumer.shared_games[self.game_id]['scores']['player1']
-        player2_score = PongConsumer.shared_games[self.game_id]['scores']['player2']
-        player1_games = PongConsumer.shared_games[self.game_id]['rounds_won']['player1']
-        player2_games = PongConsumer.shared_games[self.game_id]['rounds_won']['player2']
-
-        max_score = 11
-        max_games = 3
-
-        if player1_score >= max_score or player2_score >= max_score:
-            if abs(player1_score - player2_score) >= 2:
-                if player1_score > player2_score:
-                    player1_games += 1
-                else:
-                    player2_games += 1
-
-                player1_score = 0
-                player2_score = 0
-
-                if player1_games >= (max_games + 1) // 2 or player2_games >= (max_games + 1) // 2:
-                    if player1_games >= (max_games + 1) // 2:
-                        PongConsumer.shared_games[self.game_id]['winner'] = PongConsumer.shared_games[self.game_id]['player1']
-                    else:
-                        PongConsumer.shared_games[self.game_id]['winner'] = PongConsumer.shared_games[self.game_id]['player2']
-                    player1_games = 0
-                    player2_games = 0
-
-        PongConsumer.shared_games[self.game_id]['scores']['player1'] = player1_score
-        PongConsumer.shared_games[self.game_id]['scores']['player2'] = player2_score
-        PongConsumer.shared_games[self.game_id]['rounds_won']['player1'] = player1_games
-        PongConsumer.shared_games[self.game_id]['rounds_won']['player2'] = player2_games
-        print("player1_score", player1_score)
-        print("player2_score", player2_score)
-        print("player1_games", player1_games)
-        print("player2_games", player2_games)
-
 
 
     def update_game_state(self):
-        self.calculate_score()
-        self.win_check()
+        pass
     def update_paddle_position(self, data):
         if self.player_number == 'player1':
             PongConsumer.shared_games[self.game_id]['paddle1_position']['x'] = 5.5 * data['mouse_position']['x']
@@ -199,10 +246,6 @@ class PongConsumer(AsyncWebsocketConsumer):
             'state': event['state']
         }))
 
-from channels.generic.websocket import AsyncJsonWebsocketConsumer
-from django.contrib.auth import get_user_model
-from .models import Match
-from channels.db import sync_to_async
 
 class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
     matchmaking_queue = []
@@ -268,7 +311,4 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
             player2=player2_user,
             status="ongoing"
         )
-        print("----------------------")
-        print(match)
-        print("----------------------")
         return match
