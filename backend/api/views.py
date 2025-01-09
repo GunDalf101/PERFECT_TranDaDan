@@ -411,11 +411,6 @@ class SendFriendRequest(APIView):
             type=RelationshipType.PENDING_FIRST_SECOND.value
         )
 
-        try:
-            relationship.clean()
-            relationship.save()
-        except ValueError as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"detail": "Friend request sent."}, status=status.HTTP_201_CREATED)
 
 class DeleteFriendRequest(APIView):
@@ -517,17 +512,11 @@ class BlockUser(APIView):
                     relationship.save()
                 return Response({"detail": "User blocked."}, status=status.HTTP_201_CREATED)
 
-        relationship = UserRelationship(
+        relationship = UserRelationship.objects.create(
             first_user=current_user,
             second_user=target_user,
             type=RelationshipType.BLOCK_FIRST_SECOND.value
         )
-
-        try:
-            relationship.clean()
-            relationship.save()
-        except ValueError as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({"detail": "User blocked."}, status=status.HTTP_201_CREATED)
 

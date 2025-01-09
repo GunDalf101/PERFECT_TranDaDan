@@ -99,5 +99,9 @@ class UserRelationship(models.Model):
             elif self.type == RelationshipType.BLOCK_SECOND_FIRST.value:
                 self.type = RelationshipType.BLOCK_FIRST_SECOND.value
 
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Relationship between {self.first_user} and {self.second_user} is {self.get_type_display()}"

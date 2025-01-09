@@ -161,7 +161,6 @@ class DirectMessageConsumer(AsyncWebsocketConsumer):
             'error': error_message
         }))
 
-    
     # Handle incoming messages for other types, if needed
     async def chat_message(self, event):
         # Forward the message to the connected user
