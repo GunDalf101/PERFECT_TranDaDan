@@ -18,6 +18,7 @@ import QuadraMode from "./components/Pong/QuadraMode/QuadraMode";
 import TournamentBracket from "./pages/Tournament/Tournament";
 import QuadraRegister from "./pages/QuadraRegister/QuadraRegister";
 import LocalRegister from "./pages/LocalRegister/LocalRegister";
+import TournamentMode from "./components/Pong/TournamentMode/TournamentMode";
 
 import User from "./pages/User/User";
 import EditProfile from "./pages/EditProfile/EditProfile";
@@ -51,6 +52,7 @@ function App() {
             <Route path="tournament" element={<TournamentBracket />} />
             <Route path="quadra-register" element={<QuadraRegister />} />
             <Route path="local-register" element={<LocalRegister />} />
+            <Route path="tournament-mode" element={<TournamentMode />} />
           </Route>
           <Route
             path="/profile"
