@@ -23,7 +23,6 @@ class User(AbstractBaseUser):
         blank=True
     )
     avatar_url = models.CharField(max_length=255, blank=True, null=True)
-    channel_name = models.CharField(max_length=255, null=True, blank=True)
     email_token = models.CharField(max_length=32, blank=True, null=True)
     online = models.BooleanField(default=False)
     mfa_enabled = models.BooleanField(default=False)
