@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from api.models import UserRelationship, RelationshipType
 from django.db.utils import IntegrityError
 from django.utils.crypto import get_random_string
+from notifs.models import Notification
 
 User = get_user_model()
 
@@ -34,6 +35,7 @@ class Command(BaseCommand):
 
             self.stdout.write(self.style.SUCCESS('Successfully created friendships between the users'))
 
+            self.add_notifications_for_user(first_user)
         except IntegrityError:
             self.stdout.write(self.style.ERROR('Error: Users already exist or relationships cannot be created'))
 
@@ -48,3 +50,33 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f'Successfully created a friendship between {user1.username} and {user2.username}'))
         else:
             self.stdout.write(self.style.WARNING(f'Friendship between {user1.username} and {user2.username} already exists'))
+
+    def create_friendship(self, user1, user2):
+        relationship, created = UserRelationship.objects.get_or_create(
+            first_user=user1,
+            second_user=user2,
+            defaults={'type': RelationshipType.FRIENDS.value}
+        )
+
+        if created:
+            self.stdout.write(self.style.SUCCESS(f'Successfully created a friendship between {user1.username} and {user2.username}'))
+        else:
+            self.stdout.write(self.style.WARNING(f'Friendship between {user1.username} and {user2.username} already exists'))
+
+    def add_notifications_for_user(self, user):
+        # Add some example notifications for the first user
+        notifications = [
+            {"content": "You have a new friend request from second@example.com.", "url": "/friend-requests"},
+            {"content": "Your profile has been updated successfully.", "url": "/profile"},
+            {"content": "A new message from third@example.com.", "url": "/messages"},
+            {"content": "Just an alert notification, no link.", "url": None},
+        ]
+
+        for notification in notifications:
+            Notification.objects.create(
+                user=user,
+                content=notification['content'],
+                url=notification['url']
+            )
+
+        self.stdout.write(self.style.SUCCESS(f'Successfully created notifications for {user.username}'))

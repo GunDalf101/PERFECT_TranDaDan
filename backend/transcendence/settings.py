@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'api',
     'chat',
-    'games'
+    'games',
+    'notifs'
 ]
 
 MIDDLEWARE = [
