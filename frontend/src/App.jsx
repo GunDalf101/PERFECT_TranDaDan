@@ -18,17 +18,20 @@ import QuadraMode from "./components/Pong/QuadraMode/QuadraMode";
 import TournamentBracket from "./pages/Tournament/Tournament";
 import QuadraRegister from "./pages/QuadraRegister/QuadraRegister";
 import LocalRegister from "./pages/LocalRegister/LocalRegister";
+import TournamentMode from "./components/Pong/TournamentMode/TournamentMode";
 
 import User from "./pages/User/User";
 import EditProfile from "./pages/EditProfile/EditProfile";
 // import { Edit } from "lucide-react";
-import { UserProvider } from "./components/auth/UserContext"; 
+import { UserProvider } from "./components/auth/UserContext";
 import { ProtectedRoute, PublicRoute } from "./components/auth/ProtectedRoute";
+import { NotificationProvider } from './context/NotificationContext.jsx';
 
 function App() {
   return (
     <BrowserRouter>
       <UserProvider>
+        <NotificationProvider>
         <ToastContainer position="top-right" autoClose={3000} />
         <Routes>
           <Route path="/" element={<MainLayout />}>
@@ -51,6 +54,7 @@ function App() {
             <Route path="tournament" element={<TournamentBracket />} />
             <Route path="quadra-register" element={<QuadraRegister />} />
             <Route path="local-register" element={<LocalRegister />} />
+            <Route path="tournament-mode" element={<TournamentMode />} />
           </Route>
           <Route
             path="/profile"
@@ -89,6 +93,7 @@ function App() {
           <Route path="/Intra/callback/" element={<IntraCallback />} />
 {/*           <Route path="*" element={<Link to="/"/>}></Route> */}
         </Routes>
+        </NotificationProvider>
       </UserProvider>
     </BrowserRouter>
   );

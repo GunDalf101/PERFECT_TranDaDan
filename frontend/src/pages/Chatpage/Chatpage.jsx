@@ -83,14 +83,14 @@ const ChatApp = () => {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  
-  
+
+
 
   // Load chat history when selecting a chat
   useEffect(() => {
     const loadChatHistory = async () => {
       if (!selectedChat || !friends.length) return;
-      
+
       try {
         setIsLoading(true);
         const selectedFriend = friends.find(f => f.id === selectedChat);
@@ -98,23 +98,23 @@ const ChatApp = () => {
 
 
         const response = await getAllMessage(selectedFriend.name);
-      
+
         setMessages([]);
         const formattedMessages = response.results.map(msg => ({
-          id: Math.random(), 
+          id: Math.random(),
           text: msg.content,
           sender: msg.sender,
           receiver: selectedFriend.name,
           timestamp: msg.timestamp
         }));
-        
+
         setMessages(prev => {
           const allMessages = [...formattedMessages, ...prev];
           return Array.from(new Set(allMessages.map(m => m.id)))
             .map(id => allMessages.find(m => m.id === id))
             .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
         });
-  
+
         setHasMore(response.next !== null);
       } catch (error) {
         setError('Failed to load message history');
@@ -138,7 +138,7 @@ const ChatApp = () => {
   useEffect(() => {
     const loadFriends = async () => {
       if (!isAuthenticated) return;
-      
+
       try {
         setIsLoading(true);
         const data = await getFriends();
@@ -213,8 +213,8 @@ const ChatApp = () => {
       {error && (
         <div className="bg-red-100 text-red-700 p-3 mb-4">
           {error}
-          <button 
-            className="ml-2 text-sm underline" 
+          <button
+            className="ml-2 text-sm underline"
             onClick={() => setError(null)}
           >
             Dismiss
@@ -224,7 +224,7 @@ const ChatApp = () => {
       <div className="flex">
         <ChatWin
           friends={friends}
-          messages={messages} 
+          messages={messages}
           selectedChat={selectedChat}
           newMessage={newMessage}
           setNewMessage={setNewMessage}
