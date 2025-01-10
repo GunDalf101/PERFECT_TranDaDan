@@ -1,23 +1,23 @@
 
 
-docker stop postgres-db
-docker container rm postgres-db
-docker run -d \
-  --name postgres-db \
-  -e POSTGRES_USER=myuser \
-  -e POSTGRES_PASSWORD=mypassword \
-  -e POSTGRES_DB=mydb \
-  -p 5432:5432 \
-  postgres:latest
+# docker stop postgres-db
+# docker container rm postgres-db
+# docker run -d \
+#   --name postgres-db \
+#   -e POSTGRES_USER=myuser \
+#   -e POSTGRES_PASSWORD=mypassword \
+#   -e POSTGRES_DB=mydb \
+#   -p 5432:5432 \
+#   postgres:latest
 
-docker stop redis-db
-docker container rm redis-db
-docker run -d \
-  --name redis-db \
-  -p 6379:6379 \
-  redis:latest
+# docker stop redis-db
+# docker container rm redis-db
+# docker run -d \
+#   --name redis-db \
+#   -p 6379:6379 \
+#   redis:latest
 
-sleep 10
+# sleep 10
 python3 manage.py makemigrations
 python3 manage.py migrate
 

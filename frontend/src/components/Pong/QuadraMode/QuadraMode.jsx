@@ -56,38 +56,35 @@ const QuadraMode = () => {
 
         const cameraP1 = new THREE.PerspectiveCamera(
             75,
-            window.innerWidth * 0.5 / window.innerHeight,
+            (window.innerWidth * 0.5) / (window.innerHeight * 0.5),
             0.1,
             100
         );
-        cameraP1.position.set(10, 10, 15);
         scene.add(cameraP1);
+
         const cameraP2 = new THREE.PerspectiveCamera(
             75,
-            window.innerWidth * 0.5 / window.innerHeight,
+            (window.innerWidth * 0.5) / (window.innerHeight * 0.5),
             0.1,
             100
-        )
-        cameraP2.position.set(-10, 10, 15);
+        );
         scene.add(cameraP2);
 
-        // const cameraP3 = new THREE.PerspectiveCamera(
-        //     75,
-        //     window.innerWidth / (window.innerHeight * 0.5),
-        //     0.1,
-        //     100
-        // )
-        // cameraP3.position.set(-10, 10, 15);
-        // scene.add(cameraP3);
+        const cameraP3 = new THREE.PerspectiveCamera(
+            75,
+            (window.innerWidth * 0.5) / (window.innerHeight * 0.5),
+            0.1,
+            100
+        );
+        scene.add(cameraP3);
 
-        // const cameraP4 = new THREE.PerspectiveCamera(
-        //     75,
-        //     window.innerWidth / (window.innerHeight * 0.5),
-        //     0.1,
-        //     100
-        // )
-        // cameraP4.position.set(-10, 10, 15);
-        // scene.add(cameraP4);
+        const cameraP4 = new THREE.PerspectiveCamera(
+            75,
+            (window.innerWidth * 0.5) / (window.innerHeight * 0.5),
+            0.1,
+            100
+        );
+        scene.add(cameraP4);
 
         const renderer = new THREE.WebGLRenderer({
             canvas: canvasRef.current
@@ -575,10 +572,14 @@ const QuadraMode = () => {
             const width = window.innerWidth;
             const height = window.innerHeight;
             
-            cameraP1.aspect = width * 0.5 / height;
+            cameraP1.aspect = width * 0.5 / (height * 0.5);
             cameraP1.updateProjectionMatrix();
-            cameraP2.aspect = width * 0.5 / height;
+            cameraP2.aspect = width * 0.5 / (height * 0.5);
             cameraP2.updateProjectionMatrix();
+            cameraP3.aspect = width * 0.5 / (height * 0.5);
+            cameraP3.updateProjectionMatrix();
+            cameraP4.aspect = width * 0.5 / (height * 0.5);
+            cameraP4.updateProjectionMatrix();
             
             renderer.setSize(width, height);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -594,21 +595,48 @@ const QuadraMode = () => {
             oldElapsedTime = elapsedTime;
             
             if (inGame) {
-                if (paddleRefP1.current?.mesh) {
-                    cameraP1.position.set(
-                        0,
-                        6.8,
-                        12.2
-                    );
-                    cameraP1.lookAt(0, 0, 0);
+                if (paddleRefP1.current?.mesh && paddleRefP2.current?.mesh && paddleRefP3.current?.mesh && paddleRefP4.current?.mesh) {
+                    
+                    const cameraOffset = new THREE.Vector3(0, 2.5, 4);
+                    const splitCameraOffset = new THREE.Vector3(0, 2.5, -4);
+                    const lookAtOffset = new THREE.Vector3(0, 1, 0);
 
-                    cameraP2.position.set(
-                        0,
-                        6.8,
-                        -12.2
-                    );
+                    const player1PaddlePos = paddleRefP1.current.mesh.position.clone();
+                    const target1CameraPos = player1PaddlePos.clone().add(cameraOffset);
+                    const target1LookAt = player1PaddlePos.clone().add(lookAtOffset);
 
-                    cameraP2.lookAt(0, 0, 0);
+                    const player2PaddlePos = paddleRefP2.current.mesh.position.clone();
+                    const target2CameraPos = player2PaddlePos.clone().add(splitCameraOffset);
+                    const target2LookAt = player2PaddlePos.clone().add(lookAtOffset);
+
+                    const player3PaddlePos = paddleRefP3.current.mesh.position.clone();
+                    const target3CameraPos = player3PaddlePos.clone().add(splitCameraOffset);
+                    const target3LookAt = player3PaddlePos.clone().add(lookAtOffset);
+
+                    const player4PaddlePos = paddleRefP4.current.mesh.position.clone();
+                    const target4CameraPos = player4PaddlePos.clone().add(cameraOffset);
+                    const target4LookAt = player4PaddlePos.clone().add(lookAtOffset);
+
+                    cameraP1.position.lerp(target1CameraPos, 0.05);
+                    cameraP2.position.lerp(target2CameraPos, 0.05);
+                    cameraP3.position.lerp(target3CameraPos, 0.05);
+                    cameraP4.position.lerp(target4CameraPos, 0.05);
+
+                    const current1LookAt = new THREE.Vector3(cameraP1.position.x, cameraP1.position.y, cameraP1.position.z);
+                    const current2LookAt = new THREE.Vector3(cameraP2.position.x, cameraP2.position.y, cameraP2.position.z);
+                    const current3LookAt = new THREE.Vector3(cameraP3.position.x, cameraP3.position.y, cameraP3.position.z);
+                    const current4LookAt = new THREE.Vector3(cameraP4.position.x, cameraP4.position.y, cameraP4.position.z);
+
+                    const newLookAt1 = target1LookAt.lerp(current1LookAt, 0.05);
+                    const newLookAt2 = target2LookAt.lerp(current2LookAt, 0.05);
+                    const newLookAt3 = target3LookAt.lerp(current3LookAt, 0.05);
+                    const newLookAt4 = target4LookAt.lerp(current4LookAt, 0.05);
+
+                    cameraP1.lookAt(newLookAt1);
+                    cameraP2.lookAt(newLookAt2);
+                    cameraP3.lookAt(newLookAt3);
+                    cameraP4.lookAt(newLookAt4);
+
 
                     paddleP1VelocityX = lerp(paddleP1VelocityX, paddleP1VelocityX, smoothFactor);
                     paddleP1VelocityY = lerp(paddleP1VelocityY, paddleP1VelocityY, smoothFactor);
@@ -640,6 +668,44 @@ const QuadraMode = () => {
                         } else if (paddleRefP1.current.mesh.position.y > tableBoundsRef.current.max.y + 3) {
                             paddleRefP1.current.mesh.position.y = tableBoundsRef.current.max.y + 3;
                         }
+
+                        if (paddleRefP2.current.mesh.position.x < tableBoundsRef.current.min.x) {
+                            paddleRefP2.current.mesh.position.x = tableBoundsRef.current.min.x;
+                        } else if (paddleRefP2.current.mesh.position.x > tableBoundsRef.current.max.x) {
+                            paddleRefP2.current.mesh.position.x = tableBoundsRef.current.max.x;
+                        }
+
+                        if (paddleRefP2.current.mesh.position.y < tableBoundsRef.current.min.y - 0.5) {
+                            paddleRefP2.current.mesh.position.y = tableBoundsRef.current.min.y - 0.5;
+                        } else if (paddleRefP2.current.mesh.position.y > tableBoundsRef.current.max.y + 3) {
+                            paddleRefP2.current.mesh.position.y = tableBoundsRef.current.max.y + 3;
+                        }
+
+                        if (paddleRefP3.current.mesh.position.x < tableBoundsRef.current.min.x) {
+                            paddleRefP3.current.mesh.position.x = tableBoundsRef.current.min.x;
+                        } else if (paddleRefP3.current.mesh.position.x > tableBoundsRef.current.max.x) {
+                            paddleRefP3.current.mesh.position.x = tableBoundsRef.current.max.x;
+                        }
+
+                        if (paddleRefP3.current.mesh.position.y < tableBoundsRef.current.min.y - 0.5) {
+                            paddleRefP3.current.mesh.position.y = tableBoundsRef.current.min.y - 0.5;
+
+                        } else if (paddleRefP3.current.mesh.position.y > tableBoundsRef.current.max.y + 3) {
+                            paddleRefP3.current.mesh.position.y = tableBoundsRef.current.max.y + 3;
+                        }
+
+                        if (paddleRefP4.current.mesh.position.x < tableBoundsRef.current.min.x) {
+                            paddleRefP4.current.mesh.position.x = tableBoundsRef.current.min.x;
+                        } else if (paddleRefP4.current.mesh.position.x > tableBoundsRef.current.max.x) {
+                            paddleRefP4.current.mesh.position.x = tableBoundsRef.current.max.x;
+                        }
+
+                        if (paddleRefP4.current.mesh.position.y < tableBoundsRef.current.min.y - 0.5) {
+                            paddleRefP4.current.mesh.position.y = tableBoundsRef.current.min.y - 0.5;
+                        } else if (paddleRefP4.current.mesh.position.y > tableBoundsRef.current.max.y + 3) {
+                            paddleRefP4.current.mesh.position.y = tableBoundsRef.current.max.y + 3;
+                        }
+                            
                     }
 
                     if (paddleRefP1.current.mesh.position.x > 0) {
@@ -721,28 +787,26 @@ const QuadraMode = () => {
             }
             
             controls.update();
-            // renderer.setScissorTest(true);
-            // renderer.setViewport(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
-            // renderer.setScissor(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
-            // renderer.render(scene, cameraP2);
-
-            // renderer.setViewport(0, 0, window.innerWidth, window.innerHeight / 2);
-            // renderer.setScissor(0, 0, window.innerWidth, window.innerHeight / 2);
-            // renderer.render(scene, cameraP1);
-
-            // requestAnimationFrame(animate);
-            // renderer.setScissorTest(false);
             renderer.setScissorTest(true);
 
-            renderer.setViewport(0, 0, window.innerWidth / 2, window.innerHeight);
-            renderer.setScissor(0, 0, window.innerWidth / 2, window.innerHeight);
+            renderer.setViewport(0, 0, window.innerWidth / 2, window.innerHeight / 2);
+            renderer.setScissor(0, 0, window.innerWidth / 2, window.innerHeight / 2);
             renderer.render(scene, cameraP2);
 
-            renderer.setViewport(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
-            renderer.setScissor(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
+            renderer.setViewport(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight / 2);
+            renderer.setScissor(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight / 2);
             renderer.render(scene, cameraP1);
 
+            renderer.setViewport(0, window.innerHeight / 2, window.innerWidth / 2, window.innerHeight / 2);
+            renderer.setScissor(0, window.innerHeight / 2, window.innerWidth / 2, window.innerHeight / 2);
+            renderer.render(scene, cameraP3);
+
+            renderer.setViewport(window.innerWidth / 2, window.innerHeight / 2, window.innerWidth / 2, window.innerHeight / 2);
+            renderer.setScissor(window.innerWidth / 2, window.innerHeight / 2, window.innerWidth / 2, window.innerHeight / 2);
+            renderer.render(scene, cameraP4);
+
             requestAnimationFrame(animate);
+
             renderer.setScissorTest(false);
             if (gameObjectsRef.current.length > 0 && paddleRefP1.current?.mesh && paddleRefP2.current?.mesh && tableObject.mesh && netObject.mesh) {
 
