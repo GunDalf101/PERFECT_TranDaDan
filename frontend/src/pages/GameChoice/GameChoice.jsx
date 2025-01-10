@@ -295,6 +295,7 @@ const GameChoice = () => {
                     <Link to="/game-lobby/tournament"><div className="game-option" data-index="2">TOURNAMENT</div></Link> 
                     <Link to="/game-lobby/local-register"><div className="game-option" data-index="3">LOCAL MODE</div></Link>
                     <Link to="/game-lobby/quadra-register"><div className="game-option" data-index="4">QUADRA MODE</div></Link> 
+                    <Link to="/game-lobby/quadra-register"><div className="game-option" data-index="4">CLASSIC MODE</div></Link> 
                 </div>
 
                 <div className="game-container" id="invaders-container">

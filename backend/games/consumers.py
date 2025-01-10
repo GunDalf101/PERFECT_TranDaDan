@@ -6,27 +6,34 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.contrib.auth import get_user_model
 from .models import Match
 from channels.db import database_sync_to_async, sync_to_async
+import time
 
 
 class PongConsumer(AsyncWebsocketConsumer):
-    # Shared state between all consumer instances
     shared_games = {}
     game_loops = {}
-    active_connections = {}  # Track number of connections per game
+    active_connections = {}
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.room_group_name = None
         self.player_number = None
         self.game_id = None
-        self.delta_time = 1/60 # 60 FPS
+        self.delta_time = 1/60
+
+    connection_timestamps = {}
+    reconnection_grace_period = 5
+    disconnection_cleanup_tasks = {}
 
     async def connect(self):
         self.game_id = self.scope['url_route']['kwargs']['game_id']
         self.room_group_name = f'pong_{self.game_id}'
-        
-        # Increment connection counter for this game
-        PongConsumer.active_connections[self.game_id] = PongConsumer.active_connections.get(self.game_id, 0) + 1
+
+        PongConsumer.connection_timestamps[self.channel_name] = time.time()
+
+        if self.game_id in PongConsumer.disconnection_cleanup_tasks:
+            PongConsumer.disconnection_cleanup_tasks[self.game_id].cancel()
+            del PongConsumer.disconnection_cleanup_tasks[self.game_id]
         
         await self.channel_layer.group_add(
             self.room_group_name,
@@ -34,36 +41,140 @@ class PongConsumer(AsyncWebsocketConsumer):
         )
         await self.accept()
 
-        # Initialize shared game state if it doesn't exist
         if self.game_id not in PongConsumer.shared_games:
             self.initialize_game_state()
-            # Start game loop only once per game
             if self.game_id not in PongConsumer.game_loops:
                 PongConsumer.game_loops[self.game_id] = asyncio.create_task(self.game_loop())
 
+        if PongConsumer.active_connections.get(self.game_id, 0) > 0:
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'player_reconnected',
+                    'message': 'Opponent has reconnected'
+                }
+            )
+
+        PongConsumer.active_connections[self.game_id] = PongConsumer.active_connections.get(self.game_id, 0) + 1
+
     async def disconnect(self, close_code):
+        disconnect_time = time.time()
+        connection_time = PongConsumer.connection_timestamps.get(self.channel_name, disconnect_time)
+        connection_duration = disconnect_time - connection_time
+
+        PongConsumer.connection_timestamps.pop(self.channel_name, None)
+
+        if connection_duration < 1:
+            await self.handle_unstable_connection()
+            return
+
+        cleanup_task = asyncio.create_task(
+            self.delayed_cleanup(self.game_id, self.player_number)
+        )
+        PongConsumer.disconnection_cleanup_tasks[self.game_id] = cleanup_task
+
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'player_disconnected',
+                'player': self.player_number,
+                'message': 'Opponent disconnected. Waiting for reconnection...'
+            }
+        )
+
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
+
+    async def delayed_cleanup(self, game_id, player_number):
+        try:
+            await asyncio.sleep(self.reconnection_grace_period)
+
+            if game_id in PongConsumer.shared_games:
+                game_state = PongConsumer.shared_games[game_id]
+
+                if not game_state.get('winner'):
+                    disconnected_player = player_number
+                    winning_player = 'player2' if disconnected_player == 'player1' else 'player1'
+                    
+                    game_state['winner'] = game_state[winning_player]
+                    game_state['final_score'] = {
+                        'player1': 3 if winning_player == 'player1' else 0,
+                        'player2': 3 if winning_player == 'player2' else 0
+                    }
+                    game_state['disconnect_forfeit'] = True
+                    
+                    await self.update_match_record({
+                        'winner': winning_player,
+                        'finalScore': game_state['final_score'],
+                        'forfeit': True
+                    })
+
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {
+                            'type': 'game_ended_by_forfeit',
+                            'state': game_state,
+                            'message': f'Game ended due to player disconnection. {game_state[winning_player]} wins by forfeit.'
+                        }
+                    )
+                
+                if game_id in PongConsumer.game_loops:
+                    PongConsumer.game_loops[game_id].cancel()
+                    del PongConsumer.game_loops[game_id]
+                
+                if game_id in PongConsumer.shared_games:
+                    del PongConsumer.shared_games[game_id]
+                
+                if game_id in PongConsumer.active_connections:
+                    del PongConsumer.active_connections[game_id]
         
-        # Decrement connection counter and cleanup if last player
-        if self.game_id in PongConsumer.active_connections:
-            PongConsumer.active_connections[self.game_id] -= 1
-            if PongConsumer.active_connections[self.game_id] <= 0:
-                # Clean up game resources
-                if self.game_id in PongConsumer.game_loops:
-                    PongConsumer.game_loops[self.game_id].cancel()
-                    try:
-                        await PongConsumer.game_loops[self.game_id]
-                    except asyncio.CancelledError:
-                        pass
-                    del PongConsumer.game_loops[self.game_id]
-                
-                if self.game_id in PongConsumer.shared_games:
-                    del PongConsumer.shared_games[self.game_id]
-                
-                del PongConsumer.active_connections[self.game_id]
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            print(f"Error in delayed cleanup for game {game_id}: {e}")
+
+    async def handle_unstable_connection(self):
+        """Handle very brief connections that might indicate technical issues"""
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'connection_warning',
+                'message': 'Unstable connection detected. Please check your internet connection.'
+            }
+        )
+
+    async def player_disconnected(self, event):
+        """Handle player disconnection message"""
+        await self.send(text_data=json.dumps({
+            'type': 'player_disconnected',
+            'player': event['player'],
+            'message': event['message']
+        }))
+
+    async def player_reconnected(self, event):
+        """Handle player reconnection message"""
+        await self.send(text_data=json.dumps({
+            'type': 'player_reconnected',
+            'message': event['message']
+        }))
+
+    async def connection_warning(self, event):
+        """Handle connection warning message"""
+        await self.send(text_data=json.dumps({
+            'type': 'connection_warning',
+            'message': event['message']
+        }))
+
+    async def game_ended_by_forfeit(self, event):
+        """Handle game ended by forfeit message"""
+        await self.send(text_data=json.dumps({
+            'type': 'game_ended_by_forfeit',
+            'state': event['state'],
+            'message': event['message']
+        }))
+
 
     def update_ball_position(self, data):
         PongConsumer.shared_games[self.game_id]['ball_position']['x'] = data['ball_position']['x']
@@ -117,18 +228,15 @@ class PongConsumer(AsyncWebsocketConsumer):
         game_state['rounds_won'] = data['matches']
         game_state['current_game_winner'] = data['winner']
         
-        # Reset scores for next game
         game_state['scores'] = {'player1': 0, 'player2': 0}
 
     async def handle_match_complete(self, data):
         game_state = PongConsumer.shared_games[self.game_id]
-        game_state['winner'] = data['winner']
+        game_state['winner'] = self.get_user_from_player_number(data['winner'])
         game_state['final_score'] = data['finalScore']
         
-        # Update match record in database
         await self.update_match_record(data)
         
-        # Reset game state
         game_state['scores'] = {'player1': 0, 'player2': 0}
         game_state['rounds_won'] = {'player1': 0, 'player2': 0}
 
@@ -156,24 +264,14 @@ class PongConsumer(AsyncWebsocketConsumer):
             
             match.winner = winner_user
             match.final_score = f"{data['finalScore']['player1']}-{data['finalScore']['player2']}"
+            match.score_player1 = PongConsumer.shared_games[self.game_id] ['rounds_won']['player1']
+            match.score_player2 = PongConsumer.shared_games[self.game_id] ['rounds_won']['player2']
             match.status = "completed"
             match.save()
         except Match.DoesNotExist:
             print(f"Match {self.game_id} not found")
         except get_user_model().DoesNotExist:
             print(f"Winner user {winner_username} not found")
-
-    async def handle_match_complete(self, data):
-        game_state = PongConsumer.shared_games[self.game_id]
-        game_state['winner'] = data['winner']
-        game_state['final_score'] = data['finalScore']
-        
-        # Update match record in database
-        await self.update_match_record(data)
-        
-        # Reset game state
-        game_state['scores'] = {'player1': 0, 'player2': 0}
-        game_state['rounds_won'] = {'player1': 0, 'player2': 0}
 
     async def game_loop(self):
         try:
