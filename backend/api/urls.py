@@ -5,6 +5,7 @@ urlpatterns = [
     path('oauth2/42/', OAuth2StartView.as_view(), name='oauth2-start'),
     path('oauth2/42/callback/', OAuth2CallbackView.as_view(), name='oauth2-callback'),
     path('login/mfa/totp', MFATOTPView.as_view(), name='mfa-totp'),
+    path('mfa/totp', SecurityMFATOTP.as_view(), name='mfa-totp_sec'),
     path('register', RegisterView.as_view(), name='register'),
     path('login', LoginView.as_view(), name='login'),
     path('email/verify/<str:token>', VerifyEmailView.as_view(), name='verify-email'),
