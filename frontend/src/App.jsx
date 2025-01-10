@@ -19,6 +19,7 @@ import TournamentBracket from "./pages/Tournament/Tournament";
 import QuadraRegister from "./pages/QuadraRegister/QuadraRegister";
 import LocalRegister from "./pages/LocalRegister/LocalRegister";
 import TournamentMode from "./components/Pong/TournamentMode/TournamentMode";
+import TwoPlayers from "./components/SpaceInvaders/TwoPlayers/TwoPlayers.jsx";
 
 import User from "./pages/User/User";
 import EditProfile from "./pages/EditProfile/EditProfile";
@@ -55,6 +56,7 @@ function App() {
             <Route path="quadra-register" element={<QuadraRegister />} />
             <Route path="local-register" element={<LocalRegister />} />
             <Route path="tournament-mode" element={<TournamentMode />} />
+            <Route path="space-invaders" element={<TwoPlayers />} />
           </Route>
           <Route
             path="/profile"
