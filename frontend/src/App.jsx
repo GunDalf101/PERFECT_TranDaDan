@@ -23,13 +23,15 @@ import TournamentMode from "./components/Pong/TournamentMode/TournamentMode";
 import User from "./pages/User/User";
 import EditProfile from "./pages/EditProfile/EditProfile";
 // import { Edit } from "lucide-react";
-import { UserProvider } from "./components/auth/UserContext"; 
+import { UserProvider } from "./components/auth/UserContext";
 import { ProtectedRoute, PublicRoute } from "./components/auth/ProtectedRoute";
+import { NotificationProvider } from './context/NotificationContext.jsx';
 
 function App() {
   return (
     <BrowserRouter>
       <UserProvider>
+        <NotificationProvider>
         <ToastContainer position="top-right" autoClose={3000} />
         <Routes>
           <Route path="/" element={<MainLayout />}>
@@ -91,6 +93,7 @@ function App() {
           <Route path="/Intra/callback/" element={<IntraCallback />} />
 {/*           <Route path="*" element={<Link to="/"/>}></Route> */}
         </Routes>
+        </NotificationProvider>
       </UserProvider>
     </BrowserRouter>
   );
