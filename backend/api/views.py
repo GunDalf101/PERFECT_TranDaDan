@@ -176,11 +176,13 @@ class SecurityMFATOTP(APIView):
     def put(self, request):
         current_user = request.user
         data = request.data
-        if current_user.mfa_enabled:
-            return Response({
-                "error": "MFA is already enabled for this user."
-            }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        # if current_user.mfa_enabled:
+        #     return Response({
+        #         "error": "MFA is already enabled for this user."
+        #     }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         secret_totp = current_user.mfa_totp_secret
+        print("--------------------")
+        print(secret_totp)
         if not data.get("code") or not isinstance(data.get("code"), str) or not data.get("code").isnumeric() or not pyotp.totp.TOTP(secret_totp).verify(data.get("code")):
             return Response({
                 "error": "Invalid code."
@@ -308,6 +310,7 @@ class UsersMeView(APIView):
             'id': user.id,
             'username': user.username,
             'email': user.intra_connection.email if not user.email else user.email,
+            'mfa_enabled': user.mfa_enabled,
             'friends': getFriendList(user.id)
         }
         return Response(user_data, status=status.HTTP_200_OK)
