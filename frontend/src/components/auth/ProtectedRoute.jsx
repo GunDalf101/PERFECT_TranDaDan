@@ -27,7 +27,7 @@ const ProtectedRoute = ({ children }) => {
 
   return children;
 };
-
+ 
 
 const PublicRoute = ({ children }) => {
   const { isAuthenticated } = useUser();

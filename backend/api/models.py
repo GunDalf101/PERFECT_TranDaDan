@@ -23,6 +23,7 @@ class User(AbstractBaseUser):
         blank=True
     )
     avatar_url = models.CharField(max_length=255, blank=True, null=True)
+    channel_name = models.CharField(max_length=255, null=True, blank=True)
     email_token = models.CharField(max_length=32, blank=True, null=True)
     online = models.BooleanField(default=False)
     mfa_enabled = models.BooleanField(default=False)
@@ -97,10 +98,6 @@ class UserRelationship(models.Model):
                 self.type = RelationshipType.BLOCK_SECOND_FIRST.value
             elif self.type == RelationshipType.BLOCK_SECOND_FIRST.value:
                 self.type = RelationshipType.BLOCK_FIRST_SECOND.value
-
-    def save(self, *args, **kwargs):
-        self.clean()
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Relationship between {self.first_user} and {self.second_user} is {self.get_type_display()}"

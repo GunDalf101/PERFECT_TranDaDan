@@ -1,24 +1,17 @@
-import React, { useRef, useState } from 'react';
-import { useNotifications } from '../../../context/NotificationContext.jsx'; // Import the context
-import NotifDropdown from './NotifDropdown';
-import { useClickOutside } from '../../../hooks/useClickOutside';
+import React from "react";
+import NotifDropdown from "./NotifDropdown";
+import { useClickOutside } from "../../../hooks/useClickOutside";
+import { useState, useRef } from "react";
 
 const Notifications = () => {
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef(null);
   const buttonRef = useRef(null);
-  const { notifications } = useNotifications();  // Access notifications from context
-
   useClickOutside([notifRef, buttonRef], () => setNotifOpen(false));
-
+  
   return (
     <div className="relative">
-      <button
-        id="notificationButton"
-        ref={buttonRef}
-        className="focus:outline-none"
-        onClick={() => setNotifOpen((prev) => !prev)}
-      >
+      <button id="notificationButton" ref={buttonRef} className="focus:outline-none" onClick={() => setNotifOpen(prev => !prev)}>
         <svg
           className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 hover:text-white"
           xmlns="http://www.w3.org/2000/svg"
@@ -34,13 +27,7 @@ const Notifications = () => {
           ></path>
         </svg>
       </button>
-      <NotifDropdown isVisible={notifOpen} ref={notifRef} />
-      {/* Optionally, show a count of unread notifications */}
-      {notifications.filter((notif) => !notif.read_at).length > 0 && (
-        <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white rounded-full text-xs flex items-center justify-center">
-          {notifications.filter((notif) => !notif.read_at).length}
-        </span>
-      )}
+      <NotifDropdown isVisible={notifOpen} ref={notifRef}/>
     </div>
   );
 };

@@ -14,12 +14,13 @@ from django.urls import reverse
 from django.utils import timezone
 from django.conf import settings
 from .utils import unset_cookie_header, get_free_username, reset_password_for_user, find_user_id_by_reset_token, minuser, maxuser, createRelativeRelation, RelativeRelationshipType
-from .serializers import RegisterSerializer, LoginSerializer, RequestResetPasswordSerializer, ResetPasswordSerializer, UserUpdateSerializer
+from .serializers import RegisterSerializer, LoginSerializer, RequestResetPasswordSerializer, ResetPasswordSerializer
 from .tasks import send_registration_email
 from .models import IntraConnection
 import pyotp
 import pyqrcode
 import io
+from django.core import serializers
 from django.utils.crypto import get_random_string
 from .models import UserRelationship, RelationshipType
 from django.db.models import Q
@@ -176,13 +177,11 @@ class SecurityMFATOTP(APIView):
     def put(self, request):
         current_user = request.user
         data = request.data
-        # if current_user.mfa_enabled:
-        #     return Response({
-        #         "error": "MFA is already enabled for this user."
-        #     }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        if current_user.mfa_enabled:
+            return Response({
+                "error": "MFA is already enabled for this user."
+            }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         secret_totp = current_user.mfa_totp_secret
-        print("--------------------")
-        print(secret_totp)
         if not data.get("code") or not isinstance(data.get("code"), str) or not data.get("code").isnumeric() or not pyotp.totp.TOTP(secret_totp).verify(data.get("code")):
             return Response({
                 "error": "Invalid code."
@@ -256,11 +255,7 @@ class RequestResetPasswordView(UnprotectedView):
             email = serializer.validated_data['email']
 
             user = User.objects.filter(email=email).first()
-            if user:
-                if not user.email_verified:
-                    token = user.email_token
-                    confirmation_link = request.build_absolute_uri(reverse("verify-email", kwargs={"token": token}))
-                    send_registration_email(confirmation_link, user.email, schedule=timezone.now())
+            if user and user.email_verified:
                 token = get_random_string(32)
                 reset_password_for_user(user.id, user.email, f"{env.str('RESET_PASS_FRONTEND_URL')}/{token}", token)
             return Response({
@@ -272,8 +267,8 @@ class VerifyEmailView(UnprotectedView):
 
     def get(self, _, token):
         try:
-            user = User.objects.filter(email_token=token).first()
-            user.email_token = get_random_string(32) # set the token for the next verification.
+            user = User.objects.get(email_token=token)
+            user.email_token = ""
             user.email_verified = True
             user.save()
             return Response({"message": "email verified."}, status=status.HTTP_200_OK)
@@ -303,32 +298,22 @@ class LoginView(UnprotectedView):
 
 
 class UsersMeView(APIView):
+    # authentication_classes = [BearerTokenAuthentication]
 
     def get(self, request):
         user = request.user
+
+        ic = getattr(user, 'intra_connection', None)
+        if ic:
+            ic = serializers.serialize('json', [ic])
         user_data = {
             'id': user.id,
             'username': user.username,
-            'email': user.intra_connection.email if not user.email else user.email,
-            'mfa_enabled': user.mfa_enabled,
-            'friends': getFriendList(user.id)
+            'email': user.email,
+            'intra_connection': ic
         }
-        return Response(user_data, status=status.HTTP_200_OK)
 
-    def patch(self, request):
-        user = request.user
-        email = user.email
-        serializer = UserUpdateSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            if email != user.email:
-                user.email_verified = False
-                user.save()
-                token = user.email_token
-                confirmation_link = request.build_absolute_uri(reverse("verify-email", kwargs={"token": token}))
-                send_registration_email(confirmation_link, user.email, schedule=timezone.now())
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(user_data, status=status.HTTP_200_OK)
 
 class UsersMeTestView(UnprotectedView):
 
@@ -354,7 +339,7 @@ def getFriendList(user_id):
         friendList.append({
             'id': friend.id,
             'username': friend.username,
-            'avatar': './default_profile.webp'
+            'avatar': 'https://via.placeholder.com/40'
         })
     return friendList
 
@@ -425,6 +410,11 @@ class SendFriendRequest(APIView):
             type=RelationshipType.PENDING_FIRST_SECOND.value
         )
 
+        try:
+            relationship.clean()
+            relationship.save()
+        except ValueError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"detail": "Friend request sent."}, status=status.HTTP_201_CREATED)
 
 class DeleteFriendRequest(APIView):
@@ -526,11 +516,17 @@ class BlockUser(APIView):
                     relationship.save()
                 return Response({"detail": "User blocked."}, status=status.HTTP_201_CREATED)
 
-        relationship = UserRelationship.objects.create(
+        relationship = UserRelationship(
             first_user=current_user,
             second_user=target_user,
             type=RelationshipType.BLOCK_FIRST_SECOND.value
         )
+
+        try:
+            relationship.clean()
+            relationship.save()
+        except ValueError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({"detail": "User blocked."}, status=status.HTTP_201_CREATED)
 

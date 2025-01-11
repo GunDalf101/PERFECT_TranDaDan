@@ -1,74 +1,66 @@
-import React, { useEffect, useRef, useMemo } from 'react';
-import { Outlet } from 'react-router-dom';
-import './GameMode.css';
+import React, { useEffect } from 'react'
+import styles from './GameMode.module.scss'
+import "./GameMode.css"
+import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import GUI from 'lil-gui'
+import gsap from 'gsap'
+import { GLTFLoader } from 'three/examples/jsm/Addons.js'
+import { Outlet } from 'react-router-dom'
+
 
 const GameMode = () => {
-  const starsRef = useRef(null);
-  const requestRef = useRef();
-  const previousTimeRef = useRef();
-
-  const stars = useMemo(() => {
-    return Array.from({ length: 100 }, () => ({
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      width: Math.random() * 3,
-      delay: Math.random()
-    }));
-  }, []);
-
-  const scanlines = useMemo(() => {
-    return Array.from({ length: 10 }, (_, i) => (
-      <div key={i} className="scanline" />
-    ));
-  }, []);
-
-  useEffect(() => {
-    const handleMouseMove = (event) => {
-      if (!starsRef.current) return;
-      
-      requestRef.current = requestAnimationFrame((timestamp) => {
-        if (previousTimeRef.current !== undefined) {
-          const mouseX = (event.clientX / window.innerWidth - 0.5) * 100;
-          const mouseY = (event.clientY / window.innerHeight - 0.5) * 100;
-          
-          starsRef.current.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
+    useEffect(() => {
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.width = Math.random() * 3 + 'px';
+                star.style.height = star.style.width;
+                star.style.animationDelay = Math.random() * 1 + 's';
+                starsContainer.appendChild(star);
+            }
         }
-        previousTimeRef.current = timestamp;
-      });
-    };
 
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      if (requestRef.current) {
-        cancelAnimationFrame(requestRef.current);
-      }
-    };
-  }, []);
+        function handleMouseMove(event) {
+            const stars = document.getElementsByClassName('star');
+            const mouseX = event.clientX / window.innerWidth - 0.5;
+            const mouseY = event.clientY / window.innerHeight - 0.5;
 
-  return (
-    <div id="retro-background">
-      <div id="stars" ref={starsRef}>
-        {stars.map((star, index) => (
-          <div
-            key={index}
-            className="star"
-            style={{
-              left: `${star.left}%`,
-              top: `${star.top}%`,
-              width: `${star.width}px`,
-              height: `${star.width}px`,
-              animationDelay: `${star.delay}s`
-            }}
-          />
-        ))}
-      </div>
-      <Outlet />
-      {/* <div className="game-preview" />
-      <div id="glitch-overlay">{scanlines}</div> */}
-    </div>
-  );
-};
+            for (let star of stars) {
+                const depth = parseFloat(star.style.width) * 2;
+                const translateX = mouseX * depth * 100;
+                const translateY = mouseY * depth * 100;
+                star.style.transform = `translate(${translateX}px, ${translateY}px)`;
+            }
+        }
 
-export default GameMode;
+        createStars();
+        document.addEventListener('mousemove', handleMouseMove);
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+        };
+    }, []);
+    const scanlines = Array.from({ length: 10 }, (_, i) => (
+        <div
+            key={i}
+            className="scanline"
+        />
+    ));
+
+
+    return (
+        <div id="retro-background">
+            <div id="stars"></div>
+            <Outlet />
+            <div className="game-preview"></div>
+            <div id="glitch-overlay">{scanlines}</div>
+        </div>
+    )
+}
+
+export default GameMode

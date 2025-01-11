@@ -15,11 +15,11 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username', 'email', 'password', 'password_confirmation']
-
+    
     def validate(self, data):
         if data['password'] != data['password_confirmation']:
             raise serializers.ValidationError({"password_confirmation": "Passwords must match."})
-
+        
         try:
             password_validation.validate_password(data['password'])
         except ValidationError as e:
@@ -28,11 +28,10 @@ class RegisterSerializer(serializers.ModelSerializer):
         if User.objects.filter(email=data['email']).exists():
             raise serializers.ValidationError({"email": "A user with this email already exists."})
         return data
-
+    
     def create(self, validated_data):
         validated_data.pop('password_confirmation', None)
-        if validated_data['username'] and isinstance(validated_data['username'], str):
-            validated_data['username'] = validated_data['username'].lower()
+
         user = User(
             username=validated_data['username'],
             email=validated_data['email']
@@ -42,7 +41,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()
 
         return user
-
+    
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, style={'input_type': 'password'})
@@ -54,7 +53,7 @@ class LoginSerializer(serializers.Serializer):
             if not user.email_verified:
                 raise serializers.ValidationError({"email": "Verify your account before logging in."})
         return data
-
+    
 class RequestResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
@@ -65,44 +64,22 @@ class RequestResetPasswordSerializer(serializers.Serializer):
         except ValidationError:
             raise serializers.ValidationError({"email": "Invalid email address."})
         return value
-
+    
 class ResetPasswordSerializer(serializers.Serializer):
     password = serializers.CharField(
-        write_only=True,
-        required=True,
+        write_only=True, 
+        required=True, 
         min_length=8,
         style={'input_type': 'password'}
     )
     password_confirmation = serializers.CharField(
-        write_only=True,
-        required=True,
+        write_only=True, 
+        required=True, 
         style={'input_type': 'password'}
     )
-
+    
     def validate(self, data):
         if data['password'] != data['password_confirmation']:
             raise serializers.ValidationError({"password_confirmation": "Password and confirmation do not match."})
         return data
-
-class UserUpdateSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
-    password_confirmation = serializers.CharField(write_only=True, required=False, allow_blank=True)
-
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'password', 'password_confirmation']
-
-    def validate(self, data):
-        password = data.get('password')
-        password_confirmation = data.get('password_confirmation')
-
-        if password and password != password_confirmation:
-            raise serializers.ValidationError("Password and password confirmation do not match.")
-
-        return data
-
-    def update(self, instance, validated_data):
-        password = validated_data.pop('password', None)
-        if password:
-            instance.set_password(password)
-        return super().update(instance, validated_data)
+    

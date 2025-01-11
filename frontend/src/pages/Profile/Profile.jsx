@@ -10,10 +10,10 @@ const Profile = () => {
 
   // Local test friend list
   const friends = [
-    { id: 1, username: "Friend1", avatar: "./default_profile.webp" },
-    { id: 2, username: "Friend2", avatar: "./default_profile.webp" },
-    { id: 3, username: "Friend3", avatar: "./default_profile.webp" },
-    { id: 4, username: "Friend4", avatar: "./default_profile.webp" },
+    { id: 1, username: "Friend1", avatar: "https://via.placeholder.com/40?text=F1" },
+    { id: 2, username: "Friend2", avatar: "https://via.placeholder.com/40?text=F2" },
+    { id: 3, username: "Friend3", avatar: "https://via.placeholder.com/40?text=F3" },
+    { id: 4, username: "Friend4", avatar: "https://via.placeholder.com/40?text=F4" },
   ];
 
   useEffect(() => {
@@ -62,7 +62,7 @@ const Profile = () => {
           {/* Profile Image */}
           <div className="flex flex-col items-center">
             <img
-              src="./default_profile.webp"
+              src="https://media.licdn.com/dms/image/v2/D4E03AQHoy7si-hZGzQ/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1723469726527?e=1740614400&v=beta&t=yUwzZJlP32P8gwYyIVh4vivqMCCeIiJw5xpYa0IYjDU"
               alt="Profile"
               className="w-36 h-36 rounded-full border-4 border-white shadow-[0_0_20px_5px] shadow-neonPink mb-4"
             />
@@ -118,7 +118,7 @@ const Profile = () => {
         <div className="flex-1 min-w-[300px] h-fit p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
           <h2 className="text-2xl text-center text-neonPink mb-4">Match History</h2>
           <div className="overflow-x-auto">
-          {mymatches && mymatches.length > 0 ? (
+          {mydata.friends && mydata.friends.length > 0 ? (
             <table className="w-full text-center text-white border-collapse">
               <thead>
                 <tr className="bg-neonBlue text-black">
@@ -132,9 +132,9 @@ const Profile = () => {
                 {mymatches.map((match) => (
                   <tr key={match.id} className="odd:bg-gray-800 even:bg-gray-700">
                     <td className="p-2 border border-white">{match.id}</td>
-                    <td className="p-2 border border-white">{match.p1}</td>
+                    <td className="p-2 border border-white">{match.player1}</td>
                     <td className="p-2 border border-white">{match.result}</td>
-                    <td className="p-2 border border-white">{match.score1 + "-" + match.score2}</td>
+                    <td className="p-2 border border-white">{match.score}</td>
                   </tr>
                 ))}
               </tbody>

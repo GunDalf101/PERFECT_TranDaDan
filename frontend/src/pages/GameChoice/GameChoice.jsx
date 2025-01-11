@@ -291,11 +291,10 @@ const GameChoice = () => {
                 <div className="game-container" id="pong-container">
                     <div className="game-title">PONG</div>
                     <Link to="/game-lobby/cpu-mode"><div className="game-option" data-index="0">VS CPU</div></Link> 
-                    <Link to="/game-lobby/matchmaking"><div className="game-option" data-index="1">REMOTE MODE</div></Link> 
-                    <Link to="/game-lobby/tournament"><div className="game-option" data-index="2">TOURNAMENT</div></Link> 
-                    <Link to="/game-lobby/local-register"><div className="game-option" data-index="3">LOCAL MODE</div></Link>
-                    <Link to="/game-lobby/quadra-register"><div className="game-option" data-index="4">QUADRA MODE</div></Link> 
-                    <Link to="/game-lobby/quadra-register"><div className="game-option" data-index="4">CLASSIC MODE</div></Link> 
+                    <Link to="/game-lobby/matchmaking"><div className="game-option" data-index="1">2 PLAYER</div></Link> 
+                    <Link to="/"><div className="game-option" data-index="2">TOURNAMENT</div></Link> 
+                    <Link to="/game-lobby/local-mode"><div className="game-option" data-index="3">LOCAL MODE</div></Link>
+                    <Link to="/"><div className="game-option" data-index="0">OPTIONS</div></Link> 
                 </div>
 
                 <div className="game-container" id="invaders-container">

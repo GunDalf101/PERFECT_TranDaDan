@@ -84,23 +84,24 @@ class GetUserMatch(APIView):
     def get(self, request, userid):
 
         matches = Match.objects.filter(
-            Q(player1_id=userid, status='completed') |
-            Q(player2_id=userid, status='completed')
+            Q(player1=userid) |
+            Q(player2=userid)
         )
-        matches.first()
-        if not matches.first():
+
+        if not matches:
             Response({"no matches"}, status=200)
 
-        matches_resp = []
+        matches = []
         for _match in matches:
-            matches_resp.append({
-                'id': _match.id,
-                'p1': _match.player1.username,
-                'score1': _match.score_player1,
-                'score2': _match.score_player2,
-                'result': 'win' if _match.winner_id == userid else 'lose'
+            matches.append({
+                'id': Match.id,
+                'p1': Match.player1,
+                'p2': Match.player2,
+                'score1': Match.score_player1,
+                'score2': Match.score_player2,
+                'result': 'win' if Match.winner == userid else 'lose'
             })
-        return Response(matches_resp, status=200)
+        return Response(matches, status=200)
 
 class CancelMatch(APIView):
     permission_classes = [IsAuthenticated]
