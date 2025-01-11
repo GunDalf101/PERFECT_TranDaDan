@@ -26,7 +26,7 @@ const SearchingPlaceholder = () => (
   </div>
 );
 
-const MatchMaking = () => {
+const MatchMaking = ({ gameType = "pong" }) => {
   const [opponent, setOpponent] = useState(null);
   const [isSearching, setIsSearching] = useState(true);
   const [socket, setSocket] = useState(null);
@@ -68,7 +68,7 @@ const MatchMaking = () => {
 
     ws.onopen = () => {
       console.log("WebSocket connected");
-      ws.send(JSON.stringify({ type: "find_match" }));
+      ws.send(JSON.stringify({ type: "find_match", game_type: gameType }));
     };
 
     ws.onmessage = (event) => {
@@ -84,7 +84,6 @@ const MatchMaking = () => {
         });
         setIsSearching(false);
 
-        // Store game session data in localStorage or state management
         console.log("Match found:", data);
         const gameSession = {
           gameId: data.game_id,
@@ -96,9 +95,11 @@ const MatchMaking = () => {
 
         // Navigate to remote-play within game-lobby
         setTimeout(() => {
-          navigate('/game-lobby/remote-play', { 
-            state: gameSession
-          });
+          if (gameType === "pong") {
+            navigate('/game-lobby/remote-play', { 
+              state: gameSession
+            });
+          }
         }, 3000);
       } else if (data.status === "searching") {
         console.log("Searching for a match...");

@@ -360,7 +360,8 @@ class PongConsumer(AsyncWebsocketConsumer):
 
 
 class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
-    matchmaking_queue = []
+    # Store queues as a dictionary with game_type as key
+    matchmaking_queues = {}
     player_to_user = {}
 
     async def connect(self):
@@ -382,36 +383,56 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
         })
 
     async def disconnect(self, code):
-        if self in self.matchmaking_queue:
-            self.matchmaking_queue.remove(self)
+        # Remove player from their game type queue if they're in one
+        for queue in self.matchmaking_queues.values():
+            if self in queue:
+                queue.remove(self)
+                break
 
     async def receive_json(self, content):
         if content.get("type") == "find_match":
-            self.matchmaking_queue.append(self)
+            game_type = content.get("game_type")
+            if not game_type:
+                await self.send_json({
+                    "status": "error",
+                    "message": "Game type is required"
+                })
+                return
 
-            if len(self.matchmaking_queue) >= 2:
-                player1 = self
-                player2 = self.matchmaking_queue.pop(0)
+            if game_type not in self.matchmaking_queues:
+                self.matchmaking_queues[game_type] = []
 
-                match = await sync_to_async(self.create_match)(player1, player2)
+            self.matchmaking_queues[game_type].append(self)
+
+            if len(self.matchmaking_queues[game_type]) >= 2:
+                player1 = self.matchmaking_queues[game_type].pop(0)
+                player2 = self.matchmaking_queues[game_type].pop(0)
+
+                match = await sync_to_async(self.create_match)(
+                    player1, 
+                    player2,
+                    game_type
+                )
 
                 await player1.send_json({
                     "status": "matched",
                     "opponent": player2.scope['user'].username,
                     "game_id": match.id,
                     "username": player1.scope['user'].username,
-                    "player1": player1.scope['user'].username
+                    "player1": player1.scope['user'].username,
+                    "game_type": game_type
                 })
                 await player2.send_json({
                     "status": "matched",
                     "opponent": player1.scope['user'].username,
                     "game_id": match.id,
                     "username": player2.scope['user'].username,
-                    "player1": player1.scope['user'].username
+                    "player1": player1.scope['user'].username,
+                    "game_type": game_type
                 })
 
-    def create_match(self, player1, player2):
-        """Create a match between two players"""
+    def create_match(self, player1, player2, game_type):
+        """Create a match between two players for a specific game type"""
         if not player1.scope.get('user') or not player2.scope.get('user'):
             raise ValueError("User data missing")
         
@@ -421,6 +442,7 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
         match = Match.objects.create(
             player1=player1_user,
             player2=player2_user,
+            game_type=game_type,
             status="ongoing"
         )
         return match
