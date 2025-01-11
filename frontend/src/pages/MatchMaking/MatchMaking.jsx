@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import './MatchMaking.css';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams  } from 'react-router-dom';
 import getMyData from '../../api/authServiceMe';
 
 const ProfileCard = ({ username, title, picture }) => (
@@ -36,6 +36,9 @@ const MatchMaking = ({ gameType = "pong" }) => {
   const navigate = useNavigate();
 
   const userDataRef = useRef(null);
+  const [searchParams] = useSearchParams();
+  const receivedGameType = searchParams.get("gameType") || gameType;
+  console.log("Received game type:", searchParams.get("gameType") );
 
   const userData = {
     username: username || 'Loading...',
@@ -68,7 +71,7 @@ const MatchMaking = ({ gameType = "pong" }) => {
 
     ws.onopen = () => {
       console.log("WebSocket connected");
-      ws.send(JSON.stringify({ type: "find_match", game_type: gameType }));
+      ws.send(JSON.stringify({ type: "find_match", game_type: receivedGameType }));
     };
 
     ws.onmessage = (event) => {
@@ -95,12 +98,17 @@ const MatchMaking = ({ gameType = "pong" }) => {
 
         // Navigate to remote-play within game-lobby
         setTimeout(() => {
-          if (gameType === "pong") {
+          if (receivedGameType === "pong") {
             navigate('/game-lobby/remote-play', { 
               state: gameSession
             });
           }
         }, 3000);
+        if (receivedGameType === "space-rivalry") {
+          navigate('/game-lobby/space-rivalry', {
+            state: gameSession
+          });
+        }
       } else if (data.status === "searching") {
         console.log("Searching for a match...");
       }

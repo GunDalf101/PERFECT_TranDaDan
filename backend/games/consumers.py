@@ -273,8 +273,6 @@ class PongConsumer(AsyncWebsocketConsumer):
         try:
             match = Match.objects.get(id=self.game_id)
             winner_username = self.get_user_from_player_number(data['winner'])
-            print("----------------------------")
-            print(winner_username)
             winner_user = get_user_model().objects.get(username=winner_username)
             
             match.winner = winner_user

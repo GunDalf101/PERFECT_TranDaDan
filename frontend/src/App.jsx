@@ -66,7 +66,7 @@ function App() {
             <Route path="quadra-register" element={<QuadraRegister />} />
             <Route path="local-register" element={<LocalRegister />} />
             <Route path="tournament-mode" element={<TournamentMode />} />
-            <Route path="space-invaders" element={<TwoPlayers />} />
+            <Route path="space-rivalry" element={<TwoPlayers />} />
           </Route>
           <Route
             path="/chat"
