@@ -259,6 +259,7 @@ class PongConsumer(AsyncWebsocketConsumer):
         try:
             match = Match.objects.get(id=self.game_id)
             winner_username = self.get_user_from_player_number(data['winner'])
+            print("----------------------------")
             print(winner_username)
             winner_user = get_user_model().objects.get(username=winner_username)
             
@@ -266,6 +267,7 @@ class PongConsumer(AsyncWebsocketConsumer):
             match.final_score = f"{data['finalScore']['player1']}-{data['finalScore']['player2']}"
             match.score_player1 = PongConsumer.shared_games[self.game_id] ['rounds_won']['player1']
             match.score_player2 = PongConsumer.shared_games[self.game_id] ['rounds_won']['player2']
+            match.forfeit = data['forfeit']
             match.status = "completed"
             match.save()
         except Match.DoesNotExist:

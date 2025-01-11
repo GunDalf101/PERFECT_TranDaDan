@@ -507,7 +507,8 @@ const RemoteMode = () => {
                                 finalScore: {
                                     player1: playerGamesWon,
                                     player2: aiGamesWon
-                                }
+                                },
+                                forfeit: false
                             }));
                         }
                         

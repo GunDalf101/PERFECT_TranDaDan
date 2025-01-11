@@ -17,7 +17,6 @@
 #   -p 6379:6379 \
 #   redis:latest
 
-sleep 10
 python3 manage.py makemigrations
 python3 manage.py migrate
 

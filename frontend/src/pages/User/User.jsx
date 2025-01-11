@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import Navbar from "../../components/Navbar/Logged";
 import NotFound from "../NotFound/NotFound";
 import getUserData from "../../api/authServiceUser";
 import getMyData from "../../api/authServiceMe"
 import { sendFriendReq, cancelFriendReq, acceptFriendReq, unfriendReq} from "../../api/friendService";
 import { blockUser, unblockUser } from "../../api/blockService";
-import { toast } from 'react-toastify';
 import getMatches from "../../api/gameService";
 
-function isBlocked(r)
-{
-  return r == 4 || r == 6;
-}
+const r = {
+  NONE: 0,
+  YOU_REQUEST: 1,
+  HE_REQUEST: 2,
+  FRIENDS: 3,
+  YOU_BLOCK: 4,
+  HE_BLOCK: 5,
+  BLOCK_BOTH: 6
+};
 
 const User = () => {
   const [userdata, setuserdata] = useState(null); // Store user data
@@ -87,23 +90,13 @@ const User = () => {
 
   const handleBlockUser = async () => {
     try {
-      if (userdata.relationship == 4)
+      if (userdata.relationship == r.YOU_BLOCK || userdata.relationship == r.BLOCK_BOTH)
         {
           await unblockUser(username);
-          toast.error({
-            position: "top-right",
-            autoClose: 2000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            theme: "light",
-          });
         }
       else
       {
         await blockUser(username);
-        window.location.href = '/'
       }
     } catch (error) {
       console.error("Error sending friend request:", error);
@@ -123,8 +116,6 @@ const User = () => {
 
   return(
     <div className="flex flex-col items-center min-h-screen bg-cover bg-center bg-[url('/retro_1.jpeg')] from-darkBackground via-purpleGlow to-neonBlue text-white font-retro">
-      <Navbar />
-
       <div className="flex flex-wrap m-10 justify-between w-11/12 gap-4 mt-20">
         {/* User Box */}
         <div className="flex-1 min-w-[300px] h-[460px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
@@ -132,7 +123,7 @@ const User = () => {
           <div className="flex flex-col items-center">
           <div className="flex flex-col items-center relative">
             <img
-              src="https://media.licdn.com/dms/image/v2/D4E03AQHoy7si-hZGzQ/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1723469726527?e=1740614400&v=beta&t=yUwzZJlP32P8gwYyIVh4vivqMCCeIiJw5xpYa0IYjDU"
+              src="/default_profile.webp"
               alt="Profile"
               className="w-36 h-36 rounded-full border-4 border-white shadow-[0_0_20px_5px] shadow-neonPink mb-4"
             />
@@ -156,24 +147,24 @@ const User = () => {
             </p>
 
             {/* Friend Request Button */}
-           { userdata.relationship == 3 ? (
+           { userdata.relationship == r.FRIENDS ? (
             <button
               onClick={handleUnfriend} // Assuming this handler unfriends the user
               onMouseEnter={() => setIsAddHovering(true)}
               onMouseLeave={() => setIsAddHovering(false)}
-              className="mt-4 px-6 py-2 rounded-lg text-green-500 text-xl font-bold transition-all duration-300 bg-transparent border-green-500 border-2 hover:bg-red-600 hover:text-white hover:border-none"
+              className="mt-4 px-6 py-2 rounded-lg  bg-neonPink text-xl font-bold transition-all duration-300 hover:bg-red-600 hover:text-white"
             >
               {isAddHovering ? "Unfriend" : "Friends"}
             </button>
             ) :
-           userdata.relationship == 2 ? (
+           userdata.relationship == r.HE_REQUEST ? (
              <button
                onClick={handleAcceptRequest}
                className="mt-4 px-6 py-2 bg-neonBlue text-black font-bold rounded-lg shadow-[0_0_10px_2px] shadow-neonBlue hover:bg-neonPink hover:text-white transition-all"
              >
                Accept Request
              </button>
-             ) : userdata.relationship == 0 ? (
+             ) : userdata.relationship == r.NONE ? (
                // Add Friend Button
                <button
                  onClick={handleAddFriend}
@@ -183,7 +174,7 @@ const User = () => {
                >
                  Add Friend
                </button>
-             ) : userdata.relationship == 1 ? (
+             ) : userdata.relationship == r.YOU_REQUEST ? (
                // Cancel Request Button
                <button
                  onClick={handleCancelReq} // Assuming the same handler cancels the request
@@ -206,9 +197,9 @@ const User = () => {
                  : "bg-gray-500 text-white"
              }`}
            >
-             {userdata.relationship == 4 && isBlockHovering
+             {(userdata.relationship == r.YOU_BLOCK || userdata.relationship == r.BLOCK_BOTH) && isBlockHovering
                ? "Unblock"
-               : userdata.relationship == 4
+               : (userdata.relationship == r.YOU_BLOCK || userdata.relationship == r.BLOCK_BOTH)
                ? "Blocked"
                : "Block"}
            </button>
@@ -260,9 +251,9 @@ const User = () => {
                 {userMatches.map((match) => (
                   <tr key={match.id} className="odd:bg-gray-800 even:bg-gray-700">
                     <td className="p-2 border border-white">{match.id}</td>
-                    <td className="p-2 border border-white">{match.p1}</td>
+                    <td className="p-2 border border-white">{match.opponent}</td>
                     <td className="p-2 border border-white">{match.result}</td>
-                    <td className="p-2 border border-white">{match.score1 + "-" + match.score2}</td>
+                    <td className="p-2 border border-white">{match.score}</td>
                   </tr>
                 ))}
               </tbody>

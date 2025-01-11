@@ -36,6 +36,16 @@ function App() {
         <Routes>
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Homepage />} />
+            <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/profile/edit" element={<EditProfile />} />
+          <Route path="/user/:username" element={<User />} />
           </Route>
           <Route
             path="/game-lobby"
@@ -56,16 +66,6 @@ function App() {
             <Route path="local-register" element={<LocalRegister />} />
             <Route path="tournament-mode" element={<TournamentMode />} />
           </Route>
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/profile/edit" element={<EditProfile />} />
-          <Route path="/user/:username" element={<User />} />
           <Route
             path="/chat"
             element={

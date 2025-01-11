@@ -19,7 +19,7 @@ const ProfileIcon = () => {
     _user?.intra_connection &&
       JSON.parse(_user.intra_connection)?.[0]?.fields?.avatar_url
       ? JSON.parse(_user.intra_connection)[0].fields.avatar_url
-      : "./default_profile.webp";
+      : "/default_profile.webp";
 
   useClickOutside([profileRef, buttonRef], setProfileDropdown)
 
