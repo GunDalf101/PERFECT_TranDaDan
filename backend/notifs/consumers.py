@@ -25,7 +25,7 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
 
     async def receive_json(self, content):
         type = content.get("type")
-        print(f"????: {type}")
+        print(f"????: {content}")
 
         if type == "mark_as_read":
             notification_id = content.get("notification_id")
