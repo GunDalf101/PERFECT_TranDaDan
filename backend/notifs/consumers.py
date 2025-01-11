@@ -1,60 +1,57 @@
-# consumers.py (inside your notifications app)
-
-import json
-from channels.generic.websocket import JsonWebsocketConsumer
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.utils import timezone
 from .models import Notification
+from channels.db import database_sync_to_async
+from django.contrib.auth import get_user_model
 
-class NotificationConsumer(JsonWebsocketConsumer):
+User = get_user_model()
 
-    def connect(self):
-        # Get the user from the scope (user should be authenticated)
+class NotificationConsumer(AsyncJsonWebsocketConsumer):
+
+    async def connect(self):
         self.user = self.scope.get('user', None)
 
-        # Reject connection if user is not authenticated
         if self.user is None:
-            self.close()
+            await self.close()
             return
 
-        # Create a unique group for the user
-        self.group_name = f"user_{self.user.id}"
+        self.group_name = f"notifs_user_{self.user.username}"
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+        await self.send_notifications()
 
-        # Add the user to the group
-        self.channel_layer.group_add(
-            self.group_name,
-            self.channel_name
-        )
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
-        # Accept the WebSocket connection
-        self.accept()
+    async def receive_json(self, content):
+        type = content.get("type")
+        print(f"????: {content}")
 
-        # Send the user's notifications upon connection
-        self.send_notifications()
-
-    def disconnect(self, close_code):
-        # Remove the user from the group when they disconnect
-        self.channel_layer.group_discard(
-            self.group_name,
-            self.channel_name
-        )
-
-    def receive_json(self, content):
-        # Handle incoming JSON messages (e.g., to mark a notification as read)
-        action = content.get("action")
-
-        if action == "mark_as_read":
+        if type == "mark_as_read":
             notification_id = content.get("notification_id")
-            self.mark_as_read(notification_id)
+            await self.mark_as_read(notification_id)
+        elif type == "relationship_update":
+            await self.handle_relationship_update(content)
 
-    def send_notifications(self):
-        # Query unread notifications for the user, ordered by created_at (latest first)
+    async def send_notifications(self):
+        notifications = await self.get_unread_notifications()
+
+        await self.send_json({
+            'msgtype': 'notification',
+            'notifications': notifications
+        })
+
+    async def send_new_notification(self, event):
+        await self.send_json({
+            'msgtype': 'notification',
+            'notifications': [event['notification']]
+        })
+
+    @database_sync_to_async
+    def get_unread_notifications(self):
         notifications = Notification.objects.filter(
-            user=self.user,
-            read_at__isnull=True
-        ).order_by('-created_at').values('id', 'content', 'url', 'created_at')
-
-        # Send notifications as JSON to the WebSocket
-        notifications = [
+            user=self.user, read_at__isnull=True).order_by('-created_at').values('id', 'content', 'url', 'created_at')
+        return [
             {
                 'id': notification['id'],
                 'content': notification['content'],
@@ -64,26 +61,57 @@ class NotificationConsumer(JsonWebsocketConsumer):
             for notification in notifications
         ]
 
-        # Send notifications as JSON to the WebSocket
-        self.send_json({
-            'notifications': notifications
-        })
-
+    @database_sync_to_async
     def mark_as_read(self, notification_id):
         try:
-            # Get the notification and mark it as read
             notification = Notification.objects.get(id=notification_id, user=self.user)
             notification.read_at = timezone.now()
             notification.save()
-
-            # Send confirmation to the client that the notification was marked as read
-            self.send_json({
-                'status': 'Notification marked as read',
-                'notification_id': notification_id
-            })
         except Notification.DoesNotExist:
-            # If the notification doesn't exist, send an error
-            self.send_json({
-                'status': 'Notification not found',
-                'notification_id': notification_id
-            })
+            pass
+
+    async def handle_relationship_update(self, content):
+        action = content.get("action")
+        username = content.get("username")
+
+        if action == "sent_friend_request":
+            notif = await self.create_new_notification(username, f"You have a new friend request from @{self.user.username}.", url=f"/user/{self.user.username}")
+            await self.channel_layer.group_send(
+                f"notifs_user_{username}",
+                {
+                    'type': 'send_new_notification',
+                    'notification': {
+                        'id': notif.id,
+                        'content': notif.content,
+                        'url': notif.url,
+                        'created_at': notif.created_at.isoformat()
+                    }
+
+                }
+            )
+        await self.channel_layer.group_send(
+            f"notifs_user_{username}",
+            {
+                'type': 'dispatch_relationship_update',
+                'msgtype': 'relationship_update',
+                'action': action,
+                'username': self.user.username
+            }
+        )
+
+    async def dispatch_relationship_update(self, event):
+        del event['type']
+        await self.send_json(event)
+
+    @database_sync_to_async
+    def get_user_by_username(self, username):
+        try:
+            return User.objects.get(username=username)
+        except User.DoesNotExist:
+            return None
+
+    @database_sync_to_async
+    def create_new_notification(self, username, content, url):
+        user = User.objects.get(username=username)
+        notif = Notification.objects.create(content=content, url=url, user=user)
+        return notif

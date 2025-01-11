@@ -26,13 +26,13 @@ import EditProfile from "./pages/EditProfile/EditProfile";
 // import { Edit } from "lucide-react";
 import { UserProvider } from "./components/auth/UserContext";
 import { ProtectedRoute, PublicRoute } from "./components/auth/ProtectedRoute";
-import { NotificationProvider } from './context/NotificationContext.jsx';
+import { RealTimeProvider } from './context/RealTimeContext.jsx';
 
 function App() {
   return (
     <BrowserRouter>
       <UserProvider>
-        <NotificationProvider>
+        <RealTimeProvider>
         <ToastContainer position="top-right" autoClose={3000} />
         <Routes>
           <Route path="/" element={<MainLayout />}>
@@ -95,7 +95,7 @@ function App() {
           <Route path="/Intra/callback/" element={<IntraCallback />} />
 {/*           <Route path="*" element={<Link to="/"/>}></Route> */}
         </Routes>
-        </NotificationProvider>
+        </RealTimeProvider>
       </UserProvider>
     </BrowserRouter>
   );

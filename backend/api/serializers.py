@@ -31,7 +31,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('password_confirmation', None)
-
+        if validated_data['username'] and isinstance(validated_data['username'], str):
+            validated_data['username'] = validated_data['username'].lower()
         user = User(
             username=validated_data['username'],
             email=validated_data['email']

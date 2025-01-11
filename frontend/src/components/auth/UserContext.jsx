@@ -23,7 +23,7 @@ const UserProvider = ({ children }) => {
       }
 
       try {
-        const data = await getMyData(); 
+        const data = await getMyData();
         const userJSON = JSON.stringify(data);
         setUser(userJSON);
         setIsAuthenticated(true);
@@ -31,7 +31,7 @@ const UserProvider = ({ children }) => {
         console.error('Error validating token:', error);
         setIsAuthenticated(false);
         setUser(null);
-        localStorage.removeItem('access_token'); 
+        localStorage.removeItem('access_token');
       }
     };
 

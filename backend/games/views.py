@@ -15,25 +15,23 @@ User = get_user_model()
 
 
 class JoinQueue(APIView):
-    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         player = request.user
         game_type = request.data.get('game_type', 'pong')
         if MatchmakingQueue.objects.filter(player=player).exists():
             return Response({"status": "error", "message": "Already in queue"})
-        
+
         MatchmakingQueue.objects.create(player=player, game_type=game_type)
         return Response({"status": "success", "message": "Player added to matchmaking queue"})
 
 class FindMatch(APIView):
-    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         queue = MatchmakingQueue.objects.order_by('joined_at')[:2]
         if len(queue) < 2:
             return Response({"status": "error", "message": "Not enough players in queue"})
-        
+
         if queue[0].game_type != queue[1].game_type:
             return Response({"status": "error", "message": "Not enough players in queue"})
 
@@ -52,7 +50,6 @@ class FindMatch(APIView):
         })
 
 class LeaveQueue(APIView):
-    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         player = request.user
@@ -60,7 +57,6 @@ class LeaveQueue(APIView):
         return Response({"status": "success"})
 
 class GetMatch(APIView):
-    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         game_id = request.query_params.get('game_id')
@@ -103,7 +99,6 @@ class GetUserMatch(APIView):
         return Response(matches_resp, status=200)
 
 class CancelMatch(APIView):
-    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         game_id = request.data.get('game_id')
@@ -112,7 +107,6 @@ class CancelMatch(APIView):
         return Response({"status": "success"})
 
 class SubmitGameResult(APIView):
-    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         game_id = request.data.get('game_id')
