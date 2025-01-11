@@ -27,6 +27,10 @@ const RemoteMode = () => {
     const navigate = useNavigate();
 
     const gameSession = JSON.parse(localStorage.getItem('gameSession'));
+    if (!gameSession) {
+        navigate('/game-lobby/');
+        return null;
+    }
     const { gameId, username, opponent, isPlayer1 } = gameSession;
     const [gameStatus, setGameStatus] = useState('waiting');
 
@@ -620,6 +624,7 @@ const RemoteMode = () => {
             
             if (inGame) {
                 if (paddleRef.current?.mesh) {
+                    console.log("WEEE IN");
                     const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
                     if (isPlayer1) {
                         camera.position.set(
