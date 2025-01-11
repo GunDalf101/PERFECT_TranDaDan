@@ -1,16 +1,19 @@
 import React from "react";
 import styles from "./SubNav.module.scss";
 import { useNavigate, Link } from "react-router-dom";
-import { useUser } from "../../../components/auth/UserContext"; 
+import { useUser } from "../../../components/auth/UserContext";
+import { useRealTime } from "../../../context/RealTimeContext";
 
 
 const ProfileDropdown = React.forwardRef(({isVisible}, ref) => {
   const { logout } = useUser();
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
+  const {clearRealTimeContext} = useRealTime();
 
   const handleLogout = () => {
     logout();
-    navigate("/"); 
+    clearRealTimeContext();
+    navigate("/");
   };
 
   const handleNavigation = (path) => {

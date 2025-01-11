@@ -12,7 +12,7 @@ User = get_user_model()
 
 class DefaultAuthentication(BaseAuthentication):
     def authenticate(self, request):
-        token = request.COOKIES.get('auth')
+        token = request.headers.get('Token')
 
         if not token:
             raise AuthenticationFailed('Authentication token not found in cookies.', code=401)

@@ -25,9 +25,23 @@ class PongConsumer(AsyncWebsocketConsumer):
     reconnection_grace_period = 5
     disconnection_cleanup_tasks = {}
 
+    @database_sync_to_async
+    def check_match_status(self):
+        try:
+            match = Match.objects.get(id=self.game_id)
+            return match.status == "completed"
+        except Match.DoesNotExist:
+            return False
+
+
     async def connect(self):
         self.game_id = self.scope['url_route']['kwargs']['game_id']
         self.room_group_name = f'pong_{self.game_id}'
+
+        is_completed = await self.check_match_status()
+        if is_completed:
+            await self.close(code=4000)
+            return
 
         PongConsumer.connection_timestamps[self.channel_name] = time.time()
 

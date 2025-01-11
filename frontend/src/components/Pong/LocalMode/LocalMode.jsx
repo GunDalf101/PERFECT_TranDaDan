@@ -371,7 +371,7 @@ const LocalMode = () => {
             winCheck();
         };
 
-        const paddleSpeed = 0.08;
+        const paddleSpeed = 0.15;
         const smoothFactor = 0.05;
         let paddleVelocityX = 0;
         let paddleVelocityY = 0;
@@ -481,21 +481,33 @@ const LocalMode = () => {
             oldElapsedTime = elapsedTime;
             
             if (inGame) {
-                if (paddleRef.current?.mesh) {
-                    camera.position.set(
-                        0,
-                        6.8,
-                        12.2
-                    );
-                    camera.lookAt(0, 0, 0);
+                if (paddleRef.current?.mesh && paddleCPURef.current?.mesh) {
+                    const cameraOffset = new THREE.Vector3(0, -2.5, 4);
+                    const splitCameraOffset = new THREE.Vector3(0, 2.5, 4);
+                    const lookAtOffset = new THREE.Vector3(0, 1, 0);
 
-                    splitCamera.position.set(
-                        0,
-                        6.8,
-                        -12.2
-                    );
+                    const playerPaddlePos = paddleRef.current.mesh.position.clone();
+                    const targetCameraPos = playerPaddlePos.clone().add(splitCameraOffset);
+                    const targetLookAt = playerPaddlePos.clone().add(lookAtOffset);
 
-                    splitCamera.lookAt(0, 0, 0);
+                    const cpuPaddlePos = paddleCPURef.current.mesh.position.clone();
+                    const targetSplitCameraPos = cpuPaddlePos.clone().sub(cameraOffset);
+                    const targetSplitLookAt = cpuPaddlePos.clone().add(lookAtOffset);
+
+                    camera.position.lerp(targetCameraPos, 0.05);
+                    splitCamera.position.lerp(targetSplitCameraPos, 0.05);
+
+                    const currentLookAt = new THREE.Vector3();
+                    const currentSplitLookAt = new THREE.Vector3();
+                    
+                    camera.getWorldDirection(currentLookAt);
+                    splitCamera.getWorldDirection(currentSplitLookAt);
+                    
+                    const newLookAt = currentLookAt.lerp(targetLookAt, 0.05);
+                    const newSplitLookAt = currentSplitLookAt.lerp(targetSplitLookAt, 0.05);
+
+                    camera.lookAt(newLookAt);
+                    splitCamera.lookAt(newSplitLookAt);
 
                     paddleVelocityX = lerp(paddleVelocityX, paddleVelocityX, smoothFactor);
                     paddleVelocityY = lerp(paddleVelocityY, paddleVelocityY, smoothFactor);
@@ -519,6 +531,18 @@ const LocalMode = () => {
                             paddleRef.current.mesh.position.y = tableBoundsRef.current.min.y - 0.5;
                         } else if (paddleRef.current.mesh.position.y > tableBoundsRef.current.max.y + 3) {
                             paddleRef.current.mesh.position.y = tableBoundsRef.current.max.y + 3;
+                        }
+
+                        if (paddleCPURef.current.mesh.position.x < tableBoundsRef.current.min.x) {
+                            paddleCPURef.current.mesh.position.x = tableBoundsRef.current.min.x;
+                        } else if (paddleCPURef.current.mesh.position.x > tableBoundsRef.current.max.x) {
+                            paddleCPURef.current.mesh.position.x = tableBoundsRef.current.max.x;
+                        }
+
+                        if (paddleCPURef.current.mesh.position.y < tableBoundsRef.current.min.y - 0.5) {
+                            paddleCPURef.current.mesh.position.y = tableBoundsRef.current.min.y - 0.5;
+                        } else if (paddleCPURef.current.mesh.position.y > tableBoundsRef.current.max.y + 3) {
+                            paddleCPURef.current.mesh.position.y = tableBoundsRef.current.max.y + 3;
                         }
                     }
 

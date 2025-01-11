@@ -6,6 +6,7 @@ import getMyData from "../../api/authServiceMe"
 import { sendFriendReq, cancelFriendReq, acceptFriendReq, unfriendReq} from "../../api/friendService";
 import { blockUser, unblockUser } from "../../api/blockService";
 import getMatches from "../../api/gameService";
+import { useRealTime } from "../../context/RealTimeContext";
 
 const r = {
   NONE: 0,
@@ -24,9 +25,12 @@ const User = () => {
   const [isAddHovering, setIsAddHovering] = useState(false); // State to manage hover
   const [isBlockHovering, setIsBlockHovering] = useState(false); // State to manage hover for block button
   const [userMatches, setUserMatches] = useState(null);
-
+  const { sendRelationshipUpdate, relationshipUpdate } = useRealTime();
   const { username } = useParams();
 
+  useEffect(() => {
+    setReload(!reload);
+  }, [relationshipUpdate]);
   // Fetch user data and friend request status
   useEffect(() => {
     const fetchUserData = async () => {
@@ -52,6 +56,7 @@ const User = () => {
     try {
       await sendFriendReq(username);
       setIsAddHovering(false);
+      sendRelationshipUpdate("sent_friend_request", username);
     } catch (error) {
       console.error("Error sending friend request:", error);
     }
@@ -62,6 +67,7 @@ const User = () => {
     try {
         await cancelFriendReq(username);
         setIsAddHovering(false);
+        sendRelationshipUpdate("cancel_friend_request", username);
       } catch (error) {
         console.error("Error sending friend request:", error);
       }
@@ -72,6 +78,7 @@ const User = () => {
     try {
         await unfriendReq(username);
         setIsAddHovering(false);
+        sendRelationshipUpdate("unfriended", username);
       } catch (error) {
         console.error("Error sending friend request:", error);
       }
@@ -82,6 +89,7 @@ const User = () => {
     try {
       await acceptFriendReq(username)
       console.log("Friend request accepted");
+      sendRelationshipUpdate("friends", username);
     } catch (error) {
       console.error("Error accepting friend request:", error);
     }

@@ -515,20 +515,32 @@ const TournamentMode = () => {
             
             if (inGame) {
                 if (paddleRef.current?.mesh) {
-                    camera.position.set(
-                        0,
-                        6.8,
-                        12.2
-                    );
-                    camera.lookAt(0, 0, 0);
+                    const cameraOffset = new THREE.Vector3(0, -2.5, 4);
+                    const splitCameraOffset = new THREE.Vector3(0, 2.5, 4);
+                    const lookAtOffset = new THREE.Vector3(0, 1, 0);
 
-                    splitCamera.position.set(
-                        0,
-                        6.8,
-                        -12.2
-                    );
+                    const playerPaddlePos = paddleRef.current.mesh.position.clone();
+                    const targetCameraPos = playerPaddlePos.clone().add(splitCameraOffset);
+                    const targetLookAt = playerPaddlePos.clone().add(lookAtOffset);
 
-                    splitCamera.lookAt(0, 0, 0);
+                    const cpuPaddlePos = paddleCPURef.current.mesh.position.clone();
+                    const targetSplitCameraPos = cpuPaddlePos.clone().sub(cameraOffset);
+                    const targetSplitLookAt = cpuPaddlePos.clone().add(lookAtOffset);
+
+                    camera.position.lerp(targetCameraPos, 0.05);
+                    splitCamera.position.lerp(targetSplitCameraPos, 0.05);
+
+                    const currentLookAt = new THREE.Vector3();
+                    const currentSplitLookAt = new THREE.Vector3();
+                    
+                    camera.getWorldDirection(currentLookAt);
+                    splitCamera.getWorldDirection(currentSplitLookAt);
+                    
+                    const newLookAt = currentLookAt.lerp(targetLookAt, 0.05);
+                    const newSplitLookAt = currentSplitLookAt.lerp(targetSplitLookAt, 0.05);
+
+                    camera.lookAt(newLookAt);
+                    splitCamera.lookAt(newSplitLookAt);
 
                     paddleVelocityX = lerp(paddleVelocityX, paddleVelocityX, smoothFactor);
                     paddleVelocityY = lerp(paddleVelocityY, paddleVelocityY, smoothFactor);
