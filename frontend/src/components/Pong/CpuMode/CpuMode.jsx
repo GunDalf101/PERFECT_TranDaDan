@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import GUI from 'lil-gui';
 import gsap from 'gsap';
+import AdvancedAISystem from './AdvancedAISystem';
 
 const CpuMode = () => {
     const canvasRef = useRef(null);
@@ -13,6 +14,8 @@ const CpuMode = () => {
     const paddleCPURef = useRef(null);
     const [scores, setScores] = useState({ player: 0, ai: 0 });
     const [matches, setMatches] = useState({ player: 0, ai: 0 });
+    const advancedAISystem = new AdvancedAISystem();
+
 
     useEffect(() => {
         if (!canvasRef.current) return;
@@ -255,6 +258,7 @@ const CpuMode = () => {
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
                 ballSound.play();
+                // advancedAISystem.onHit();
                 
                 const paddleBox = new THREE.Box3().setFromObject(paddleCPURef.current.mesh);
                 const ballWidth = ball.position.x - paddleBox.min.x;
@@ -280,6 +284,10 @@ const CpuMode = () => {
                 ballSound.play();
                 
                 ball.velocity.y = -ball.velocity.y;
+
+                // if (ball.position.z < 0 && aiSideBounces === 1) {
+                //     advancedAISystem.onMiss();
+                // }
                 
                 if (ball.position.z < 0) {
                     aiSideBounces++;
@@ -435,14 +443,6 @@ const CpuMode = () => {
             const deltaTime = elapsedTime - oldElapsedTime;
             oldElapsedTime = elapsedTime;
             
-            // Update CPU paddle position
-            if (gameObjectsRef.current.length > 0 && paddleCPURef.current?.mesh) {
-                const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
-                paddleCPURef.current.mesh.position.x = ball.position.x;
-                paddleCPURef.current.mesh.position.y = ball.position.y;
-                paddleCPURef.current.mesh.position.z = -10;
-            }
-            
             if (inGame) {
                 if (paddleRef.current?.mesh) {
                     camera.position.set(
@@ -454,6 +454,24 @@ const CpuMode = () => {
                     paddleRef.current.mesh.position.x = 5.5 * mouseCurrent.x;
                     paddleRef.current.mesh.position.z = 11 - Math.abs((2 * mouseCurrent.x));
                     paddleRef.current.mesh.position.y = 5.03 + (2 * mouseCurrent.y);
+
+                    if (gameObjectsRef.current.length > 0 && paddleRef.current?.mesh && paddleCPURef.current?.mesh) {
+                        const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
+                        
+                        // Update AI controller
+                        advancedAISystem.update(
+                            ball,
+                            paddleCPURef.current.mesh,
+                            deltaTime,
+                            playerScore,
+                            aiScore
+                        );
+                        
+                    }
+
+                    paddleCPURef.current.mesh.position.z = -10; // Keep AI paddle at proper distance
+                    paddleCPURef.current.mesh.position.y = Math.max(4.0387, Math.min(7, paddleCPURef.current.mesh.position.y)); // Height constraints
+                    paddleCPURef.current.mesh.position.x = Math.max(-5.5, Math.min(5.5, paddleCPURef.current.mesh.position.x));
 
                     if (paddleRef.current.mesh.position.x > 0) {
                         gsap.to(paddleRef.current.mesh.rotation, {
