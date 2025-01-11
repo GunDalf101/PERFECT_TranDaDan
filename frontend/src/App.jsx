@@ -20,6 +20,7 @@ import EditProfile from "./pages/EditProfile/EditProfile";
 // import { Edit } from "lucide-react";
 import { UserProvider } from "./components/auth/UserContext";
 import { ProtectedRoute, PublicRoute } from "./components/auth/ProtectedRoute";
+import { RealTimeProvider } from './context/RealTimeContext.jsx';
 import ResetPasswordForm from "./pages/ResetPassword/ResetPasswordForm";
 import { WebSocketProvider } from './components/chatContext/WebSocketContext';
 
@@ -27,65 +28,70 @@ function App() {
   return (
     <BrowserRouter>
       <UserProvider>
-        <WebSocketProvider>
-
-          <ToastContainer position="top-right" autoClose={3000} />
-          <Routes>
-            <Route path="/" element={<MainLayout />}>
-              <Route index element={<Homepage />} />
-            </Route>
+        <RealTimeProvider>
+        <ToastContainer position="top-right" autoClose={3000} />
+        <Routes>
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<Homepage />} />
             <Route
-              path="/game-lobby"
-              element={
-                <ProtectedRoute>
-                  <GameMode />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<GameChoice />} />
-              <Route path="matchmaking" element={<MatchMaking />} />
-              <Route path="cpu-mode" element={<CpuMode />} />
-              <Route path="remote-play" element={<RemoteMode />} />
-              <Route path="local-mode" element={<LocalMode />} />
-            </Route>
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/profile/edit" element={<EditProfile />} />
-            <Route path="/user/:username" element={<User />} />
-            <Route
-              path="/chat"
-              element={
-                <ProtectedRoute>
-                  <ChatApp />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <PublicRoute>
-                  <Register />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/login"
-              element={
-                <PublicRoute>
-                  <Login />
-                </PublicRoute>
-              }
-            />
-            <Route path="/reset-password/:token" element={<ResetPasswordForm />} />
-            <Route path="/Intra/callback/" element={<IntraCallback />} />
-          </Routes>
-        </WebSocketProvider>
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/profile/edit" element={<EditProfile />} />
+          <Route path="/user/:username" element={<User />} />
+          </Route>
+          <Route
+            path="/game-lobby"
+            element={
+              <ProtectedRoute>
+                <GameMode />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<GameChoice />} />
+            <Route path="matchmaking" element={<MatchMaking />} />
+            <Route path="cpu-mode" element={<CpuMode />} />
+            <Route path="remote-play" element={<RemoteMode />} />
+            <Route path="local-mode" element={<LocalMode />} />
+            <Route path="quadra-mode" element={<QuadraMode />} />
+            <Route path="tournament" element={<TournamentBracket />} />
+            <Route path="quadra-register" element={<QuadraRegister />} />
+            <Route path="local-register" element={<LocalRegister />} />
+            <Route path="tournament-mode" element={<TournamentMode />} />
+            <Route path="space-rivalry" element={<TwoPlayers />} />
+          </Route>
+          <Route
+            path="/chat"
+            element={
+              <ProtectedRoute>
+                <ChatApp />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <PublicRoute>
+                <Register />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+          <Route path="/Intra/callback/" element={<IntraCallback />} />
+{/*           <Route path="*" element={<Link to="/"/>}></Route> */}
+        </Routes>
+        </RealTimeProvider>
       </UserProvider>
     </BrowserRouter>
   );

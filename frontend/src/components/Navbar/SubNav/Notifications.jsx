@@ -1,12 +1,14 @@
-import React from "react";
-import NotifDropdown from "./NotifDropdown";
-import { useClickOutside } from "../../../hooks/useClickOutside";
-import { useState, useRef } from "react";
+import React, { useRef, useState } from 'react';
+import { useRealTime } from '../../../context/RealTimeContext.jsx'; // Import the context
+import NotifDropdown from './NotifDropdown';
+import { useClickOutside } from '../../../hooks/useClickOutside';
 
 const Notifications = () => {
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef(null);
   const buttonRef = useRef(null);
+  const { notifications } = useRealTime();  // Access notifications from context
+
   useClickOutside([notifRef, buttonRef], () => setNotifOpen(false));
   
   return (

@@ -1,12 +1,24 @@
-import React from "react";
+import React, { useEffect } from 'react';
+import { useRealTime } from '../../../context/RealTimeContext';  // Import the context
+import { formatDistanceToNow } from 'date-fns'; // Import date-fns for time formatting
 
-const NotifDropdown = React.forwardRef(({isVisible}, ref) => {
-  return isVisible? (
-    <div
-      id="notificationDropdown"
-      className="notification-dropdown absolute text-white right-0 mt-2 w-auto bg-gray-900 border-2 border-pink-500 shadow-lg rounded-md font-pixel z-10"
-      ref={ref}
-    >
+const NotifDropdown = React.forwardRef(({ isVisible }, ref) => {
+  const { notifications, markAsRead } = useRealTime();
+
+  // Effect to mark notifications as read when they are visible
+  useEffect(() => {
+    if (isVisible) {
+      notifications.forEach((notif) => {
+        // If a notification doesn't have a link and is visible, mark as read
+        if (!notif.url && !notif.read_at) {
+          markAsRead(notif.id);
+        }
+      });
+    }
+  }, [isVisible, notifications, markAsRead]);
+
+  return isVisible ? (
+    <div id="notificationDropdown" className="notification-dropdown absolute text-white right-0 mt-2 w-auto bg-gray-900 border-2 border-pink-500 shadow-lg rounded-md font-pixel z-10" ref={ref}>
       <div className="p-2">
         <p className="text-center font-bold text-lg">Notifications</p>
         <ul className="mt-2 text-sm">

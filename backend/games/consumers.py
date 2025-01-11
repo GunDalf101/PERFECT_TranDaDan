@@ -54,6 +54,81 @@ class PongConsumer(AsyncWebsocketConsumer):
         if 'type' in data and data['type'] == 'mouse_move':
             self.update_paddle_position(data)
             await self.broadcast_game_state()
+        elif 'type' in data and data['type'] == 'ball_position':
+            self.update_ball_position(data)
+            await self.broadcast_game_state()
+        elif data['type'] == 'score_update':
+            self.update_scores(data)
+            await self.broadcast_game_state()
+        
+        elif data['type'] == 'game_won':
+            self.handle_game_won(data)
+            await self.broadcast_game_state()
+        
+        elif data['type'] == 'match_complete':
+            await self.handle_match_complete(data)
+            await self.broadcast_game_state()
+
+    def update_scores(self, data):
+        game_state = PongConsumer.shared_games[self.game_id]
+        game_state['scores'] = data['scores']
+        
+        if 'scoring_history' not in game_state:
+            game_state['scoring_history'] = []
+        game_state['scoring_history'].append({
+            'scorer': data['scoringPlayer'],
+            'score': data['scores']
+        })
+
+    def handle_game_won(self, data):
+        game_state = PongConsumer.shared_games[self.game_id]
+        game_state['rounds_won'] = data['matches']
+        game_state['current_game_winner'] = data['winner']
+        
+        game_state['scores'] = {'player1': 0, 'player2': 0}
+
+    async def handle_match_complete(self, data):
+        game_state = PongConsumer.shared_games[self.game_id]
+        game_state['winner'] = self.get_user_from_player_number(data['winner'])
+        game_state['final_score'] = data['finalScore']
+        
+        await self.update_match_record(data)
+        
+        game_state['scores'] = {'player1': 0, 'player2': 0}
+        game_state['rounds_won'] = {'player1': 0, 'player2': 0}
+
+    @database_sync_to_async
+    def get_user_by_username(self, username):
+        User = get_user_model()
+        try:
+            return User.objects.get(username=username)
+        except User.DoesNotExist:
+            return None
+
+    def get_user_from_player_number(self, player_number):
+        game_state = PongConsumer.shared_games[self.game_id]
+        if player_number == 'player1':
+            return game_state['player1']
+        return game_state.get('player2')
+
+    @database_sync_to_async
+    def update_match_record(self, data):
+        try:
+            match = Match.objects.get(id=self.game_id)
+            winner_username = self.get_user_from_player_number(data['winner'])
+            winner_user = get_user_model().objects.get(username=winner_username)
+            
+            match.winner = winner_user
+            match.final_score = f"{data['finalScore']['player1']}-{data['finalScore']['player2']}"
+            match.score_player1 = PongConsumer.shared_games[self.game_id] ['rounds_won']['player1']
+            match.score_player2 = PongConsumer.shared_games[self.game_id] ['rounds_won']['player2']
+            match.forfeit = data['forfeit']
+            match.status = "completed"
+            match.save()
+        except Match.DoesNotExist:
+            print(f"Match {self.game_id} not found")
+        except get_user_model().DoesNotExist:
+            print(f"Winner user {winner_username} not found")
 
     async def game_loop(self):
         try:
@@ -137,7 +212,8 @@ from .models import Match
 from channels.db import sync_to_async
 
 class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
-    matchmaking_queue = []
+    # Store queues as a dictionary with game_type as key
+    matchmaking_queues = {}
     player_to_user = {}
 
     async def connect(self):
@@ -159,36 +235,56 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
         })
 
     async def disconnect(self, code):
-        if self in self.matchmaking_queue:
-            self.matchmaking_queue.remove(self)
+        # Remove player from their game type queue if they're in one
+        for queue in self.matchmaking_queues.values():
+            if self in queue:
+                queue.remove(self)
+                break
 
     async def receive_json(self, content):
         if content.get("type") == "find_match":
-            self.matchmaking_queue.append(self)
+            game_type = content.get("game_type")
+            if not game_type:
+                await self.send_json({
+                    "status": "error",
+                    "message": "Game type is required"
+                })
+                return
 
-            if len(self.matchmaking_queue) >= 2:
-                player1 = self
-                player2 = self.matchmaking_queue.pop(0)
+            if game_type not in self.matchmaking_queues:
+                self.matchmaking_queues[game_type] = []
 
-                match = await sync_to_async(self.create_match)(player1, player2)
+            self.matchmaking_queues[game_type].append(self)
+
+            if len(self.matchmaking_queues[game_type]) >= 2:
+                player1 = self.matchmaking_queues[game_type].pop(0)
+                player2 = self.matchmaking_queues[game_type].pop(0)
+
+                match = await sync_to_async(self.create_match)(
+                    player1, 
+                    player2,
+                    game_type
+                )
 
                 await player1.send_json({
                     "status": "matched",
                     "opponent": player2.scope['user'].username,
                     "game_id": match.id,
                     "username": player1.scope['user'].username,
-                    "player1": player1.scope['user'].username
+                    "player1": player1.scope['user'].username,
+                    "game_type": game_type
                 })
                 await player2.send_json({
                     "status": "matched",
                     "opponent": player1.scope['user'].username,
                     "game_id": match.id,
                     "username": player2.scope['user'].username,
-                    "player1": player1.scope['user'].username
+                    "player1": player1.scope['user'].username,
+                    "game_type": game_type
                 })
 
-    def create_match(self, player1, player2):
-        """Create a match between two players"""
+    def create_match(self, player1, player2, game_type):
+        """Create a match between two players for a specific game type"""
         if not player1.scope.get('user') or not player2.scope.get('user'):
             raise ValueError("User data missing")
         
@@ -198,6 +294,7 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
         match = Match.objects.create(
             player1=player1_user,
             player2=player2_user,
+            game_type=game_type,
             status="ongoing"
         )
         return match

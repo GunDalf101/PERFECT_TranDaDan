@@ -330,8 +330,9 @@ class UsersMeTestView(UnprotectedView):
 def getFriendList(user_id):
     friendList = []
     relations = UserRelationship.objects.filter(
-        Q(first_user_id=user_id, type=RelativeRelationshipType.FRIENDS.value) |
-        Q(second_user_id=user_id, type=RelativeRelationshipType.FRIENDS.value)
+        Q(first_user_id=user_id) |
+        Q(second_user_id=user_id),
+        type=RelativeRelationshipType.FRIENDS.value
     )
 
     for relation in relations:
@@ -339,7 +340,7 @@ def getFriendList(user_id):
         friendList.append({
             'id': friend.id,
             'username': friend.username,
-            'avatar': 'https://via.placeholder.com/40'
+            'avatar': '/default_profile.webp'
         })
     return friendList
 
@@ -361,9 +362,6 @@ class UserView(APIView):
 
         if relationship:
             relationship_n = createRelativeRelation(current_user, relationship)
-
-        if relationship_n == RelativeRelationshipType.HE_BLOCK.value:
-            return Response({"error": "User not found."}, status=404)
 
         user_data = {
             'id': target_user.id,
@@ -489,10 +487,6 @@ class BlockUser(APIView):
             Q(first_user=current_user, second_user=target_user) |
             Q(first_user=target_user, second_user=current_user)
         ).first()
-
-        if relationship:
-            if createRelativeRelation(current_user, relationship) == RelativeRelationshipType.HE_BLOCK.value: #this section used for: if a user has been blocked by another user he can't block him too.
-                return Response({"error": "User not found."}, status=404)
 
         if relationship:
             if relationship.first_user == current_user:

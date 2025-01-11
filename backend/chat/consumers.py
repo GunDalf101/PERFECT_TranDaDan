@@ -14,7 +14,7 @@ User = get_user_model()
 class DirectMessageConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user = self.scope['user']
-        print(self.user)
+        # print(self.user)
         if not self.user:
             await self.close()
             return

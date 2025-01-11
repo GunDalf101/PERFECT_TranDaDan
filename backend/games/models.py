@@ -3,7 +3,7 @@ from django.conf import settings
 
 class Match(models.Model):
     id = models.AutoField(primary_key=True)
-    game_type = models.CharField(max_length=10, default='pong')
+    game_type = models.CharField(max_length=15, default='pong')
     player1 = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -33,7 +33,7 @@ class Match(models.Model):
     
 class MatchmakingQueue(models.Model):
     id = models.AutoField(primary_key=True)
-    game_type = models.CharField(max_length=10, default='pong')
+    game_type = models.CharField(max_length=15, default='pong')
     player = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

@@ -45,7 +45,7 @@ const ProfileIcon = () => {
     <div className="relative py-1 ">
       <button id="profileButton" ref={buttonRef} className="focus:outline-none rounded-full border-2  border-pink-500" onClick={() => setProfileDropdown(prev => !prev)}>
       <img 
-          src={intraData?.avatar_url || "https://via.placeholder.com/40"}
+          src={intraData?.avatar_url || "/default_profile.webp"}
           className="w-12 h-12 sm:w-14 sm:h-14 rounded-full "
         />
       </button>

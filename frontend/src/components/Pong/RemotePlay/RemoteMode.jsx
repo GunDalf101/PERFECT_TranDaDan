@@ -233,8 +233,108 @@ const RemoteMode = () => {
         };
 
         const updateScore = () => {
-            setScores({ player: playerScore, ai: aiScore });
-            setMatches({ player: playerGamesWon, ai: aiGamesWon });
+            setScores({ player1: playerScore, player2: aiScore });
+            setMatches({ player1: playerGamesWon, player2: aiGamesWon });
+        };
+        
+        const winCheck = () => {
+            if (playerScore >= maxScore || aiScore >= maxScore) {
+                if (Math.abs(playerScore - aiScore) >= 2) {
+                    if (playerScore > aiScore) {
+                        playerGamesWon++;
+                    } else {
+                        aiGamesWon++;
+                    }
+                    
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                            type: 'game_won',
+                            winner: playerScore > aiScore ? 'player1' : 'player2',
+                            matches: {
+                                player1: playerGamesWon,
+                                player2: aiGamesWon
+                            }
+                        }));
+                    }
+                    
+                    playerScore = 0;
+                    aiScore = 0;
+                    
+                    if (playerGamesWon >= Math.ceil(maxGames / 2) ||
+                        aiGamesWon >= Math.ceil(maxGames / 2)) {
+                        isGameOver = true;
+                        inGame = false;
+                        
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify({
+                                type: 'match_complete',
+                                winner: playerGamesWon > aiGamesWon ? 'player1' : 'player2',
+                                finalScore: {
+                                    player1: playerGamesWon,
+                                    player2: aiGamesWon
+                                },
+                                forfeit: false
+                            }));
+                        }
+                        
+                        playerGamesWon = 0;
+                        aiGamesWon = 0;
+                    }
+                    
+                    updateScore();
+                }
+            }
+        };
+
+        const gameLogic = () => {
+            if (gameObjectsRef.current.length === 0) return;
+            
+            const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
+            const tableBounds = new THREE.Box3().setFromObject(tableObject.mesh);
+            
+            let scoreUpdate = false;
+            let scoringPlayer = null;
+        
+            if (ball.position.z > tableBounds.max.z + 3 && playerSideBounces === 1) {
+                aiScore++;
+                scoreUpdate = true;
+                scoringPlayer = 'player2';
+                updateScore();
+                resetBall(-1);
+            } else if (ball.position.z < tableBounds.min.z - 3 && aiSideBounces === 1) {
+                playerScore++;
+                scoreUpdate = true;
+                scoringPlayer = 'player1';
+                updateScore();
+                resetBall(1);
+            } else if (ball.position.z > tableBounds.max.z + 3 && playerSideBounces === 0) {
+                playerScore++;
+                scoreUpdate = true;
+                scoringPlayer = 'player1';
+                updateScore();
+                resetBall(1);
+            } else if (ball.position.z < tableBounds.min.z - 3 && aiSideBounces === 0) {
+                aiScore++;
+                scoreUpdate = true;
+                scoringPlayer = 'player2';
+                updateScore();
+                resetBall(-1);
+            }
+        
+            if (scoreUpdate && ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'score_update',
+                    scores: {
+                        player1: playerScore,
+                        player2: aiScore
+                    },
+                    scoringPlayer: scoringPlayer,
+                    playerGamesWon: playerGamesWon,
+                    aiGamesWon: aiGamesWon
+                }));
+            }
+            
+            winCheck();
         };
 
         const handleMouseMove = (event) => {

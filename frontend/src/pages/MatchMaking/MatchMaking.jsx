@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import './MatchMaking.css';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams  } from 'react-router-dom';
 import getMyData from '../../api/authServiceMe';
 
 const ProfileCard = ({ username, title, picture }) => (
@@ -26,7 +26,7 @@ const SearchingPlaceholder = () => (
   </div>
 );
 
-const MatchMaking = () => {
+const MatchMaking = ({ gameType = "pong" }) => {
   const [opponent, setOpponent] = useState(null);
   const [isSearching, setIsSearching] = useState(true);
   const [socket, setSocket] = useState(null);
@@ -36,6 +36,9 @@ const MatchMaking = () => {
   const navigate = useNavigate();
 
   const userDataRef = useRef(null);
+  const [searchParams] = useSearchParams();
+  const receivedGameType = searchParams.get("gameType") || gameType;
+  console.log("Received game type:", searchParams.get("gameType") );
 
   const userData = {
     username: username || 'Loading...',
@@ -68,7 +71,7 @@ const MatchMaking = () => {
 
     ws.onopen = () => {
       console.log("WebSocket connected");
-      ws.send(JSON.stringify({ type: "find_match" }));
+      ws.send(JSON.stringify({ type: "find_match", game_type: receivedGameType }));
     };
 
     ws.onmessage = (event) => {
@@ -84,7 +87,6 @@ const MatchMaking = () => {
         });
         setIsSearching(false);
 
-        // Store game session data in localStorage or state management
         console.log("Match found:", data);
         const gameSession = {
           gameId: data.game_id,
@@ -96,10 +98,17 @@ const MatchMaking = () => {
 
         // Navigate to remote-play within game-lobby
         setTimeout(() => {
-          navigate('/game-lobby/remote-play', { 
+          if (receivedGameType === "pong") {
+            navigate('/game-lobby/remote-play', { 
+              state: gameSession
+            });
+          }
+        }, 3000);
+        if (receivedGameType === "space-rivalry") {
+          navigate('/game-lobby/space-rivalry', {
             state: gameSession
           });
-        }, 3000);
+        }
       } else if (data.status === "searching") {
         console.log("Searching for a match...");
       }

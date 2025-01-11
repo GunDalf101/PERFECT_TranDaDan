@@ -15,25 +15,23 @@ User = get_user_model()
 
 
 class JoinQueue(APIView):
-    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         player = request.user
         game_type = request.data.get('game_type', 'pong')
         if MatchmakingQueue.objects.filter(player=player).exists():
             return Response({"status": "error", "message": "Already in queue"})
-        
+
         MatchmakingQueue.objects.create(player=player, game_type=game_type)
         return Response({"status": "success", "message": "Player added to matchmaking queue"})
 
 class FindMatch(APIView):
-    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         queue = MatchmakingQueue.objects.order_by('joined_at')[:2]
         if len(queue) < 2:
             return Response({"status": "error", "message": "Not enough players in queue"})
-        
+
         if queue[0].game_type != queue[1].game_type:
             return Response({"status": "error", "message": "Not enough players in queue"})
 
@@ -52,7 +50,6 @@ class FindMatch(APIView):
         })
 
 class LeaveQueue(APIView):
-    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         player = request.user
@@ -60,7 +57,6 @@ class LeaveQueue(APIView):
         return Response({"status": "success"})
 
 class GetMatch(APIView):
-    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         game_id = request.query_params.get('game_id')
@@ -84,8 +80,10 @@ class GetUserMatch(APIView):
     def get(self, request, userid):
 
         matches = Match.objects.filter(
-            Q(player1=userid) |
-            Q(player2=userid)
+            Q(player1_id=userid) |
+            Q(player2_id=userid),
+            Q(status='completed') |
+            Q(forfeit=True)
         )
 
         if not matches:
@@ -93,18 +91,15 @@ class GetUserMatch(APIView):
 
         matches = []
         for _match in matches:
-            matches.append({
-                'id': Match.id,
-                'p1': Match.player1,
-                'p2': Match.player2,
-                'score1': Match.score_player1,
-                'score2': Match.score_player2,
-                'result': 'win' if Match.winner == userid else 'lose'
+            matches_resp.append({
+                'id': _match.id,
+                'opponent': _match.player2.username if _match.player1.id == userid else _match.player1.username,
+                'score': "Forfeit" if _match.forfeit else f"{_match.score_player1} - {_match.score_player2}",
+                'result': 'win' if _match.winner_id == userid else 'lose'
             })
         return Response(matches, status=200)
 
 class CancelMatch(APIView):
-    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         game_id = request.data.get('game_id')
@@ -113,7 +108,6 @@ class CancelMatch(APIView):
         return Response({"status": "success"})
 
 class SubmitGameResult(APIView):
-    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         game_id = request.data.get('game_id')

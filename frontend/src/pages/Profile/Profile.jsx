@@ -1,5 +1,4 @@
 import styles from "./Profile.module.scss";
-import Navbar from "../../components/Navbar/Logged";
 import { useState, useEffect } from "react";
 import getMyData from "../../api/authServiceMe";
 import getMatches from "../../api/gameService"
@@ -7,14 +6,6 @@ import getMatches from "../../api/gameService"
 const Profile = () => {
   const [mydata, setMyData] = useState(null);
   const [mymatches, setMymatches] = useState(null);
-
-  // Local test friend list
-  const friends = [
-    { id: 1, username: "Friend1", avatar: "https://via.placeholder.com/40?text=F1" },
-    { id: 2, username: "Friend2", avatar: "https://via.placeholder.com/40?text=F2" },
-    { id: 3, username: "Friend3", avatar: "https://via.placeholder.com/40?text=F3" },
-    { id: 4, username: "Friend4", avatar: "https://via.placeholder.com/40?text=F4" },
-  ];
 
   useEffect(() => {
     // Fetch user data
@@ -34,14 +25,6 @@ const Profile = () => {
     fetchUserData();
   }, []);
 
-  const matchHistory = [
-    { id: 1, opponent: "Player1", result: "Win", score: "3-1" },
-    { id: 2, opponent: "Player2", result: "Loss", score: "1-3" },
-    { id: 3, opponent: "Player3", result: "Win", score: "2-0" },
-    { id: 4, opponent: "Player3", result: "Win", score: "2-9" },
-    { id: 5, opponent: "Player3", result: "Win", score: "3-0" },
-  ];
-
   const statistics = {
     totalMatches: 10,
     wins: 7,
@@ -52,9 +35,7 @@ const Profile = () => {
   if (!mydata) return <div>Loading...</div>;
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-cover bg-center bg-[url('retro_1.jpeg')] from-darkBackground via-purpleGlow to-neonBlue text-white font-retro">
-      <Navbar />
-
+    <div className="flex flex-col items-center min-h-screen bg-cover bg-center bg-[url('/retro_1.jpeg')] from-darkBackground via-purpleGlow to-neonBlue text-white font-retro">
       {/* Profile and Friends Section */}
       <div className="flex flex-wrap m-10 justify-between w-11/12 gap-4 mt-20">
         {/* User Box */}
@@ -62,7 +43,7 @@ const Profile = () => {
           {/* Profile Image */}
           <div className="flex flex-col items-center">
             <img
-              src="https://media.licdn.com/dms/image/v2/D4E03AQHoy7si-hZGzQ/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1723469726527?e=1740614400&v=beta&t=yUwzZJlP32P8gwYyIVh4vivqMCCeIiJw5xpYa0IYjDU"
+              src="/default_profile.webp"
               alt="Profile"
               className="w-36 h-36 rounded-full border-4 border-white shadow-[0_0_20px_5px] shadow-neonPink mb-4"
             />
@@ -102,7 +83,7 @@ const Profile = () => {
                     alt={`${friend.username}'s avatar`}
                     className="w-12 h-12 rounded-full border-2 border-white"
                   />
-                  <p className="text-lg text-white font-medium">{friend.username}</p>
+                  <a href={"user/" + friend.username}><p className="text-lg text-white font-medium">{friend.username}</p></a>
                 </li>
               ))}
             </ul>
@@ -132,7 +113,7 @@ const Profile = () => {
                 {mymatches.map((match) => (
                   <tr key={match.id} className="odd:bg-gray-800 even:bg-gray-700">
                     <td className="p-2 border border-white">{match.id}</td>
-                    <td className="p-2 border border-white">{match.player1}</td>
+                    <td className="p-2 border border-white">{match.opponent}</td>
                     <td className="p-2 border border-white">{match.result}</td>
                     <td className="p-2 border border-white">{match.score}</td>
                   </tr>
