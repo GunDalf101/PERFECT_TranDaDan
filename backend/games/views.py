@@ -80,8 +80,10 @@ class GetUserMatch(APIView):
     def get(self, request, userid):
 
         matches = Match.objects.filter(
-            Q(player1_id=userid, status='completed') |
-            Q(player2_id=userid, status='completed')
+            Q(player1_id=userid) |
+            Q(player2_id=userid),
+            Q(status='completed') |
+            Q(forfeit=True)
         )
         matches.first()
         if not matches.first():
@@ -91,9 +93,8 @@ class GetUserMatch(APIView):
         for _match in matches:
             matches_resp.append({
                 'id': _match.id,
-                'p1': _match.player1.username,
-                'score1': _match.score_player1,
-                'score2': _match.score_player2,
+                'opponent': _match.player2.username if _match.player1.id == userid else _match.player1.username,
+                'score': "Forfeit" if _match.forfeit else f"{_match.score_player1} - {_match.score_player2}",
                 'result': 'win' if _match.winner_id == userid else 'lose'
             })
         return Response(matches_resp, status=200)

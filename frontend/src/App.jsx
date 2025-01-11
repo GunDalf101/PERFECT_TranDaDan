@@ -37,6 +37,16 @@ function App() {
         <Routes>
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Homepage />} />
+            <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/profile/edit" element={<EditProfile />} />
+          <Route path="/user/:username" element={<User />} />
           </Route>
           <Route
             path="/game-lobby"
@@ -58,16 +68,6 @@ function App() {
             <Route path="tournament-mode" element={<TournamentMode />} />
             <Route path="space-invaders" element={<TwoPlayers />} />
           </Route>
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/profile/edit" element={<EditProfile />} />
-          <Route path="/user/:username" element={<User />} />
           <Route
             path="/chat"
             element={
