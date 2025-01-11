@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
-import { useNotifications } from '../../../context/NotificationContext';  // Import the context
+import { useRealTime } from '../../../context/RealTimeContext';  // Import the context
 import { formatDistanceToNow } from 'date-fns'; // Import date-fns for time formatting
 
 const NotifDropdown = React.forwardRef(({ isVisible }, ref) => {
-  const { notifications, markAsRead } = useNotifications();
+  const { notifications, markAsRead } = useRealTime();
 
   // Effect to mark notifications as read when they are visible
   useEffect(() => {
