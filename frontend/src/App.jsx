@@ -18,69 +18,74 @@ import { ToastContainer } from "react-toastify";
 import User from "./pages/User/User";
 import EditProfile from "./pages/EditProfile/EditProfile";
 // import { Edit } from "lucide-react";
-import { UserProvider } from "./components/auth/UserContext"; 
+import { UserProvider } from "./components/auth/UserContext";
 import { ProtectedRoute, PublicRoute } from "./components/auth/ProtectedRoute";
+import ResetPasswordForm from "./pages/ResetPassword/ResetPasswordForm";
+import { WebSocketProvider } from './components/chatContext/WebSocketContext';
 
 function App() {
   return (
     <BrowserRouter>
       <UserProvider>
-        <ToastContainer position="top-right" autoClose={3000} />
-        <Routes>
-          <Route path="/" element={<MainLayout />}>
-            <Route index element={<Homepage />} />
-          </Route>
-          <Route
-            path="/game-lobby"
-            element={
-              <ProtectedRoute>
-                <GameMode />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<GameChoice />} />
-            <Route path="matchmaking" element={<MatchMaking />} />
-            <Route path="cpu-mode" element={<CpuMode />} />
-            <Route path="remote-play" element={<RemoteMode />} />
-            <Route path="local-mode" element={<LocalMode />} />
-          </Route>
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/profile/edit" element={<EditProfile />} />
-          <Route path="/user/:username" element={<User />} />
-          <Route
-            path="/chat"
-            element={
-              <ProtectedRoute>
-                <ChatApp />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <PublicRoute>
-                <Register />
-              </PublicRoute>
-            }
-          />
-          <Route
-            path="/login"
-            element={
-              <PublicRoute>
-                <Login />
-              </PublicRoute>
-            }
-          />
-          <Route path="/Intra/callback/" element={<IntraCallback />} />
-{/*           <Route path="*" element={<Link to="/"/>}></Route> */}
-        </Routes>
+        <WebSocketProvider>
+
+          <ToastContainer position="top-right" autoClose={3000} />
+          <Routes>
+            <Route path="/" element={<MainLayout />}>
+              <Route index element={<Homepage />} />
+            </Route>
+            <Route
+              path="/game-lobby"
+              element={
+                <ProtectedRoute>
+                  <GameMode />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<GameChoice />} />
+              <Route path="matchmaking" element={<MatchMaking />} />
+              <Route path="cpu-mode" element={<CpuMode />} />
+              <Route path="remote-play" element={<RemoteMode />} />
+              <Route path="local-mode" element={<LocalMode />} />
+            </Route>
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/profile/edit" element={<EditProfile />} />
+            <Route path="/user/:username" element={<User />} />
+            <Route
+              path="/chat"
+              element={
+                <ProtectedRoute>
+                  <ChatApp />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <PublicRoute>
+                  <Register />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/login"
+              element={
+                <PublicRoute>
+                  <Login />
+                </PublicRoute>
+              }
+            />
+            <Route path="/reset-password/:token" element={<ResetPasswordForm />} />
+            <Route path="/Intra/callback/" element={<IntraCallback />} />
+          </Routes>
+        </WebSocketProvider>
       </UserProvider>
     </BrowserRouter>
   );

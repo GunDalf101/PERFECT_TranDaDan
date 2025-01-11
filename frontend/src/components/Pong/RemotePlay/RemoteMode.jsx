@@ -281,7 +281,7 @@ const RemoteMode = () => {
         const animate = () => {
             const elapsedTime = clock.getElapsedTime();
             const deltaTime = elapsedTime - oldElapsedTime;
-            oldElapsedTime = elapsedTime;* 
+            oldElapsedTime = elapsedTime;
             
             if (true) {
                 // Update paddle positions based on mouse

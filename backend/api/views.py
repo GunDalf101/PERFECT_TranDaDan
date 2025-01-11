@@ -257,7 +257,7 @@ class RequestResetPasswordView(UnprotectedView):
             user = User.objects.filter(email=email).first()
             if user and user.email_verified:
                 token = get_random_string(32)
-                reset_password_for_user(user.id, user.email, f"{env.str('FRONTEND_URL')}/{token}", token)
+                reset_password_for_user(user.id, user.email, f"{env.str('RESET_PASS_FRONTEND_URL')}/{token}", token)
             return Response({
                 "message": "if a user exists with a verified email that you specified, you will receive a reset password token in your inbox.",
             }, status=status.HTTP_200_OK)

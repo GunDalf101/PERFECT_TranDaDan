@@ -18,8 +18,8 @@ const DynamicSidebar = ({ selectedUser, onClose }) => {
             <div className="flex flex-col items-center space-y-4 ">
               <div className="w-48 h-48 rounded-full bg-blue-300 flex items-center justify-center  border-solid ring-4">
                 {/* <span className="text-white text-2xl font-semibold">
-                  {selectedUser.name[0]}
-                </span> */}
+                {selectedUser.name[0]}
+              </span> */}
                 <img
                   src={imag1}
                   // alt={`${user.name}'s avatar`}
@@ -58,9 +58,9 @@ const DynamicSidebar = ({ selectedUser, onClose }) => {
                 <span>View Profile</span>
               </button>
               {/* <button className="w-full p-2 text-left flex items-center space-x-2 hover:bg-gray-700 rounded-lg transition-colors duration-200">
-                <Users className="w-5 h-5 text-purple-400" />
-                <span>Shared Contacts</span>
-              </button> */}
+              <Users className="w-5 h-5 text-purple-400" />
+              <span>Shared Contacts</span>
+            </button> */}
               <button className="w-full p-2 text-left flex items-center space-x-2 hover:bg-red-500 rounded-lg text-red-400 hover:text-white transition-colors duration-200">
                 <Ban className="w-5 h-5" />
                 <span>Block User</span>
@@ -69,13 +69,13 @@ const DynamicSidebar = ({ selectedUser, onClose }) => {
           </div>
 
           {/* <div className="border-t border-gray-700 pt-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">Joined</span>
-              <span className="text-sm text-gray-400">
-                {new Date(selectedUser.createdAt).toLocaleDateString()}
-              </span>
-            </div>
-          </div> */}
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-gray-500">Joined</span>
+            <span className="text-sm text-gray-400">
+              {new Date(selectedUser.createdAt).toLocaleDateString()}
+            </span>
+          </div>
+        </div> */}
         </div>
       </div>
     </div>
