@@ -13,7 +13,8 @@ app = get_asgi_application()
 from channels.routing import ProtocolTypeRouter, URLRouter
 from api.authentication import JWTAuthMiddleware
 from games.routing import websocket_urlpatterns
-from chat import consumers
+from chat.consumers import DirectMessageConsumer
+from notifs.consumers import NotificationConsumer
 from django.urls import path
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'transcendence.settings')
 
@@ -21,7 +22,7 @@ application = ProtocolTypeRouter({
     "http": app,
     "websocket": JWTAuthMiddleware(
         URLRouter(
-            websocket_urlpatterns + [path('ws/chat/', consumers.DirectMessageConsumer.as_asgi())]
+            websocket_urlpatterns + [path('ws/chat/', DirectMessageConsumer.as_asgi()), path('ws/notifs/', NotificationConsumer.as_asgi())]
         )
     ),
 })

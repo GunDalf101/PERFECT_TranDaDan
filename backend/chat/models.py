@@ -21,7 +21,6 @@ class Conversation(models.Model):
             self.first_user, self.second_user = self.second_user, self.first_user
 
     def save(self, *args, **kwargs):
-        # print("AAAAA")
         self.clean()
         super().save(*args, **kwargs)
 

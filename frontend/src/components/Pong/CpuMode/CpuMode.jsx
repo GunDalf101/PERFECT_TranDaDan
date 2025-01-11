@@ -16,6 +16,7 @@ const CpuMode = () => {
 
     useEffect(() => {
         if (!canvasRef.current) return;
+        let i = 0;
 
         let playerScore = 0;
         let aiScore = 0;
@@ -175,6 +176,8 @@ const CpuMode = () => {
         const simulatePhysics = (deltaTime) => {
             gameObjectsRef.current.forEach(obj => {
                 // Apply gravity
+                console.log(i);
+                i++;
                 obj.velocity.y += -9.82 * deltaTime;
 
                 // Update positions
@@ -334,7 +337,6 @@ const CpuMode = () => {
                     } else {
                         aiGamesWon++;
                     }
-                    
                     playerScore = 0;
                     aiScore = 0;
                     
@@ -356,6 +358,7 @@ const CpuMode = () => {
             
             const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
             const tableBounds = new THREE.Box3().setFromObject(tableObject.mesh);
+            console.log(tableBounds)
             
             if (ball.position.z > tableBounds.max.z + 3 && playerSideBounces === 1) {
                 aiScore++;
@@ -391,20 +394,6 @@ const CpuMode = () => {
                 inGame = !inGame;
                 controls.enableRotate = !inGame;
             }
-        };
-        
-        const handleClick = () => {
-            if (gameObjectsRef.current.length > 0) {
-                gameObjectsRef.current.forEach(obj => scene.remove(obj.mesh));
-                gameObjectsRef.current = [];
-            }
-            lastHitAI = true;
-            const position = new THREE.Vector3(
-                (Math.random() - 0.5) * 4,
-                5.0387,
-                -8
-            );
-            CreateBall(position);
         };
         
         // Lighting setup
@@ -455,7 +444,6 @@ const CpuMode = () => {
             }
             
             if (inGame) {
-                // Update paddle positions based on mouse
                 if (paddleRef.current?.mesh) {
                     camera.position.set(
                         4 * mouseCurrent.x,
@@ -467,7 +455,6 @@ const CpuMode = () => {
                     paddleRef.current.mesh.position.z = 11 - Math.abs((2 * mouseCurrent.x));
                     paddleRef.current.mesh.position.y = 5.03 + (2 * mouseCurrent.y);
 
-                    // Paddle rotation animation
                     if (paddleRef.current.mesh.position.x > 0) {
                         gsap.to(paddleRef.current.mesh.rotation, {
                             x: 2.81,
@@ -546,11 +533,16 @@ const CpuMode = () => {
             setupLighting();
             const { netObject, tableObject } = createTableAndNet();
             CreatePaddle();
+            const position = new THREE.Vector3(
+                (Math.random() - 0.5) * 4,
+                5.0387,
+                -8
+            );
+            CreateBall(position);
             
             // Add event listeners
             window.addEventListener('mousemove', handleMouseMove);
             window.addEventListener('keydown', handleKeyDown);
-            window.addEventListener('click', handleClick);
             window.addEventListener('resize', handleResize);
             
             // Start animation loop
@@ -567,7 +559,6 @@ const CpuMode = () => {
             // Handle click events
             window.removeEventListener('keydown', handleKeyDown);
             // Handle window resize events
-            window.removeEventListener('click', handleClick);
 
             // Start the animation loop
             window.removeEventListener('resize', handleResize);

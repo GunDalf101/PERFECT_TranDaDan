@@ -5,8 +5,13 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import GUI from 'lil-gui';
 import gsap from 'gsap';
 import { split } from 'three/src/nodes/TSL.js';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Trophy } from 'lucide-react';
 
 const LocalMode = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { player1Name, player2Name, player1Image, player2Image } = location.state;
     const canvasRef = useRef(null);
     const sceneRef = useRef(null);
     const gameObjectsRef = useRef([]);
@@ -14,6 +19,8 @@ const LocalMode = () => {
     const paddleCPURef = useRef(null);
     const [scores, setScores] = useState({ player: 0, ai: 0 });
     const [matches, setMatches] = useState({ player: 0, ai: 0 });
+    const [winner, setWinner] = useState(null);
+    const [gameOver, setGameOver] = useState(false);
     let tableBoundsRef = useRef(null);
 
     useEffect(() => {
@@ -27,10 +34,8 @@ const LocalMode = () => {
         let maxGames = 3;
         let playerSideBounces = 0;
         let aiSideBounces = 0;
-        let isGameOver = false;
         let inGame = false;
         let lastHitAI = true;
-        let mouseCurrent = { x: 0, y: 0 };
 
         const scene = new THREE.Scene();
         sceneRef.current = scene;
@@ -48,7 +53,7 @@ const LocalMode = () => {
 
         const camera = new THREE.PerspectiveCamera(
             75,
-            window.innerWidth / (window.innerHeight * 0.5),
+            window.innerWidth * 0.5 / (window.innerHeight ),
             0.1,
             100
         );
@@ -56,7 +61,7 @@ const LocalMode = () => {
         scene.add(camera);
         const splitCamera = new THREE.PerspectiveCamera(
             75,
-            window.innerWidth / (window.innerHeight * 0.5),
+            window.innerWidth * 0.5 / (window.innerHeight),
             0.1,
             100
         )
@@ -319,10 +324,18 @@ const LocalMode = () => {
                     
                     if (playerGamesWon >= Math.ceil(maxGames / 2) ||
                     aiGamesWon >= Math.ceil(maxGames / 2)) {
-                        isGameOver = true;
+                        setGameOver(true);
                         inGame = false;
-                        playerGamesWon = 0;
-                        aiGamesWon = 0;
+                        setWinner(playerGamesWon > aiGamesWon ? player1Name : player2Name);
+                        navigate('/game-lobby/local-register', {
+                            state: {
+                                winner: playerGamesWon > aiGamesWon ? 'left' : 'right',
+                                player1Name,
+                                player2Name,
+                                player1Image,
+                                player2Image
+                            }
+                        });
                     }
                     
                     updateScore();
@@ -358,7 +371,7 @@ const LocalMode = () => {
             winCheck();
         };
 
-        const paddleSpeed = 0.08;
+        const paddleSpeed = 0.15;
         const smoothFactor = 0.05;
         let paddleVelocityX = 0;
         let paddleVelocityY = 0;
@@ -449,9 +462,9 @@ const LocalMode = () => {
             const width = window.innerWidth;
             const height = window.innerHeight;
             
-            camera.aspect = width / (height * 0.5);
+            camera.aspect = width  * 0.5 / (height);
             camera.updateProjectionMatrix();
-            splitCamera.aspect = width / (height * 0.5);
+            splitCamera.aspect = width  * 0.5 / (height);
             splitCamera.updateProjectionMatrix();
             
             renderer.setSize(width, height);
@@ -468,21 +481,33 @@ const LocalMode = () => {
             oldElapsedTime = elapsedTime;
             
             if (inGame) {
-                if (paddleRef.current?.mesh) {
-                    camera.position.set(
-                        0,
-                        6.8,
-                        12.2
-                    );
-                    camera.lookAt(0, 0, 0);
+                if (paddleRef.current?.mesh && paddleCPURef.current?.mesh) {
+                    const cameraOffset = new THREE.Vector3(0, -2.5, 4);
+                    const splitCameraOffset = new THREE.Vector3(0, 2.5, 4);
+                    const lookAtOffset = new THREE.Vector3(0, 1, 0);
 
-                    splitCamera.position.set(
-                        0,
-                        6.8,
-                        -12.2
-                    );
+                    const playerPaddlePos = paddleRef.current.mesh.position.clone();
+                    const targetCameraPos = playerPaddlePos.clone().add(splitCameraOffset);
+                    const targetLookAt = playerPaddlePos.clone().add(lookAtOffset);
 
-                    splitCamera.lookAt(0, 0, 0);
+                    const cpuPaddlePos = paddleCPURef.current.mesh.position.clone();
+                    const targetSplitCameraPos = cpuPaddlePos.clone().sub(cameraOffset);
+                    const targetSplitLookAt = cpuPaddlePos.clone().add(lookAtOffset);
+
+                    camera.position.lerp(targetCameraPos, 0.05);
+                    splitCamera.position.lerp(targetSplitCameraPos, 0.05);
+
+                    const currentLookAt = new THREE.Vector3();
+                    const currentSplitLookAt = new THREE.Vector3();
+                    
+                    camera.getWorldDirection(currentLookAt);
+                    splitCamera.getWorldDirection(currentSplitLookAt);
+                    
+                    const newLookAt = currentLookAt.lerp(targetLookAt, 0.05);
+                    const newSplitLookAt = currentSplitLookAt.lerp(targetSplitLookAt, 0.05);
+
+                    camera.lookAt(newLookAt);
+                    splitCamera.lookAt(newSplitLookAt);
 
                     paddleVelocityX = lerp(paddleVelocityX, paddleVelocityX, smoothFactor);
                     paddleVelocityY = lerp(paddleVelocityY, paddleVelocityY, smoothFactor);
@@ -506,6 +531,18 @@ const LocalMode = () => {
                             paddleRef.current.mesh.position.y = tableBoundsRef.current.min.y - 0.5;
                         } else if (paddleRef.current.mesh.position.y > tableBoundsRef.current.max.y + 3) {
                             paddleRef.current.mesh.position.y = tableBoundsRef.current.max.y + 3;
+                        }
+
+                        if (paddleCPURef.current.mesh.position.x < tableBoundsRef.current.min.x) {
+                            paddleCPURef.current.mesh.position.x = tableBoundsRef.current.min.x;
+                        } else if (paddleCPURef.current.mesh.position.x > tableBoundsRef.current.max.x) {
+                            paddleCPURef.current.mesh.position.x = tableBoundsRef.current.max.x;
+                        }
+
+                        if (paddleCPURef.current.mesh.position.y < tableBoundsRef.current.min.y - 0.5) {
+                            paddleCPURef.current.mesh.position.y = tableBoundsRef.current.min.y - 0.5;
+                        } else if (paddleCPURef.current.mesh.position.y > tableBoundsRef.current.max.y + 3) {
+                            paddleCPURef.current.mesh.position.y = tableBoundsRef.current.max.y + 3;
                         }
                     }
 
@@ -552,13 +589,25 @@ const LocalMode = () => {
             }
             
             controls.update();
+            // renderer.setScissorTest(true);
+            // renderer.setViewport(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
+            // renderer.setScissor(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
+            // renderer.render(scene, splitCamera);
+
+            // renderer.setViewport(0, 0, window.innerWidth, window.innerHeight / 2);
+            // renderer.setScissor(0, 0, window.innerWidth, window.innerHeight / 2);
+            // renderer.render(scene, camera);
+
+            // requestAnimationFrame(animate);
+            // renderer.setScissorTest(false);
             renderer.setScissorTest(true);
-            renderer.setViewport(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
-            renderer.setScissor(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
+
+            renderer.setViewport(0, 0, window.innerWidth / 2, window.innerHeight);
+            renderer.setScissor(0, 0, window.innerWidth / 2, window.innerHeight);
             renderer.render(scene, splitCamera);
 
-            renderer.setViewport(0, 0, window.innerWidth, window.innerHeight / 2);
-            renderer.setScissor(0, 0, window.innerWidth, window.innerHeight / 2);
+            renderer.setViewport(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
+            renderer.setScissor(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
             renderer.render(scene, camera);
 
             requestAnimationFrame(animate);
@@ -616,44 +665,72 @@ const LocalMode = () => {
     return (
         <>
             <canvas ref={canvasRef} className="webgl" />
-            <div
-                style={{
-                    position: 'absolute',
-                    top: '10px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    color: 'white',
-                    fontSize: '24px'
-                }}
-                >
-                Player: {scores.player} | AI: {scores.ai}
+        
+        {/* Retro Navbar for Player Avatars and Scores */}
+        <div className="absolute top-10 left-1/2 transform -translate-x-1/2 flex items-center justify-between w-full max-w-4xl px-6 py-4 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full border-4 border-neon-cyan shadow-glow">
+            
+            {/* Player 1 Avatar */}
+            <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-cyan-400 neon-glow-cyan">
+                {player1Image && (
+                    <img 
+                        src={player1Image} 
+                        alt={player1Name}
+                        className="w-full h-full object-cover"
+                    />
+                )}
             </div>
-            <div
-                style={{
-                    position: 'absolute',
-                    top: '50px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    color: 'white',
-                    fontSize: '24px'
-                }}
-            >
-                PlayerMatches: {matches.player} | AI: {matches.ai}
+            
+            {/* Scores and Rounds - Centralized between Avatars */}
+            <div className="flex flex-col items-center space-y-2">
+                {/* Score Display */}
+                <div className="text-neon-white text-2xl pixel-font animate-glow">
+                    {player1Name}: {scores.player} | {player2Name}: {scores.ai}
+                </div>
+                
+                {/* Rounds Display */}
+                <div className="text-neon-white text-xl pixel-font">
+                    ROUNDS - {player1Name}: {matches.player} | {player2Name}: {matches.ai}
+                </div>
             </div>
-            <div
-                style={{
-                    position: 'absolute',
-                    bottom: '20px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    color: 'white',
-                    fontSize: '16px'
-                }}
-            >
-                Press ENTER to start/pause game
+            
+            {/* Player 2 Avatar */}
+            <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-rose-400 neon-glow-rose">
+                {player2Image && (
+                    <img 
+                        src={player2Image} 
+                        alt={player2Name}
+                        className="w-full h-full object-cover"
+                    />
+                )}
             </div>
+        </div>
+        
+        {/* Instructions */}
+        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-neon-white text-lg pixel-font animate-flicker">
+            Press ENTER to start/pause game
+        </div>
+            
+            {/* Game Over Screen */}
+            {gameOver && (
+                <div className="absolute inset-0 bg-black/90 flex items-center justify-center">
+                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-lg text-center border-2 border-neon-white neon-glow-white">
+                        <Trophy className={`w-16 h-16 mx-auto mb-4 ${winner === player1Name ? 'text-cyan-400' : 'text-rose-400'} animate-pulse`} />
+                        <div className={`text-2xl font-bold ${winner === player1Name ? 'text-cyan-400' : 'text-rose-400'} pixel-font animate-glow`}>
+                            {winner} WINS!
+                        </div>
+                        <button
+                            onClick={() => navigate('/game-lobby/local-register')}
+                            className="mt-4 bg-transparent text-neon-white border-2 border-cyan-400 px-6 py-2 rounded-lg
+                                hover:bg-cyan-400/20 transition-all duration-300 pixel-font"
+                        >
+                            Back to Lobby
+                        </button>
+                    </div>
+                </div>
+            )}
         </>
     );
+
 };
 
 export default LocalMode;

@@ -22,14 +22,14 @@ class Match(models.Model):
         null=True,
         related_name='matches_won'
     )
-    
+    forfeit = models.BooleanField(default=False)
     status = models.CharField(max_length=10, default='pending')
     started_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(null=True)
     
 
     def __str__(self):
-        return f"{self.player1} vs {self.player2}"
+        return f"{self.player1.username} vs {self.player2.username}"
     
 class MatchmakingQueue(models.Model):
     id = models.AutoField(primary_key=True)

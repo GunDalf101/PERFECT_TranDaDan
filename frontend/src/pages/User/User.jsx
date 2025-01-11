@@ -6,6 +6,8 @@ import getUserData from "../../api/authServiceUser";
 import getMyData from "../../api/authServiceMe"
 import { sendFriendReq, cancelFriendReq, acceptFriendReq, unfriendReq} from "../../api/friendService";
 import { blockUser, unblockUser } from "../../api/blockService";
+import { toast } from 'react-toastify';
+import getMatches from "../../api/gameService";
 
 function isBlocked(r)
 {
@@ -18,6 +20,7 @@ const User = () => {
   const [reload, setReload] = useState(false); // State to trigger useEffect
   const [isAddHovering, setIsAddHovering] = useState(false); // State to manage hover
   const [isBlockHovering, setIsBlockHovering] = useState(false); // State to manage hover for block button
+  const [userMatches, setUserMatches] = useState(null);
 
   const { username } = useParams();
 
@@ -28,6 +31,8 @@ const User = () => {
         const mydata = await getMyData()
         const data = await getUserData(username);
         setuserdata(data);
+        const matches = await getMatches(data.id)
+        setUserMatches(matches)
         if(mydata.id == data.id)
             window.location.href = "/profile"
       } catch (error) {
@@ -82,9 +87,19 @@ const User = () => {
 
   const handleBlockUser = async () => {
     try {
-      console.log(userdata.relationship)
       if (userdata.relationship == 4)
-        await unblockUser(username);
+        {
+          await unblockUser(username);
+          toast.error({
+            position: "top-right",
+            autoClose: 2000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            theme: "light",
+          });
+        }
       else
       {
         await blockUser(username);
@@ -98,21 +113,6 @@ const User = () => {
 
   if (error) return <NotFound />;
   if (!userdata) return <div>Loading...</div>; // Show loading state while fetching data
-
-  const matchHistory = [
-    { id: 1, opponent: "Player1", result: "Win", score: "3-1" },
-    { id: 2, opponent: "Player2", result: "Loss", score: "1-3" },
-    { id: 3, opponent: "Player3", result: "Win", score: "2-0" },
-    { id: 4, opponent: "Player3", result: "Win", score: "2-9" },
-    { id: 5, opponent: "Player3", result: "Win", score: "3-0" },
-  ];
-
-  const friends = [
-    { id: 1, username: "Friend1", avatar: "https://via.placeholder.com/40?text=F1" },
-    { id: 2, username: "Friend2", avatar: "https://via.placeholder.com/40?text=F2" },
-    { id: 3, username: "Friend3", avatar: "https://via.placeholder.com/40?text=F3" },
-    { id: 4, username: "Friend4", avatar: "https://via.placeholder.com/40?text=F4" },
-  ];
 
   const statistics = {
     totalMatches: 10,
@@ -246,6 +246,7 @@ const User = () => {
         <div className="flex-1 min-w-[300px] h-fit p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
           <h2 className="text-2xl text-center text-neonPink mb-4">Match History</h2>
           <div className="overflow-x-auto">
+          {userMatches && userMatches.length > 0 ? (
             <table className="w-full text-center text-white border-collapse">
               <thead>
                 <tr className="bg-neonBlue text-black">
@@ -256,16 +257,19 @@ const User = () => {
                 </tr>
               </thead>
               <tbody>
-                {matchHistory.map((match) => (
+                {userMatches.map((match) => (
                   <tr key={match.id} className="odd:bg-gray-800 even:bg-gray-700">
                     <td className="p-2 border border-white">{match.id}</td>
-                    <td className="p-2 border border-white">{match.opponent}</td>
+                    <td className="p-2 border border-white">{match.p1}</td>
                     <td className="p-2 border border-white">{match.result}</td>
-                    <td className="p-2 border border-white">{match.score}</td>
+                    <td className="p-2 border border-white">{match.score1 + "-" + match.score2}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            ):(
+              <p className="text-center text-gray-400">No matches to display.</p>
+            )}
           </div>
         </div>
 
