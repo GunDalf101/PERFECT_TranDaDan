@@ -1,0 +1,110 @@
+.heroSection {
+  height: 100svh;
+  max-height: 100em;
+}
+
+.heroHeader {
+  position: relative;
+  font-family: "Exo";
+  font-size: clamp(1em, 10vw, 9em);
+  text-transform: uppercase;
+  margin: 0;
+  transform: skew(-15deg);
+  letter-spacing: 0.03em;
+
+  &::after {
+    // Add styles for ::after if needed
+  }
+
+  .firstHero {
+    position: relative;
+    display: block;
+    text-shadow: 0 0 0.1em #8ba2d0, 0 0 0.2em black, 0 0 5em #165ff3;
+    -webkit-text-stroke: 0.06em rgba(black, 0.5);
+  }
+
+  .secondHero {
+    position: absolute;
+    left: 0;
+    top: 0;
+    background-image: linear-gradient(
+      #032d50 25%,
+      #00a1ef 35%,
+      white 50%,
+      #20125f 50%,
+      #8313e7 55%,
+      #ff61af 75%
+    );
+    -webkit-text-stroke: 0.01em #94a0b9;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+}
+
+.heroSubheader {
+  font-family: "Mr Dafoe";
+  margin: 0;
+  font-size: clamp(0.5em, 5vw, 5.5em);
+  text-align: right;
+  margin-top: -0.8em;
+  color: white;
+  text-shadow: 0 0 0.05em #fff, 0 0 0.2em #fe05e1, 0 0 0.3em #fe05e1;
+  transform: rotate(-7deg);
+}
+
+.heroContent {
+  color: #7df9ff;
+  font-family: "VT323", monospace;
+}
+
+.pressStartButton {
+  font-family: "Press Start 2P", cursive;
+  font-size: 1em;
+  color: #ff0000;
+  background: transparent;
+  border: 7px solid #ff0000;
+  font-weight: bold;
+  padding: 10px 30px;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  cursor: pointer;
+  transition: opacity 3s ease-in-out;
+  animation: fade 1.5s infinite alternate;
+  border-radius: 30px;
+  outline: none;
+
+  &:hover {
+    scale: 1.1;
+    animation: none;
+  }
+}
+
+@keyframes fade {
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 820px) {
+  .heroContent {
+    font-size: clamp(0.5em, 5vw, 5.5em) !important;
+  }
+  .pressStartButton {
+    font-size: 3vw;
+  }
+}
+
+@media (max-height: 600px) {
+  .heroSection {
+    height: 600px !important;
+  }
+  .content {
+    height: 600px !important;
+  }
+}
