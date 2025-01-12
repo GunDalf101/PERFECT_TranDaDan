@@ -2,15 +2,17 @@ import styles from "./EditProfile.module.scss";
 import Navbar from "../../components/Navbar/Logged";
 import getMyData from "../../api/authServiceMe";
 import {qrMFAreq, disableMFAreq, enableMFA} from "../../api/mfaService"
+import {myToast} from "../../lib/utils1"
 import { useState, useEffect } from "react";
+
 
 const EditProfile = () => {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
-    avatar: "", // URL or image file preview
-    password: "", // Password field
-    confirmPassword: "", // Password confirmation field
+    avatar: "/default_profile.webp",
+    password: "",
+    confirmPassword: "",
   });
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -23,7 +25,6 @@ const EditProfile = () => {
     const fetchUserData = async () => {
       try {
         const mydata = await getMyData();
-        // setMyData(mydata)
         setFormData((prev) => ({ ...prev, ...mydata }));
         setIs2FAEnabled(mydata.mfa_enabled); // Assuming `mydata` contains a property `is2FAEnabled`
       } catch (error) {
@@ -34,6 +35,9 @@ const EditProfile = () => {
     fetchUserData();
   }, []); // Empty dependency array to run only on component mount
 
+
+
+  
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -58,12 +62,8 @@ const EditProfile = () => {
     }
     try {
       await updateProfileData(formData); // Replace with actual API call
-      setSuccessMessage("Profile updated successfully!");
-      setErrorMessage("");
-      setPasswordError("");
     } catch (error) {
-      setErrorMessage("Failed to update profile. Please try again.");
-      setSuccessMessage("");
+      console.error("zaba")
     }
   };
   const toggle2FA = async () => {
@@ -71,16 +71,14 @@ const EditProfile = () => {
       if (is2FAEnabled) {
         await disableMFAreq(); // Replace with your API logic
         setIs2FAEnabled(false);
-        alert("2FA has been disabled.");
+        myToast(2, "MFA has been disabled.")
       } else {
         // Logic to enable 2FA
         const qrImage = await qrMFAreq(); // Replace with your API logic to get the QR code
         setQrCode(qrImage);
-        alert("2FA has been enabled. Please scan the QR code below.");
       }
     } catch (error) {
       console.error("Error toggling 2FA:", error);
-      alert("Failed to toggle 2FA. Please try again.");
     }
   };
 
@@ -92,10 +90,10 @@ const EditProfile = () => {
         alert("2FA setup is complete!");
         setSuccessMessage("2FA setup is complete!");
         setIs2FAEnabled(true)
+        myToast(0, "MFA has been enabled.")
         setQrCode(null)
       } else {
-        alert("Invalid 2FA code. Please try again.");
-        setErrorMessage("Invalid 2FA code. Please try again.");
+        myToast(2, "invalid code.")
       }
     } catch (error) {
       console.error("Error verifying 2FA code:", error);
@@ -105,8 +103,6 @@ const EditProfile = () => {
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-cover bg-center bg-[url('/retro_1.jpeg')] from-darkBackground via-purpleGlow to-neonBlue text-white font-retro">
-      <Navbar />
-
       <div className="flex flex-col items-center mt-20 w-11/12 max-w-[600px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
         <h1 className="text-3xl text-neonPink mb-6">Edit Profile</h1>
 
@@ -246,13 +242,6 @@ const EditProfile = () => {
             </div>
           )}
         </form>
-
-        {successMessage && (
-          <p className="mt-4 text-green-500">{successMessage}</p>
-        )}
-        {errorMessage && (
-          <p className="mt-4 text-red-500">{errorMessage}</p>
-        )}
       </div>
     </div>
   );

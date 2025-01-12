@@ -94,7 +94,7 @@ class GetUserMatch(APIView):
             matches_resp.append({
                 'id': _match.id,
                 'opponent': _match.player2.username if _match.player1.id == userid else _match.player1.username,
-                'score': "Forfeit" if _match.forfeit else f"{_match.score_player1} - {_match.score_player2}",
+                'score': "Forfeit" if _match.forfeit else f"{_match.score_player1}-{_match.score_player2}",
                 'result': 'win' if _match.winner_id == userid else 'lose'
             })
         return Response(matches_resp, status=200)

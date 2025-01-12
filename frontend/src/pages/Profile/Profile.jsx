@@ -39,7 +39,7 @@ const Profile = () => {
       {/* Profile and Friends Section */}
       <div className="flex flex-wrap m-10 justify-between w-11/12 gap-4 mt-20">
         {/* User Box */}
-        <div className="flex-1 min-w-[300px] h-[400px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
+        <div className="flex-1 min-w-[500px] h-[400px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
           {/* Profile Image */}
           <div className="flex flex-col items-center">
             <img
@@ -69,7 +69,7 @@ const Profile = () => {
         </div>
 
         {/* Friends Box */}
-        <div className="flex-1 min-w-[300px] h-[400px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink overflow-y-auto">
+        <div className="flex-1 min-w-[400px] h-[400px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink overflow-y-auto">
           <h2 className="text-2xl text-center text-neonPink mb-4">Friends</h2>
           {mydata.friends && mydata.friends.length > 0 ? (
             <ul className="space-y-4">

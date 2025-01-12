@@ -7,6 +7,7 @@ import { sendFriendReq, cancelFriendReq, acceptFriendReq, unfriendReq} from "../
 import { blockUser, unblockUser } from "../../api/blockService";
 import getMatches from "../../api/gameService";
 import { useRealTime } from "../../context/RealTimeContext";
+import {myToast} from "../../lib/utils1"
 
 const r = {
   NONE: 0,
@@ -56,6 +57,7 @@ const User = () => {
     try {
       await sendFriendReq(username);
       setIsAddHovering(false);
+      myToast(0, "friend request has been sent")
       sendRelationshipUpdate("sent_friend_request", username);
     } catch (error) {
       console.error("Error sending friend request:", error);
@@ -67,6 +69,7 @@ const User = () => {
     try {
         await cancelFriendReq(username);
         setIsAddHovering(false);
+        myToast(1, "friend request has been canceled")
         sendRelationshipUpdate("cancel_friend_request", username);
       } catch (error) {
         console.error("Error sending friend request:", error);
@@ -78,6 +81,7 @@ const User = () => {
     try {
         await unfriendReq(username);
         setIsAddHovering(false);
+        myToast(2, "I'm sorry mi amori")
         sendRelationshipUpdate("unfriended", username);
       } catch (error) {
         console.error("Error sending friend request:", error);
@@ -88,7 +92,7 @@ const User = () => {
   const handleAcceptRequest = async () => {
     try {
       await acceptFriendReq(username)
-      console.log("Friend request accepted");
+      myToast(1, "friend request has been accepted.")
       sendRelationshipUpdate("friends", username);
     } catch (error) {
       console.error("Error accepting friend request:", error);
@@ -101,10 +105,14 @@ const User = () => {
       if (userdata.relationship == r.YOU_BLOCK || userdata.relationship == r.BLOCK_BOTH)
         {
           await unblockUser(username);
+          myToast(0, "unblocked.")
+          sendRelationshipUpdate("unblocked", username);
         }
-      else
-      {
-        await blockUser(username);
+        else
+        {
+          await blockUser(username);
+          myToast(2, "blocked.")
+        sendRelationshipUpdate("blocked", username);
       }
     } catch (error) {
       console.error("Error sending friend request:", error);
@@ -126,7 +134,7 @@ const User = () => {
     <div className="flex flex-col items-center min-h-screen bg-cover bg-center bg-[url('/retro_1.jpeg')] from-darkBackground via-purpleGlow to-neonBlue text-white font-retro">
       <div className="flex flex-wrap m-10 justify-between w-11/12 gap-4 mt-20">
         {/* User Box */}
-        <div className="flex-1 min-w-[300px] h-[460px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
+        <div className="flex-1 min-w-[500px] h-[460px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
           {/* Profile Image */}
           <div className="flex flex-col items-center">
           <div className="flex flex-col items-center relative">
