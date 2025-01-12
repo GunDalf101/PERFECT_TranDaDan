@@ -22,4 +22,4 @@ python3 manage.py migrate
 
 echo "!!!!! Run in another terminal: 'python manage.py process_tasks' to receive emails. !!!!!"
 export DJANGO_SETTINGS_MODULE=transcendence.settings
-python manage.py runserver 8000
+python manage.py runserver 10.13.5.4:8000

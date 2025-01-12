@@ -148,7 +148,7 @@ const Login = () => {
     };
 
     const handle42Login = () => {
-        window.location.href = `http://localhost:8000/api/oauth2/42/`;
+        window.location.href = `http://10.13.5.4:8000/api/oauth2/42/`;
     };
 
     // const switchForm = (showReset) => {

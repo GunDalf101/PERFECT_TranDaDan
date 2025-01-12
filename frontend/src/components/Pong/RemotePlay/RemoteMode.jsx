@@ -13,6 +13,7 @@ const RemoteMode = () => {
     const websocketRef = useRef(null);
     const gameObjectsRef = useRef([]);
     const paddleRef = useRef(null);
+    const isUnmounting = useRef(false);
     const paddleOpponentRef = useRef(null);
     const [scores, setScores] = useState({ player1: 0, player2: 0 });
     const [matches, setMatches] = useState({ player1: 0, player2: 0 });
@@ -25,6 +26,13 @@ const RemoteMode = () => {
     const isReconnecting = useRef(false);
     const [winner, setWinner] = useState(null);
     const navigate = useNavigate();
+    const [connectionState, setConnectionState] = useState({
+        status: 'connecting',
+        lastPing: Date.now(),
+        hasGameStarted: false
+    });
+    const pingInterval = useRef(null);
+    const lastPongReceived = useRef(Date.now());
 
     const gameSession = JSON.parse(localStorage.getItem('gameSession'));
     if (!gameSession) {
@@ -52,86 +60,147 @@ const RemoteMode = () => {
         const ballSound = new Audio('/sounds/ping_pong.mp3');
 
         console.log(gameId, username, opponent, isPlayer1);
-        if (websocketRef.current) {
-            websocketRef.current.close();
-            websocketRef.current = null;
-        }
-        const ws = new WebSocket(
-            `ws://localhost:8000/ws/game/${gameId}/?username=${username}`
-        );
-        websocketRef.current = ws;
+        const setupWebSocket = () => {
+            if (websocketRef.current?.readyState === WebSocket.OPEN) {
+                websocketRef.current.close();
+            }
 
-        ws.onopen = () => {
-            console.log('WebSocket connection opened');
-            setConnectionStatus('connected');
-            setErrorMessage('');
-            reconnectAttempts.current = 0;
-            
-            const initData = {
-                type: 'init',
-                username: username,
-                opponent: opponent,
-                isPlayer1: isPlayer1
-            };
-            ws.send(JSON.stringify(initData));
-        };
+            const ws = new WebSocket(
+                `ws://10.13.5.4:8000/ws/game/${gameId}/?username=${username}`
+            );
+            websocketRef.current = ws;
 
-        ws.onclose = (event) => {
-            console.log('WebSocket connection closed', event);
-            setConnectionStatus('disconnected');
+            websocketRef.current.onopen = () => {
+                console.log('WebSocket connection opened');
+                setConnectionState(prev => ({
+                    ...prev,
+                    status: 'connected',
+                    lastPing: Date.now()
+                }));
+                setErrorMessage('');
+                reconnectAttempts.current = 0;
+                
+                const initData = {
+                    type: 'init',
+                    username: username,
+                    opponent: opponent,
+                    isPlayer1: isPlayer1
+                };
+                websocketRef.current.send(JSON.stringify(initData));
 
-            if (gameStatus !== 'completed' && !isReconnecting.current) {
-                isReconnecting.current = true;
-                setErrorMessage('Connection lost. Attempting to reconnect...');
-
-                if (reconnectTimeoutId.current) {
-                    clearTimeout(reconnectTimeoutId.current);
+                if (pingInterval.current) {
+                    clearInterval(pingInterval.current);
                 }
-
-                reconnectTimeoutId.current = setTimeout(() => {
-                    setupWebSocket();
-                }, 2000);
-            }
-        };
-
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            
-            switch(data.type) {
-                case 'game_state':
-                    handleGameState(data.state);
-                    if (data.state.winner) {
-                        handleGameEnd(data.state);
+                pingInterval.current = setInterval(() => {
+                    if (websocketRef.current.readyState === WebSocket.OPEN) {
+                        websocketRef.current.send(JSON.stringify({ type: 'ping', timestamp: Date.now() }));
                     }
-                    break;
-                    
-                case 'player_disconnected':
-                    setErrorMessage(`${data.message}`);
-                    inGame = false;
-                    break;
-                    
-                case 'player_reconnected':
-                    setErrorMessage('');
-                    setTimeout(() => {
-                        inGame = true;
-                    }, 3000);
-                    break;
-                    
-                case 'connection_warning':
-                    // setErrorMessage(data.message);
-                    break;
-                    
-                case 'game_ended_by_forfeit':
-                    handleGameEnd(data.state);
-                    setGameStatus('completed');
-                    break;
-            }
+                }, 5000);
+            };
+
+            websocketRef.current.onclose = (event) => {
+                console.log('WebSocket connection closed', event);
+                setConnectionState(prev => ({
+                    ...prev,
+                    status: 'disconnected'
+                }));
+            
+                if (gameStatus !== 'completed' && !isReconnecting.current && !isUnmounting.current) {
+                    isReconnecting.current = true;
+                    setErrorMessage('Connection lost. Attempting to reconnect...');
+            
+                    if (reconnectTimeoutId.current) {
+                        clearTimeout(reconnectTimeoutId.current);
+                    }
+            
+                    reconnectTimeoutId.current = setTimeout(() => {
+                        setupWebSocket();
+                    }, 2000);
+                }
+            };
+
+            websocketRef.current.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                lastPongReceived.current = Date.now();
+                
+                switch(data.type) {
+                    case 'pong':
+                        setConnectionState(prev => ({
+                            ...prev,
+                            lastPing: Date.now()
+                        }));
+                        break;
+
+                    case 'game_state':
+                        handleGameState(data.state);
+                        setConnectionState(prev => ({
+                            ...prev,
+                            hasGameStarted: true,
+                            status: 'connected'
+                        }));
+                        if (data.state.winner) {
+                            handleGameEnd(data.state);
+                        }
+                        setTimeout(() => {
+                            inGame = true;
+                        }, 3000);
+                        break;
+                        
+                    case 'player_disconnected':
+                        setErrorMessage(`${data.message}`);
+                        setConnectionState(prev => ({
+                            ...prev,
+                            status: 'waiting_opponent'
+                        }));
+                        inGame = false;
+                        break;
+                        
+                    case 'player_reconnected':
+                        setErrorMessage('');
+                        setConnectionState(prev => ({
+                            ...prev,
+                            status: 'connected'
+                        }));
+                        setTimeout(() => {
+                            inGame = true;
+                        }, 3000);
+                        break;
+                        
+                    case 'connection_warning':
+                        if (connectionState.status === 'connected') {
+                            setErrorMessage(data.message);
+                        }
+                        break;
+                        
+                    case 'game_ended_by_forfeit':
+                        handleGameEnd(data.state);
+                        setGameStatus('completed');
+                        break;
+                }
+            };
+
+            websocketRef.current.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                if (connectionState.status === 'connected') {
+                    setErrorMessage('Connection error occurred.');
+                }
+            };
         };
 
-        ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
-            setErrorMessage('Connection error occurred.');
-        };
+        setupWebSocket();
+
+        const connectionMonitor = setInterval(() => {
+            const now = Date.now();
+            const timeSinceLastPong = now - lastPongReceived.current;
+
+            if (timeSinceLastPong > 10000 && connectionState.status === 'connected') {
+                setConnectionState(prev => ({
+                    ...prev,
+                    status: 'unstable'
+                }));
+            }
+        }, 1000);
+
 
         const handleGameEnd = (state) => {
             setGameStatus('completed');
@@ -450,10 +519,20 @@ const RemoteMode = () => {
         };
 
         const handleBeforeUnload = (e) => {
-            if (gameStatus !== 'completed') {
-                ws.close();
+            if (gameStatus !== 'completed' && websocketRef.current) {
+                isUnmounting.current = true;
+                websocketRef.current.close();
+                websocketRef.current = null;
             }
         };
+
+        // const handleVisibilityChange = () => {
+        //     if (document.hidden && websocketRef.current) {
+        //         isUnmounting.current = true;
+        //         websocketRef.current.close();
+        //         websocketRef.current = null;
+        //     }
+        // };
 
         const resetBall = (direction = 1) => {
             gameObjectsRef.current.forEach(obj => {
@@ -485,8 +564,8 @@ const RemoteMode = () => {
                         aiGamesWon++;
                     }
                     
-                    if (ws && ws.readyState === WebSocket.OPEN) {
-                        ws.send(JSON.stringify({
+                    if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
+                        websocketRef.current.send(JSON.stringify({
                             type: 'game_won',
                             winner: playerScore > aiScore ? 'player1' : 'player2',
                             matches: {
@@ -504,8 +583,8 @@ const RemoteMode = () => {
                         isGameOver = true;
                         inGame = false;
                         
-                        if (ws && ws.readyState === WebSocket.OPEN) {
-                            ws.send(JSON.stringify({
+                        if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
+                            websocketRef.current.send(JSON.stringify({
                                 type: 'match_complete',
                                 winner: playerGamesWon > aiGamesWon ? 'player1' : 'player2',
                                 finalScore: {
@@ -560,8 +639,8 @@ const RemoteMode = () => {
                 resetBall(-1);
             }
         
-            if (scoreUpdate && ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
+            if (scoreUpdate && websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
+                websocketRef.current.send(JSON.stringify({
                     type: 'score_update',
                     scores: {
                         player1: playerScore,
@@ -581,8 +660,8 @@ const RemoteMode = () => {
                 x: (event.clientX / window.innerWidth) * 2 - 1,
                 y: -(event.clientY / window.innerHeight) * 2 + 1
             };
-            if (ws && ws.readyState === WebSocket.OPEN && inGame) {
-                ws.send(JSON.stringify({ type: 'mouse_move', mouse_position: mouseCurrent }));
+            if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN && inGame) {
+                websocketRef.current.send(JSON.stringify({ type: 'mouse_move', mouse_position: mouseCurrent }));
             }
         };
 
@@ -632,8 +711,8 @@ const RemoteMode = () => {
                             6.8 + (1 * mouseCurrent.y),
                             12.8
                         );
-                        if (ws && ws.readyState === WebSocket.OPEN)
-                            ws.send(JSON.stringify({ type: 'ball_position', ball_position: { x: ball.position.x, y: ball.position.y, z: ball.position.z } }));
+                        if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN)
+                            websocketRef.current.send(JSON.stringify({ type: 'ball_position', ball_position: { x: ball.position.x, y: ball.position.y, z: ball.position.z } }));
                     } else {
                         camera.position.set(
                             -4 * mouseCurrent.x,
@@ -717,6 +796,7 @@ const RemoteMode = () => {
             CreateBall(new THREE.Vector3(0, 5.0387, -8));
             
             window.addEventListener('beforeunload', handleBeforeUnload);
+            // document.addEventListener('visibilitychange', handleVisibilityChange);
             window.addEventListener('mousemove', handleMouseMove);
             window.addEventListener('resize', handleResize);
             
@@ -725,37 +805,58 @@ const RemoteMode = () => {
         
          init();
 
-        return () => {
+         return () => {
+            isUnmounting.current = true;
+            
             if (reconnectTimeout.current) {
                 clearTimeout(reconnectTimeout.current);
                 reconnectTimeout.current = null;
             }
-            if (ws) {
-                ws.close();
+    
+            if (reconnectTimeoutId.current) {
+                clearTimeout(reconnectTimeoutId.current);
+                reconnectTimeoutId.current = null;
+            }
+    
+            if (pingInterval.current) {
+                clearInterval(pingInterval.current);
+                pingInterval.current = null;
+            }
+    
+            if (websocketRef.current) {
+                if (websocketRef.current.readyState === WebSocket.OPEN) {
+                    websocketRef.current.send(JSON.stringify({
+                        type: 'client_disconnect',
+                        message: 'User left the game'
+                    }));
+                }
+                websocketRef.current.close();
                 websocketRef.current = null;
             }
-            console.log('WebSocket connection closed');
+    
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('resize', handleResize);
             window.removeEventListener('beforeunload', handleBeforeUnload);
+            // document.removeEventListener('visibilitychange', handleVisibili0tyChange);
+    
             inGame = false;
             reconnectAttempts.current = 0;
             setErrorMessage('');
-            setConnectionStatus('connecting');
-            scene.traverse((object) => {
-                if (object instanceof THREE.Mesh) {
-                    object.geometry.dispose();
-                    if (object.material.map) object.material.map.dispose();
-                    object.material.dispose();
-                }
-            });
-            renderer.dispose();
+            setConnectionState(prev => ({ ...prev, status: 'disconnected' }));
+    
+            if (sceneRef.current) {
+                sceneRef.current.traverse((object) => {
+                    if (object instanceof THREE.Mesh) {
+                        object.geometry.dispose();
+                        if (object.material.map) object.material.map.dispose();
+                        object.material.dispose();
+                    }
+                });
+            }
+    
+            if (renderer) renderer.dispose();
             if (controls) controls.dispose();
         };
-
-        
-
-
     }, []);
 
     return (
@@ -796,15 +897,30 @@ const RemoteMode = () => {
                     {errorMessage}
                 </div>
             )}
-
             <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-neon-white text-lg pixel-font bg-gray-800/80 px-6 py-2 rounded-full border-2 border-neon-cyan animate-flicker">
-                {connectionStatus === 'connecting'
-                    ? 'Connecting...'
-                    : gameStatus === 'waiting'
-                    ? 'Waiting for opponent...'
-                    : gameStatus === 'completed'
-                    ? 'Game ended'
-                    : 'Game in progress'}
+                {connectionState.status === 'connecting' ? 'Connecting...' :
+                 connectionState.status === 'waiting_opponent' ? 'Waiting for opponent...' :
+                 connectionState.status === 'unstable' ? 'Connection unstable...' :
+                 gameStatus === 'completed' ? 'Game ended' :
+                 connectionState.hasGameStarted ? 'Game in progress' : 'Waiting to start'}
+            </div>
+
+            <div className={`fixed bottom-4 right-4 flex items-center gap-2 px-4 py-2 rounded-full text-sm ${
+                connectionState.status === 'connected' ? 'bg-green-500/20' :
+                connectionState.status === 'unstable' ? 'bg-yellow-500/20' :
+                'bg-red-500/20'
+            }`}>
+                <div className={`w-3 h-3 rounded-full ${
+                    connectionState.status === 'connected' ? 'bg-green-500' :
+                    connectionState.status === 'unstable' ? 'bg-yellow-500' :
+                    'bg-red-500 animate-pulse'
+                }`} />
+                <span className="text-white">
+                    {connectionState.status === 'connected' ? 'Connected' :
+                     connectionState.status === 'unstable' ? 'Unstable' :
+                     connectionState.status === 'waiting_opponent' ? 'Waiting' :
+                     'Disconnected'}
+                </span>
             </div>
 
             {gameStatus === 'completed' && (
