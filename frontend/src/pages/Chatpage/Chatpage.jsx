@@ -21,12 +21,14 @@ const ChatApp = () => {
   const [error, setError] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   
   const messageIdsRef = useRef(new Set());
   const lastMessageLoadingRef = useRef(new Set());
   const pageTrackingRef = useRef(new Map());
   const messageCacheRef = useRef(new Map()); 
   const lastMessagesRef = useRef(new Map()); 
+  const scrollPositionRef = useRef(null);
 
   const currentUsername = user ? JSON.parse(user).username : null;
 
@@ -149,18 +151,38 @@ const ChatApp = () => {
     }
   };
 
-  const loadMoreMessages = async () => {
+    const saveScrollPosition = useCallback(() => {
+    if (selectedChat) {
+      scrollPositionRef.current = document.querySelector('.chat-body')?.scrollTop || 0;
+    }
+  }, [selectedChat]);
+
+  const restoreScrollPosition = useCallback(() => {
+    if (scrollPositionRef.current !== null) {
+      const chatBody = document.querySelector('.chat-body');
+      if (chatBody) {
+        chatBody.scrollTop = scrollPositionRef.current;
+      }
+    }
+  }, []);
+
+    const loadMoreMessages = async () => {
     if (!selectedChat || isLoadingMore || !hasMore) return;
 
     try {
       setIsLoadingMore(true);
+      saveScrollPosition(); // Save position before loading
+      
       const selectedFriend = friends.find(f => f.id === selectedChat);
       if (!selectedFriend) return;
 
       const loadedPages = pageTrackingRef.current.get(selectedChat) || new Set([1]);
       const nextPage = Math.max(...Array.from(loadedPages)) + 1;
 
-      if (loadedPages.has(nextPage)) return;
+      if (loadedPages.has(nextPage)) {
+        restoreScrollPosition(); // Restore if we've already loaded this page
+        return;
+      }
 
       const response = await getAllMessage(`${selectedFriend.name}?page=${nextPage}`);
       
@@ -181,13 +203,19 @@ const ChatApp = () => {
       });
 
       setHasMore(response.next !== null);
+      
+      // Use requestAnimationFrame to ensure DOM has updated
+      requestAnimationFrame(() => {
+        restoreScrollPosition();
+      });
+
     } catch (error) {
       console.error('Error loading more messages:', error);
       setError('Failed to load more messages. Please try again.');
     } finally {
       setIsLoadingMore(false);
     }
-  };
+    };
 
   useEffect(() => {
     loadFriendsWithLastMessages();

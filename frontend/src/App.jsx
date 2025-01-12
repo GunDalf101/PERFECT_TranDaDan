@@ -101,7 +101,7 @@ function App() {
                   </PublicRoute>
                 }
               />
-              <Route path="/email-verified/:token" element={
+              <Route path="/email-verify/:token" element={
               <PublicRoute>
                 <EmailVerificationPage />
               </PublicRoute>
@@ -126,6 +126,4 @@ function App() {
 }
 
 export default App;
-
-
 

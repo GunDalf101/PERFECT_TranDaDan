@@ -19,7 +19,6 @@ const EmailVerificationPage = () => {
           });
         }
       };
-  
       verifyEmail();
   
       const timeout = setTimeout(() => {
