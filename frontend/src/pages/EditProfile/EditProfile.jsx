@@ -57,6 +57,7 @@ const EditProfile = () => {
       return;
     }
     try {
+      console.log(formData);
       await updateProfileData(formData); // Replace with actual API call
       setSuccessMessage("Profile updated successfully!");
       setErrorMessage("");
@@ -116,7 +117,7 @@ const EditProfile = () => {
               <img
                 src={
                   formData.avatar ||
-                  "https://via.placeholder.com/150?text=Your+Avatar"
+                  "/default_profile.webp"
                 } // Default avatar if none is set
                 alt="Profile Avatar"
                 className="w-full h-full rounded-full border-4 border-neonPink object-cover"
@@ -130,7 +131,7 @@ const EditProfile = () => {
               <input
                 type="file"
                 id="avatar-upload"
-                accept="image/*"
+                accept="image/png, image/jpeg, image/jpg"
                 onChange={handleAvatarChange}
                 className="hidden"
               />

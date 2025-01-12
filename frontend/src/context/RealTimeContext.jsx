@@ -14,11 +14,12 @@ export const RealTimeProvider = ({ children }) => {
   const { isAuthenticated } = useUser();
 
   useEffect(() => {
+    let socket;
     if (isAuthenticated) {
       const accessToken = localStorage.getItem("access_token");
 
       if (accessToken) {
-        const socket = new WebSocket(`ws://localhost:8000/ws/notifs/?token=${accessToken}`);
+        socket = new WebSocket(`ws://localhost:8000/ws/notifs/?token=${accessToken}`);
 
         socket.onopen = () => {
           console.log('WebSocket connection established');
@@ -38,12 +39,14 @@ export const RealTimeProvider = ({ children }) => {
         };
 
         setWs(socket);
-
-        return () => {
-          if (socket) socket.close();
-        };
       }
     }
+    return () => {
+      if (socket) {
+          socket.close();
+          clearRealTimeContext();
+      }
+    };
   }, [isAuthenticated]);
 
   const sendRelationshipUpdate = (action, username) => {
