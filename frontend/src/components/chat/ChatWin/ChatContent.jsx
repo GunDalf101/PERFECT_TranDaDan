@@ -13,95 +13,83 @@ const ChatContent = memo(
     handleSidebarToggle,
     loadMoreMessages,
     hasMore,
-    isLoading: parentIsLoading,
+    // isLoading,
+    isLoadingMore,
   }) => {
     const chatBodyRef = useRef(null);
     const observerRef = useRef(null);
     const loadingTimerRef = useRef(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
-    const selectedUser = friends.find((friend) => friend.id === selectedChat);
     const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
 
-    // Handle typing indicator
-    useEffect(() => {
-      if (selectedUser?.isTyping) {
-        setIsTyping(true);
-        const timeout = setTimeout(() => setIsTyping(false), 3000);
-        return () => clearTimeout(timeout);
-      }
-    }, [selectedUser]);
+    const [lastScrollHeight, setLastScrollHeight] = useState(0);
+    const loadingRef = useRef(false);
+    const selectedUser = friends.find((friend) => friend.id === selectedChat);
+    
 
-    // Handle loading state
-    useEffect(() => {
-      if (parentIsLoading) {
-        setIsLoading(true);
-        if (loadingTimerRef.current) {
-          clearTimeout(loadingTimerRef.current);
+    const [initialLoad, setInitialLoad] = useState(true);
+    const prevScrollHeightRef = useRef(0);
+    const isLoadingRef = useRef(false);
+
+
+
+    const handleScroll = async () => {
+      if (!chatBodyRef.current || isLoadingRef.current || !hasMore || isLoadingMore) return;
+
+      const { scrollTop, scrollHeight} = chatBodyRef.current;
+      
+  
+      if (scrollHeight + scrollTop < 1000) {
+        console.log("ok");
+        isLoadingRef.current = true;
+        prevScrollHeightRef.current = scrollHeight;
+        
+        try {
+          await loadMoreMessages();
+        } finally {
+          isLoadingRef.current = false;
         }
-        loadingTimerRef.current = setTimeout(() => {
-          setIsLoading(false);
-        }, 2000);
-      }
-      return () => {
-        if (loadingTimerRef.current) {
-          clearTimeout(loadingTimerRef.current);
-        }
-      };
-    }, [parentIsLoading]);
-
-    useEffect(() => {
-      if (chatBodyRef.current && shouldScrollToBottom) {
-        const scrollToBottom = () => {
-          chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
-        };
-        scrollToBottom();
-      }
-    }, [messages, shouldScrollToBottom]);
-
-    const handleScroll = () => {
-      if (chatBodyRef.current) {
-        const { scrollTop, scrollHeight, clientHeight } = chatBodyRef.current;
-        const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-        console.log("asdasd",(scrollHeight - scrollTop - clientHeight));
-        setShouldScrollToBottom(isNearBottom);
       }
     };
 
+    // Initialize scroll listener
     useEffect(() => {
       const chatBody = chatBodyRef.current;
-      if (chatBody) {
-        chatBody.addEventListener('scroll', handleScroll);
-        return () => chatBody.removeEventListener('scroll', handleScroll);
-      }
-    }, []);
+      // if (chatBody) {
+      //   chatBody.addEventListener('scroll', handleScroll);
+      //   return () => chatBody.removeEventListener('scroll', handleScroll);
+      // }
+    }, [hasMore, isLoadingMore]);
 
-    // Infinite scroll handling
+    // Maintain scroll position after loading more messages
     useEffect(() => {
-      if (!hasMore || isLoading) return;
-
-      const options = {
-        root: null,
-        rootMargin: "20px",
-        threshold: 0.1,
-      };
-
-      const observer = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting) {
-          loadMoreMessages();
-        }
-      }, options);
-
-      if (observerRef.current) {
-        observer.observe(observerRef.current);
+      if (!chatBodyRef.current || initialLoad) {
+        setInitialLoad(false);
+        return;
       }
 
-      return () => {
-        if (observerRef.current) {
-          observer.unobserve(observerRef.current);
+      if (prevScrollHeightRef.current > 0) {
+        const newScrollHeight = chatBodyRef.current.scrollHeight;
+        const scrollDiff = newScrollHeight - prevScrollHeightRef.current;
+        if (scrollDiff > 0) {
+          chatBodyRef.current.scrollTop = scrollDiff;
         }
-      };
-    }, [hasMore, isLoading, loadMoreMessages]);
+        prevScrollHeightRef.current = 0;
+      }
+    }, [messages, initialLoad]);
+
+    // Auto-scroll to bottom for new messages
+    useEffect(() => {
+      if (chatBodyRef.current && !isLoadingMore && !initialLoad) {
+        const { scrollTop, scrollHeight, clientHeight } = chatBodyRef.current;
+        const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+        
+        if (isNearBottom) {
+          chatBodyRef.current.scrollTop = scrollHeight;
+        }
+      }
+    }, [messages, isLoadingMore, initialLoad]);
 
     const formatMessageTime = (timestamp) => {
       const date = new Date(timestamp);
@@ -251,7 +239,7 @@ const ChatContent = memo(
           </div>
         </div>
 
-        <div ref={chatBodyRef} className="flex-1 overflow-y-auto flex flex-col-reverse p-5">
+        <div ref={chatBodyRef} onScroll={handleScroll} className="flex-1 overflow-y-auto flex flex-col-reverse p-5">
           {messages.slice().map((message) => (
             <div key={message.id} className="mb-4">
               <div className={`flex items-start space-x-2 ${message.sender === selectedUser.name ? "justify-start" : "justify-end"}`}>
