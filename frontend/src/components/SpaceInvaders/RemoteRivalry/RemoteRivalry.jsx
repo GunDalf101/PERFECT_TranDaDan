@@ -114,7 +114,7 @@ const RemoteRivalry = () => {
     }
 
     const ws = new WebSocket(
-      `ws://localhost:8000/ws/space-rivalry/${gameId}/?username=${username}`
+      `ws://10.13.5.4:8000/ws/space-rivalry/${gameId}/?username=${username}`
     );
 
     ws.onopen = () => {

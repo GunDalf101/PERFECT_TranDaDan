@@ -66,7 +66,7 @@ const RemoteMode = () => {
             }
 
             const ws = new WebSocket(
-                `ws://localhost:8000/ws/game/${gameId}/?username=${username}`
+                `ws://10.13.5.4:8000/ws/game/${gameId}/?username=${username}`
             );
             websocketRef.current = ws;
 
