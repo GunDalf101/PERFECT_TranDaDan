@@ -144,7 +144,7 @@ const EditProfile = () => {
               <input
                 type="file"
                 id="avatar-upload"
-                accept="image/*"
+                accept="image/png, image/jpeg, image/jpg"
                 onChange={handleAvatarChange}
                 className="hidden"
               />

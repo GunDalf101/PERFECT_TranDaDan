@@ -28,6 +28,12 @@ class Command(BaseCommand):
             second_user.save()
             third_user.save()
             self.stdout.write(self.style.SUCCESS('Successfully created 3 users'))
+            for i in range(50):
+                user = User.objects.create_user(email=f'user{i}@example.com', username=f'user{i}', password=f'user{i}', email_verified=True)
+                self.stdout.write(self.style.SUCCESS(f'Successfully created user{i}'))
+                user.email_token = None
+                user.save()
+
 
             # Create friendships (relationships)
             self.create_friendship(first_user, second_user)
@@ -70,6 +76,42 @@ class Command(BaseCommand):
             {"content": "You have a new friend request from second@example.com.", "url": "/friend-requests"},
             {"content": "Your profile has been updated successfully.", "url": "/profile"},
             {"content": "A new message from third@example.com.", "url": "/messages"},
+            {"content": "A new message from third@example.com.", "url": "/messages"},
+
+            {"content": "A new message from third@example.com.", "url": "/messages"},
+            {"content": "A new message from third@example.com.", "url": "/messages"},
+            {"content": "A new message from third@example.com.", "url": "/messages"},
+            {"content": "A new message from third@example.com.", "url": "/messages"},
+            {"content": "A new message from third@example.com.", "url": "/messages"},
+            {"content": "A new message from third@example.com.", "url": "/messages"},
+            {"content": "A new message from third@example.com.", "url": "/messages"},
+            {"content": "A new message from third@example.com.", "url": "/messages"},
+            {"content": "A new message from third@example.com.", "url": "/messages"},
+            {"content": "A new message from third@example.com.", "url": "/messages"},
+            {"content": "A new message from third@example.com.", "url": "/messages"},
+            {"content": "A new message from third@example.com.", "url": "/messages"},
+            {"content": "A new message from third@example.com.", "url": "/messages"},
+            {"content": "A new message from third@example.com.", "url": "/messages"},
+            {"content": "A new message from third@example.com.", "url": "/messages"},
+            {"content": "A new message from third@example.com.", "url": "/messages"},
+            {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
             {"content": "Just an alert notification, no link.", "url": None},
         ]
 

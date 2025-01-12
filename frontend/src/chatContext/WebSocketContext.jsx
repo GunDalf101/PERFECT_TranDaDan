@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { useUser } from '../components/auth/UserContext';
 import PropTypes from 'prop-types';
 
-const WEBSOCKET_URL = 'ws://localhost:8000/ws/chat';
+const WEBSOCKET_URL = 'ws://10.12.7.6:8000/ws/chat';
 const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_DELAY = 3000;
 
@@ -55,7 +55,7 @@ export const WebSocketProvider = ({ children }) => {
       ws.onclose = (event) => {
         console.log("WebSocket Disconnected", event.code);
         setIsConnected(false);
-        
+
         if (!event.wasClean && reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
           reconnectTimerRef.current = setTimeout(() => {
             reconnectAttemptsRef.current++;

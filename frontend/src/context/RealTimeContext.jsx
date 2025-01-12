@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useUser } from '../components/auth/UserContext';
+import { useCallback } from 'react';
 
 const RealTimeContext = createContext();
 
@@ -12,13 +13,16 @@ export const RealTimeProvider = ({ children }) => {
   const [relationshipUpdate, setRelationshipUpdate] = useState(null);
   const [ws, setWs] = useState(null);
   const { isAuthenticated } = useUser();
+  const [markedNotifications, setMarkedNotifications] = useState(new Set());
+  const [markedIds, setMarkedIds] = useState(new Set());
 
   useEffect(() => {
+    let socket;
     if (isAuthenticated) {
       const accessToken = localStorage.getItem("access_token");
 
       if (accessToken) {
-        const socket = new WebSocket(`ws://localhost:8000/ws/notifs/?token=${accessToken}`);
+        socket = new WebSocket(`ws://10.12.7.6:8000/ws/notifs/?token=${accessToken}`);
 
         socket.onopen = () => {
           console.log('WebSocket connection established');
@@ -38,12 +42,14 @@ export const RealTimeProvider = ({ children }) => {
         };
 
         setWs(socket);
-
-        return () => {
-          if (socket) socket.close();
-        };
       }
     }
+    return () => {
+      if (socket) {
+          socket.close();
+          clearRealTimeContext();
+      }
+    };
   }, [isAuthenticated]);
 
   const sendRelationshipUpdate = (action, username) => {
@@ -56,14 +62,23 @@ export const RealTimeProvider = ({ children }) => {
     }
   };
 
-  const markAsRead = (notificationId) => {
-    if (ws) {
+  const markAsRead = useCallback((notificationId) => {
+    if (ws && !markedIds.has(notificationId)) {
       ws.send(JSON.stringify({
         type: 'mark_as_read',
         notification_id: notificationId,
       }));
+
+      setMarkedIds(prev => new Set([...prev, notificationId]));
     }
-  };
+  }, [ws, markedIds]);
+
+  const removeMarkedNotifications = useCallback(() => {
+    if (markedIds.size > 0) {
+      setNotifications(prev => prev.filter(notif => !markedIds.has(notif.id)));
+      setMarkedIds(new Set());
+    }
+  }, [markedIds]);
 
   const clearRealTimeContext = () => {
     setNotifications([]);
@@ -71,7 +86,7 @@ export const RealTimeProvider = ({ children }) => {
   };
 
   return (
-    <RealTimeContext.Provider value={{ notifications, relationshipUpdate, sendRelationshipUpdate, markAsRead, clearRealTimeContext }}>
+    <RealTimeContext.Provider value={{ notifications, removeMarkedNotifications , relationshipUpdate, sendRelationshipUpdate, markAsRead, clearRealTimeContext }}>
       {children}
     </RealTimeContext.Provider>
   );

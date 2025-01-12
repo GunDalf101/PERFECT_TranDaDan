@@ -19,7 +19,8 @@ import TournamentBracket from "./pages/Tournament/Tournament";
 import QuadraRegister from "./pages/QuadraRegister/QuadraRegister";
 import LocalRegister from "./pages/LocalRegister/LocalRegister";
 import TournamentMode from "./components/Pong/TournamentMode/TournamentMode";
-import TwoPlayers from "./components/SpaceInvaders/TwoPlayers/TwoPlayers.jsx";
+import RemoteRivalry from "./components/SpaceInvaders/RemoteRivalry/RemoteRivalry.jsx";
+import SpaceRivalry from "./components/SpaceInvaders/SpaceRivalry/SpaceRivalry.jsx";
 
 import User from "./pages/User/User";
 import EditProfile from "./pages/EditProfile/EditProfile";
@@ -29,6 +30,8 @@ import { ProtectedRoute, PublicRoute } from "./components/auth/ProtectedRoute";
 import { RealTimeProvider } from './context/RealTimeContext.jsx';
 import { WebSocketProvider } from "./chatContext/WebSocketContext";
 import ResetPasswordForm from "./pages/ResetPassword/ResetPasswordForm"
+import EmailVerificationPage from "./pages/EmailVerificationPage.jsx";
+import { Space } from "lucide-react";
 
 function App() {
   return (
@@ -70,7 +73,9 @@ function App() {
                 <Route path="quadra-register" element={<QuadraRegister />} />
                 <Route path="local-register" element={<LocalRegister />} />
                 <Route path="tournament-mode" element={<TournamentMode />} />
-                <Route path="space-rivalry" element={<TwoPlayers />} />
+                <Route path="space-rivalry" element={<SpaceRivalry />} />
+                <Route path="remote-rivalry" element={<RemoteRivalry />} />
+
               </Route>
               <Route
                 path="/chat"
@@ -96,8 +101,21 @@ function App() {
                   </PublicRoute>
                 }
               />
-              <Route path="/Intra/callback/" element={<IntraCallback />} />
-              <Route path="/reset-password/:token" element={<ResetPasswordForm />} />
+              <Route path="/email-verify/:token" element={
+              <PublicRoute>
+                <EmailVerificationPage />
+              </PublicRoute>
+              }>
+                </Route>
+              <Route path="/Intra/callback/" element={
+              <PublicRoute>
+              <IntraCallback />
+              </PublicRoute>
+              } />
+              <Route path="/reset-password/:token" element={
+
+              <ResetPasswordForm />
+              } />
               {/*           <Route path="*" element={<Link to="/"/>}></Route> */}
             </Routes>
           </RealTimeProvider>
@@ -108,3 +126,4 @@ function App() {
 }
 
 export default App;
+
