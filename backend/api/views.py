@@ -608,3 +608,28 @@ class FriendsView(APIView):
             for rel in rels
         ]
         return Response({"friends": friends_usernames}, status=status.HTTP_200_OK)
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.db.models import Q
+from .serializers import UserSearchSerializer
+from .models import User
+
+class UserSearchView(APIView):
+    def get(self, request):
+        print(f"request.GET: {request.GET}")
+        query = request.GET.get('q', '').strip()
+        print(f"query: {query}")
+        if not query:
+            return Response({'results': []}, status=status.HTTP_200_OK)
+        users = User.objects.filter(
+            Q(username__icontains=query) |
+            Q(email__icontains=query)
+        ).distinct()[:10]
+
+        print(f"users: {users}")
+
+        serializer = UserSearchSerializer(users, many=True)
+        return Response({'results': serializer.data}, status=status.HTTP_200_OK)

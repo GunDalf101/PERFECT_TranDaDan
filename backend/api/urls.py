@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import OAuth2StartView, OAuth2CallbackView, UsersMeView, MFATOTPView, RegisterView, VerifyEmailView, LoginView, SecurityMFATOTP, RequestResetPasswordView, ResetPasswordView, UserView, UsersMeTestView, SendFriendRequest, DeleteFriendRequest, AcceptFriendRequestView, BlockUser, UnfriendView, FriendsView
+from .views import UserSearchView
 
 urlpatterns = [
     path('oauth2/42/', OAuth2StartView.as_view(), name='oauth2-start'),
@@ -19,5 +20,6 @@ urlpatterns = [
     path('friend/unfriendrequest', UnfriendView.as_view(), name='unfrien-friend'),
     path('friend/acceptrequest/<str:username>', AcceptFriendRequestView.as_view(), name='accept-friend-request'),
     path('blockuser', BlockUser.as_view(), name='block-user'),
-    path('friends', FriendsView.as_view(), name='friends')
+    path('friends', FriendsView.as_view(), name='friends'),
+    path('search/', UserSearchView.as_view(), name='user-search'),
 ]
