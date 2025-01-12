@@ -1,5 +1,5 @@
 import React from "react";
-import Searchbar from "./SubNav/Searchbar";
+import SearchDropdown from "./SubNav/Searchbar";
 import Sidebar from "./SubNav/Sidebar";
 import Notifications from "./SubNav/Notifications";
 import { useState, useEffect, useRef } from "react";
@@ -43,7 +43,7 @@ const Logged = () => {
         </button>
         <div className="logo text-white text-5xl ml-5 mb-4">TDD</div>
       </div>
-      <Searchbar isVisible={isSearhVisible} ref={searchRef} />
+      <SearchDropdown isVisible={isSearhVisible} ref={searchRef} />
       <Sidebar isVisible={isSidebarVisible} ref={sidebarRef} />
       <div className="flex items-center my-auto py-2 space-x-4">
         <button id="searchIcon" className="md:hidden focus:outline-none" onClick={() => setSearchVisible((prev) => !prev)}>

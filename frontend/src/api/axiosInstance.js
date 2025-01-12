@@ -8,7 +8,7 @@ const axiosInstance = axios.create({
     },
 });
 
-const unauthAxiosInstance = axios.create({
+const unauthAxiosInstance = axios.create({ 
   baseURL: 'http://10.13.5.4:8000/',
   withCredentials: true,
   headers: {
