@@ -6,120 +6,135 @@ import { toast } from 'react-toastify';
 import LoginAx from "../../api/authServiceLogin";
 import getMyData from "../../api/authServiceMe";
 import RequestResetPassword from "../../api/authServiceRequestRp";
-
+import MFAVerificationForm from "./MFAVerificationForm";
+import authVerifyMFA from "../../api/authVerifyMFA"
 
 import { useUser } from '../../components/auth/UserContext'
 
 const Login = () => {
 	const [loading, setLoading] = useState(false);
 	const { login } = useUser();
-    const [showResetForm, setShowResetForm] = useState(false);
-   const navigate = useNavigate();
-   const queryParams = new URLSearchParams(window.location.search);
-   const validate = queryParams.get("validate");
+	const [showResetForm, setShowResetForm] = useState(false);
+	const navigate = useNavigate();
+	const queryParams = new URLSearchParams(window.location.search);
+	// const validate = queryParams.get("validate");
+	const [showMFAForm, setShowMFAForm] = useState(false);
 
-   useEffect(()=>{
-	toast.success(validate,
-		{
-			position: "top-right",
-			autoClose: 3000,
-		}
-	);
-   },[validate])
-   
-    const [formData, setFormData] = useState({
-        email: "",
-        password: "",
-    });
 
-    const [resetFormData, setResetFormData] = useState({
-        email: "",
-    });
+	// useEffect(() => {
+	// 	toast.success(validate,
+	// 		{
+	// 			position: "top-right",
+	// 			autoClose: 3000,
+	// 		}
+	// 	);
+	// }, [validate])
 
-    const [loginErrors, setLoginErrors] = useState({
-        email: "",
-        password: "",
-        general: "",
-    });
+	const [formData, setFormData] = useState({
+		email: "",
+		password: "",
+	});
 
-    const [resetErrors, setResetErrors] = useState({
-        email: "",
-        general: "",
-    });
+	const [Mfadata, setMfadata] = useState({
+		mfaCode: "",
+	});
 
-    const handleLoginChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value,
-        }));
-        setLoginErrors(prev => ({
-            ...prev,
-            [name]: "",
-            general: "",
-        }));
-    };
+	const [resetFormData, setResetFormData] = useState({
+		email: "",
+	});
 
-    const handleResetChange = (e) => {
-        const { name, value } = e.target;
-        setResetFormData(prev => ({
-            ...prev,
-            [name]: value,
-        }));
-        setResetErrors(prev => ({
-            ...prev,
-            [name]: "",
-            general: "",
-        }));
-    };
+	const [loginErrors, setLoginErrors] = useState({
+		email: "",
+		password: "",
+		general: "",
+	});
 
-    const handleResetPassword = async (e) => {
-        e.preventDefault();
-        setLoading(true);
+	const [resetErrors, setResetErrors] = useState({
+		email: "",
+		general: "",
+	});
 
-        try {
-            const response = await RequestResetPassword(resetFormData);
+	const handleLoginChange = (e) => {
+		const { name, value } = e.target;
+		setFormData(prev => ({
+			...prev,
+			[name]: value,
+		}));
+		setLoginErrors(prev => ({
+			...prev,
+			[name]: "",
+			general: "",
+		}));
+	};
+
+	const handleResetChange = (e) => {
+		const { name, value } = e.target;
+		setResetFormData(prev => ({
+			...prev,
+			[name]: value,
+		}));
+		setResetErrors(prev => ({
+			...prev,
+			[name]: "",
+			general: "",
+		}));
+	};
+
+	const handleResetPassword = async (e) => {
+		e.preventDefault();
+		setLoading(true);
+
+		try {
+			const response = await RequestResetPassword(resetFormData);
 			// console.log(response);
-            toast.success(response.data.message, {
-                position: "top-right",
-                autoClose: 3000,
-            });
-            setShowResetForm(false);
-            setResetFormData({ email: "" });
-        } catch (err) {
-            const apiErrors = err.response?.data;
-            if (apiErrors) {
-                setResetErrors(prev => ({
-                    ...prev,
-                    email: Array.isArray(apiErrors.email) ? apiErrors.email[0] : "",
-                    general: apiErrors.message || "Failed to send reset link"
-                }));
+			toast.success(response.data.message, {
+				position: "top-right",
+				autoClose: 3000,
+			});
+			setShowResetForm(false);
+			setResetFormData({ email: "" });
+		} catch (err) {
+			const apiErrors = err.response?.data;
+			if (apiErrors) {
+				setResetErrors(prev => ({
+					...prev,
+					email: Array.isArray(apiErrors.email) ? apiErrors.email[0] : "",
+					general: apiErrors.message || "Failed to send reset link"
+				}));
 
-                if (apiErrors.message) {
-                    toast.error(apiErrors.message, {
-                        position: "top-right",
-                        autoClose: 2000,
-                    });
-                }
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
+				if (apiErrors.message) {
+					toast.error(apiErrors.message, {
+						position: "top-right",
+						autoClose: 2000,
+					});
+				}
+			}
+		} finally {
+			setLoading(false);
+		}
+	};
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setLoading(true);
 
-        try {
-            const response = await LoginAx(formData);
-            const { access_token } = response.data;
-            localStorage.setItem('access_token', access_token);
-            const data = await getMyData();
-            const userJSON = JSON.stringify(data);
-            login(userJSON);
-            navigate('/');
-        } catch (err) {
+	const handleLogin = async (e) => {
+		e.preventDefault();
+		setLoading(true);
+
+		try {
+			const response = await LoginAx(formData);
+			const { access_token } = response.data;
+			
+			if (response.data.mfa_required) {
+				localStorage.setItem('2fa_access_token', access_token);
+				setShowMFAForm(true); // Show the MFA form
+				setLoading(false); //
+				return;
+			}
+			localStorage.setItem('access_token', access_token);
+			const data = await getMyData();
+			const userJSON = JSON.stringify(data);
+			login(userJSON);
+			navigate('/');
+		} catch (err) {
 			if (err.response?.data) {
 				const apiErrors = err.response.data;
 				Object.keys(apiErrors).forEach((field) => {
@@ -133,31 +148,38 @@ const Login = () => {
 			setLoginErrors(loginErrors);
 			if (loginErrors.general) {
 				toast.error(loginErrors.general, {
-                        position: "top-right",
-                        autoClose: 2000,
+					position: "top-right",
+					autoClose: 2000,
 					hideProgressBar: false,
 					closeOnClick: true,
 					pauseOnHover: true,
 					draggable: true,
 					theme: "light",
-                    });
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
+				});
+			}
+		} finally {
+			setLoading(false);
+		}
+	};
 
-    const handle42Login = () => {
-        window.location.href = `http://localhost:8000/api/oauth2/42/`;
-    };
+	const handle42Login = () => {
+		window.location.href = `http://localhost:8000/api/oauth2/42/`;
+	};
 
-    // const switchForm = (showReset) => {
-    //     setShowResetForm(showReset);
-    //     setLoginErrors({ email: "", password: "", general: "" });
-    //     setResetErrors({ email: "", general: "" });
-    //     setFormData({ email: "", password: "" });
-    //     setResetFormData({ email: "" });
-    // };
+	const handleMFAVerify = async (Mfadata) => {
+		try {
+			const response = await authVerifyMFA(Mfadata);
+			const { access_token } = response.data;
+			localStorage.removeItem('2fa_access_token');
+			localStorage.setItem("access_token", access_token);
+			const data = await getMyData();
+			const userJSON = JSON.stringify(data);
+			login(userJSON);
+			navigate("/");
+		} catch (err) {
+			throw new Error(err.response?.data?.message || "Invalid verification code");
+		}
+	};
 	return (
 		<div className={`flex ${styles.newBody}`}>
 			<div className="flex flex-col justify-center items-center w-full lg:w-2/5 p-8 bg-black text-white relative">
@@ -338,6 +360,12 @@ const Login = () => {
 						Register
 					</Link>
 				</p>
+				{showMFAForm && (
+			<MFAVerificationForm
+				onVerify={handleMFAVerify}
+				onCancel={() => setShowMFAForm(false)}
+			/>
+        	)}
 			</div>
 
 			<div
@@ -345,6 +373,7 @@ const Login = () => {
 			></div>
 
 			<div className={`hidden lg:flex flex-1 ${styles.imagePlaceholder}`}></div>
+			
 		</div>
 	);
 };

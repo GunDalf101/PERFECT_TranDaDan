@@ -30,7 +30,6 @@ import { RealTimeProvider } from './context/RealTimeContext.jsx';
 import { WebSocketProvider } from "./chatContext/WebSocketContext";
 import ResetPasswordForm from "./pages/ResetPassword/ResetPasswordForm"
 
-
 function App() {
   return (
     <BrowserRouter>
