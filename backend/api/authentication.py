@@ -23,7 +23,6 @@ class DefaultAuthentication(BaseAuthentication):
             mfa_required = payload.get('mfa_required', False)
             if mfa_required and not request.path in ["/api/login/mfa/totp"]:
                 raise AuthenticationFailed('MFA active. Please complete MFA to proceed.', code=403)
-            print(payload)
             user_id = payload.get('uid', None)
             if not user_id:
                 raise Exception
