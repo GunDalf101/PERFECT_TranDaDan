@@ -32,7 +32,6 @@ import { WebSocketProvider } from "./chatContext/WebSocketContext";
 import ResetPasswordForm from "./pages/ResetPassword/ResetPasswordForm"
 import { Space } from "lucide-react";
 
-
 function App() {
   return (
     <BrowserRouter>

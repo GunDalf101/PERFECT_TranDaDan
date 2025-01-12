@@ -5,9 +5,11 @@ from django.contrib.auth import get_user_model
 from datetime import timedelta
 from django.core.cache import cache
 from .tasks import send_reset_password_email
-from django.core import serializers
 from enum import Enum
 from .models import RelationshipType
+import jwt
+import datetime
+from django.conf import settings
 
 User = get_user_model()
 
@@ -80,3 +82,18 @@ def createRelativeRelation(uid, relationship):
             return RelativeRelationshipType.YOU_BLOCK.value
 
     return 0
+
+def generate_jwt(user, **kwargs):
+    now = datetime.datetime.now(datetime.timezone.utc)
+    exp = now + datetime.timedelta(hours=48)
+    payload = {
+        'uid': user.id,
+        'exp': exp
+    }
+    payload.update(kwargs)
+    token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+
+    return token
+
+def decode_jwt(token):
+    return jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])

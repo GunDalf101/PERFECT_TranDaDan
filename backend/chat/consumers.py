@@ -22,14 +22,14 @@ class DirectMessageConsumer(AsyncWebsocketConsumer):
 
         # Set up user group and cache key
         self.user_group_name = f"user_{self.user.id}"
-        self.cache_key = f"user_status_{self.user.id}"
+        # self.cache_key = f"user_status_{self.user.id}"
 
         # Increment user's connection count in cache
-        try:
-            current_count = cache.incr(self.cache_key, 1)
-        except ValueError:
-            current_count = cache.set(self.cache_key, 1)
-        print(f"type>> {current_count}")
+        # try:
+        #     current_count = cache.incr(self.cache_key, 1)
+        # except ValueError:
+        #     current_count = cache.set(self.cache_key, 1)
+        # print(f"type>> {current_count}")
         # cache.set(self.cache_key, current_count + 1)
         # print(f"upon connect: {cache.get(self.cache_key, 0)}")
 
@@ -45,11 +45,11 @@ class DirectMessageConsumer(AsyncWebsocketConsumer):
         }))
 
         # Notify friends of the user's status change (user is online)
-        if current_count == 1:
-            await self.notify_friends_of_status_change(self.user, True)
+        # if current_count == 1:
+        #     await self.notify_friends_of_status_change(self.user, True)
 
-        # Check for online status of all friends (scan Redis keys)
-        await self.scan_and_notify_friends_of_status(self.user)
+        # # Check for online status of all friends (scan Redis keys)
+        # await self.scan_and_notify_friends_of_status(self.user)
 
     async def disconnect(self, close_code):
         if hasattr(self, "cache_key"):

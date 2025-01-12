@@ -50,7 +50,6 @@ const ChatContent = memo(
       };
     }, [parentIsLoading]);
 
-    // Scroll handling for new messages
     useEffect(() => {
       if (chatBodyRef.current && shouldScrollToBottom) {
         const scrollToBottom = () => {
@@ -60,11 +59,11 @@ const ChatContent = memo(
       }
     }, [messages, shouldScrollToBottom]);
 
-    // Handle scroll position detection
     const handleScroll = () => {
       if (chatBodyRef.current) {
         const { scrollTop, scrollHeight, clientHeight } = chatBodyRef.current;
         const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+        console.log("asdasd",(scrollHeight - scrollTop - clientHeight));
         setShouldScrollToBottom(isNearBottom);
       }
     };
@@ -253,7 +252,7 @@ const ChatContent = memo(
         </div>
 
         <div ref={chatBodyRef} className="flex-1 overflow-y-auto flex flex-col-reverse p-5">
-          {messages.slice().reverse().map((message) => (
+          {messages.slice().map((message) => (
             <div key={message.id} className="mb-4">
               <div className={`flex items-start space-x-2 ${message.sender === selectedUser.name ? "justify-start" : "justify-end"}`}>
                 {message.sender === selectedUser.name && (
@@ -294,7 +293,7 @@ const ChatContent = memo(
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 p-2 rounded-lg bg-[#2c2a2aa8] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 p-2 rounded-lg bg-[#2c2a2aa8] text-white  focus:outline-none "
             />
             <button
               type="submit"
