@@ -1,79 +1,17 @@
-import React, { useState, useEffect, useCallback} from "react";
-import styles from "../../components/chat/styles.module.scss";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useUser } from "../../components/auth/UserContext";
 import Logged from '../../components/Navbar/Logged';
 import Dprofile from "../../components/chat/Dprofile/Dprofile";
-import ChatWin from "../../components/chat/ChatWin/ChatWin";
-import { useUser } from "../../components/auth/UserContext";
+import ChatContent from "../../components/chat/ChatWin/ChatContent";
+import UserList from "../../components/chat/ChatWin/UserList";
 import getFriends from "../../api/axiosGetFriends";
 import getAllMessage from "../../api/axiosGetallMessage";
-
-const useChatWebSocket = ({ setMessages, setSocket, selectedChat }) => {
-
-  useEffect(() => {
-    let reconnectTimer = null;
-
-    const connectWebSocket = () => {
-      const token = localStorage.getItem("access_token");
-      const ws = new WebSocket(`ws://localhost:8000/ws/chat/?token=${token}`);
-
-
-      ws.onopen = () => {
-        console.log("WebSocket Connected");
-        if (reconnectTimer) {
-          clearTimeout(reconnectTimer);
-          reconnectTimer = null;
-        }
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          console.log("data a git::",data);
-          if (data.error) {
-            console.error("WebSocket error:", data.error);
-            return;
-          }
-          if (data.message && data.sender) {
-            setMessages(prev => [...prev, {
-              id: Math.random(),
-              text: data.message,
-              sender: data.sender,
-              receiver: selectedChat,
-              timestamp: new Date().toISOString(),
-            }]);
-          }
-        } catch (error) {
-          console.error("Error parsing message:", error);
-        }
-      };
-
-      ws.onclose = (event) => {
-        console.log("WebSocket Disconnected", event.code);
-        if (!event.wasClean) {
-          reconnectTimer = setTimeout(connectWebSocket, 3000);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
-      };
-
-      setSocket(ws);
-    };
-
-    connectWebSocket();
-
-    return () => {
-      if (reconnectTimer) {
-        clearTimeout(reconnectTimer);
-      }
-    };
-  }, [selectedChat, setMessages, setSocket]);
-};
+import styles from "../../components/chat/styles.module.scss";
+import { useWebSocket } from '../../chatContext/WebSocketContext';
 
 const ChatApp = () => {
   const { user, isAuthenticated } = useUser();
-  const [socket, setSocket] = useState(null);
+  const { sendMessage, registerMessageHandler, isConnected } = useWebSocket();
   const [messages, setMessages] = useState([]);
   const [friends, setFriends] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
@@ -81,131 +19,327 @@ const ChatApp = () => {
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  
+  const messageIdsRef = useRef(new Set());
+  const lastMessageLoadingRef = useRef(new Set());
+  const pageTrackingRef = useRef(new Map());
+  const messageCacheRef = useRef(new Map()); 
+  const lastMessagesRef = useRef(new Map()); 
 
+  const currentUsername = user ? JSON.parse(user).username : null;
 
+  const generateMessageId = useCallback((sender, timestamp) => {
+    return `${sender}-${timestamp}-${Math.random().toString(36).slice(2, 9)}`;
+  }, []);
 
-  // Load chat history when selecting a chat
-  useEffect(() => {
-    const loadChatHistory = async () => {
-      if (!selectedChat || !friends.length) return;
-
-      try {
-        setIsLoading(true);
-        const selectedFriend = friends.find(f => f.id === selectedChat);
-        if (!selectedFriend) return;
-
-
-        const response = await getAllMessage(selectedFriend.name);
-
-        setMessages([]);
-        const formattedMessages = response.results.map(msg => ({
-          id: Math.random(),
-          text: msg.content,
-          sender: msg.sender,
-          receiver: selectedFriend.name,
-          timestamp: msg.timestamp
-        }));
-
-        setMessages(prev => {
-          const allMessages = [...formattedMessages, ...prev];
-          return Array.from(new Set(allMessages.map(m => m.id)))
-            .map(id => allMessages.find(m => m.id === id))
-            .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-        });
-
-        setHasMore(response.next !== null);
-      } catch (error) {
-        setError('Failed to load message history');
-        console.error('Error loading messages:', error);
-      } finally {
-        setIsLoading(false);
+  const cacheMessages = useCallback((chatId, messages, page) => {
+    const currentCache = messageCacheRef.current.get(chatId) || [];
+    const newCache = [...currentCache];
+    
+    messages.forEach(msg => {
+      const index = newCache.findIndex(m => m.id === msg.id);
+      if (index === -1) {
+        newCache.push(msg);
       }
-    };
+    });
+    
+    messageCacheRef.current.set(chatId, newCache.sort((a, b) => 
+      new Date(b.timestamp) - new Date(a.timestamp)
+    ));
+    
+    pageTrackingRef.current.set(chatId, 
+      new Set([...(pageTrackingRef.current.get(chatId) || new Set()), page])
+    );
+  }, []);
 
-    loadChatHistory();
-  }, [selectedChat, page, friends]);
+  const updateFriendLastMessage = useCallback((friendName, newMessage) => {
+    lastMessagesRef.current.set(friendName, {
+      content: newMessage.text,
+      timestamp: newMessage.timestamp
+    });
 
+    setFriends(prevFriends => 
+      prevFriends.map(friend => {
+        if (friend.name === friendName) {
+          return {
+            ...friend,
+            lastMessage: newMessage.text,
+            lastMessageTime: newMessage.timestamp,
+            unreadCount: friend.id !== selectedChat ? (friend.unreadCount || 0) + 1 : 0
+          };
+        }
+        return friend;
+      })
+    );
+  }, [selectedChat]);
 
+  const loadFriendsWithLastMessages = async () => {
+    if (!isAuthenticated) return;
 
-  useEffect(() => {
-    console.log("Messages updated:", messages);
-
-  }, [messages]);
-
-
-  useEffect(() => {
-    const loadFriends = async () => {
-      if (!isAuthenticated) return;
-
-      try {
-        setIsLoading(true);
-        const data = await getFriends();
-        const initialFriends = data.friends.map((friend, index) => ({
+    try {
+      setIsLoading(true);
+      const data = await getFriends();
+      
+      const friendsData = data.friends.map((friend, index) => {
+        const cachedLastMessage = lastMessagesRef.current.get(friend);
+        return {
           id: index + 1,
           name: friend,
           online: Math.random() < 0.5,
           lastSeen: new Date().toISOString(),
-        }));
-        setFriends(initialFriends);
+          avatar: `/api/users/${friend}/avatar`,
+          lastMessage: cachedLastMessage?.content || null,
+          lastMessageTime: cachedLastMessage?.timestamp || null,
+          unreadCount: 0
+        };
+      });
+
+      setFriends(friendsData);
+
+      // Load last messages only for friends without cached messages
+      const uncachedFriends = friendsData.filter(
+        friend => !lastMessagesRef.current.has(friend.name)
+      );
+
+      if (uncachedFriends.length > 0) {
+        await loadLastMessagesForFriends(uncachedFriends);
+      }
+    } catch (error) {
+      console.error("Error loading friends:", error);
+      setError("Failed to load friends list. Please refresh the page.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadLastMessagesForFriends = async (friendsToLoad) => {
+    for (const friend of friendsToLoad) {
+      if (lastMessageLoadingRef.current.has(friend.name)) continue;
+      
+      lastMessageLoadingRef.current.add(friend.name);
+      
+      try {
+        const response = await getAllMessage(`${friend.name}?page=1`);
+        if (response.results?.[0]) {
+          const lastMessage = response.results[0];
+          lastMessagesRef.current.set(friend.name, {
+            content: lastMessage.content,
+            timestamp: lastMessage.timestamp
+          });
+
+          setFriends(prev => 
+            prev.map(f => 
+              f.name === friend.name
+                ? {
+                    ...f,
+                    lastMessage: lastMessage.content,
+                    lastMessageTime: lastMessage.timestamp
+                  }
+                : f
+            )
+          );
+        }
       } catch (error) {
-        setError("Failed to load friends list");
-        console.error("Error fetching friends:", error);
+        console.error(`Error loading messages for ${friend.name}:`, error);
+      } finally {
+        lastMessageLoadingRef.current.delete(friend.name);
+      }
+    }
+  };
+
+  const loadMoreMessages = async () => {
+    if (!selectedChat || isLoadingMore || !hasMore) return;
+
+    try {
+      setIsLoadingMore(true);
+      const selectedFriend = friends.find(f => f.id === selectedChat);
+      if (!selectedFriend) return;
+
+      const loadedPages = pageTrackingRef.current.get(selectedChat) || new Set([1]);
+      const nextPage = Math.max(...Array.from(loadedPages)) + 1;
+
+      if (loadedPages.has(nextPage)) return;
+
+      const response = await getAllMessage(`${selectedFriend.name}?page=${nextPage}`);
+      
+      const formattedMessages = response.results.map(msg => ({
+        id: generateMessageId(msg.sender, msg.timestamp),
+        text: msg.content,
+        sender: msg.sender,
+        timestamp: msg.timestamp
+      }));
+
+      cacheMessages(selectedChat, formattedMessages, nextPage);
+      
+      setMessages(prev => {
+        const allMessages = [...prev, ...formattedMessages];
+        return Array.from(
+          new Map(allMessages.map(msg => [msg.id, msg])).values()
+        ).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      });
+
+      setHasMore(response.next !== null);
+    } catch (error) {
+      console.error('Error loading more messages:', error);
+      setError('Failed to load more messages. Please try again.');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFriendsWithLastMessages();
+    return () => {
+      messageIdsRef.current.clear();
+      lastMessageLoadingRef.current.clear();
+      pageTrackingRef.current.clear();
+      messageCacheRef.current.clear();
+      lastMessagesRef.current.clear();
+    };
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    const loadInitialMessages = async () => {
+      if (!selectedChat) return;
+
+      setIsLoading(true);
+      setHasMore(true);
+      
+      try {
+        const selectedFriend = friends.find(f => f.id === selectedChat);
+        if (!selectedFriend) return;
+
+        // Check cache first
+        const cachedMessages = messageCacheRef.current.get(selectedChat);
+        if (cachedMessages?.length) {
+          setMessages(cachedMessages);
+          return;
+        }
+
+        const response = await getAllMessage(`${selectedFriend.name}?page=1`);
+        const formattedMessages = response.results.map(msg => ({
+          id: generateMessageId(msg.sender, msg.timestamp),
+          text: msg.content,
+          sender: msg.sender,
+          timestamp: msg.timestamp
+        }));
+
+        const sortedMessages = formattedMessages.sort((a, b) => 
+          new Date(b.timestamp) - new Date(a.timestamp)
+        );
+
+        cacheMessages(selectedChat, sortedMessages, 1);
+        setMessages(sortedMessages);
+        setHasMore(response.next !== null);
+
+        // Reset unread count
+        setFriends(prev => 
+          prev.map(friend => 
+            friend.id === selectedChat 
+              ? { ...friend, unreadCount: 0 }
+              : friend
+          )
+        );
+      } catch (error) {
+        console.error('Error loading messages:', error);
+        setError('Failed to load message history. Please try again.');
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadFriends();
-  }, [isAuthenticated]);
+    loadInitialMessages();
+  }, [selectedChat, friends, generateMessageId, cacheMessages]);
 
-  useChatWebSocket({ setMessages, setSocket, selectedChat });
+  useEffect(() => {
+    const handleMessage = (data) => {
+      if (data.error) {
+        setError(data.error);
+        return;
+      }
+      
+      if (data.message && data.sender) {
+        const messageId = generateMessageId(data.sender, Date.now());
+        if (messageIdsRef.current.has(messageId)) return;
+        
+        messageIdsRef.current.add(messageId);
 
-  const sendMessage = useCallback((e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
+        const newMsg = {
+          id: messageId,
+          text: data.message,
+          sender: data.sender,
+          timestamp: new Date().toISOString(),
+        };
+
+        setMessages(prev => [newMsg, ...prev]);
+
+        const friendName = data.sender === currentUsername ? data.receiver : data.sender;
+        updateFriendLastMessage(friendName, newMsg);
+
+        // Update cache
+        const chatId = friends.find(f => f.name === friendName)?.id;
+        if (chatId) {
+          const cachedMessages = messageCacheRef.current.get(chatId) || [];
+          messageCacheRef.current.set(chatId, [newMsg, ...cachedMessages]);
+        }
+      }
+    };
+    
+    const unregister = registerMessageHandler(handleMessage);
+    return () => unregister();
+  }, [generateMessageId, registerMessageHandler, currentUsername, updateFriendLastMessage, friends]);
+
+  const handleSendMessage = useCallback((e) => {
+    if (e) e.preventDefault();
+    if (!newMessage.trim() || !selectedChat) return;
 
     const selectedFriend = friends.find((f) => f.id === selectedChat);
-    // if (!selectedFriend) return;
+    if (!selectedFriend) return;
 
-    try {
-      const messageData = {
-        username: selectedFriend.name,
-        content: newMessage.trim()
-      };
+    const messageData = {
+      username: selectedFriend.name,
+      content: newMessage.trim()
+    };
 
-      if (socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify(messageData));
-        // setMessages([]);
-        setMessages(prev => [...prev, {
-          id: Math.random(),
-          text: newMessage.trim(),
-          sender: JSON.parse(user).username,
-          receiver: selectedFriend.name,
-          timestamp: new Date().toISOString(),
-        }]);
+    const timestamp = new Date().toISOString();
+    const tempMessage = {
+      id: generateMessageId(currentUsername, timestamp),
+      text: newMessage.trim(),
+      sender: currentUsername,
+      timestamp: timestamp,
+      pending: true
+    };
 
-        setNewMessage([]);
+    setMessages(prev => [tempMessage, ...prev]);
+    setNewMessage("");
+
+    updateFriendLastMessage(selectedFriend.name, tempMessage);
+
+    // Update cache
+    const cachedMessages = messageCacheRef.current.get(selectedChat) || [];
+    messageCacheRef.current.set(selectedChat, [tempMessage, ...cachedMessages]);
+
+    if (isConnected) {
+      const sent = sendMessage(messageData);
+      if (sent) {
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === tempMessage.id ? { ...msg, pending: false } : msg
+          )
+        );
       } else {
-        setError("Connection lost. Reconnecting...");
+        setError("Failed to send message. Please try again.");
       }
-    } catch (error) {
-      console.error("Error sending message:", error);
-      setError("Failed to send message");
+    } else {
+      setError("Connection lost. Please wait while we reconnect.");
     }
-  }, [socket, selectedChat, newMessage, friends, user]);
+  }, [selectedChat, newMessage, friends, currentUsername, generateMessageId, isConnected, sendMessage, updateFriendLastMessage]);
 
   const handleSidebarToggle = (type) => {
     setActiveSidebar(activeSidebar === type ? null : type);
   };
-
-  const loadMoreMessages = () => {
-    if (hasMore && !isLoading) {
-      setPage(prev => prev + 1);
-    }
-  };
-
 
   return (
     <div className={`flex flex-col ${styles.nwbody}`}>
@@ -222,20 +356,29 @@ const ChatApp = () => {
         </div>
       )}
       <div className="flex">
-        <ChatWin
-          friends={friends}
-          messages={messages}
-          selectedChat={selectedChat}
-          newMessage={newMessage}
-          setNewMessage={setNewMessage}
-          sendMessage={sendMessage}
-          setSelectedChat={setSelectedChat}
-          handleSidebarToggle={handleSidebarToggle}
-          isOnline={friends.find(f => f.id === selectedChat)?.online}
-          loadMoreMessages={loadMoreMessages}
-          hasMore={hasMore}
-          isLoading={isLoading}
-        />
+        <div className={`${styles.chat_win}`}>
+          <UserList
+            friends={friends}
+            selectedChat={selectedChat}
+            setSelectedChat={setSelectedChat}
+            isLoading={isLoading}
+            currentUsername={currentUsername}
+          />
+          <ChatContent
+            friends={friends}
+            messages={messages}
+            selectedChat={selectedChat}
+            newMessage={newMessage}
+            setNewMessage={setNewMessage}
+            handleSendMessage={handleSendMessage}
+            handleSidebarToggle={handleSidebarToggle}
+            isOnline={friends.find(f => f.id === selectedChat)?.online}
+            loadMoreMessages={loadMoreMessages}
+            hasMore={hasMore}
+            isLoading={isLoading}
+            isLoadingMore={isLoadingMore}
+          />
+        </div>
         {activeSidebar && (
           <Dprofile
             selectedUser={friends.find((user) => user.id === selectedChat)}

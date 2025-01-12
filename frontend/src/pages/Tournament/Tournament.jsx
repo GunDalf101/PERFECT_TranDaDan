@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Upload, Trophy } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-
+// cause merge issue
 // PlayerCard component remains the same
 const PlayerCard = ({ player, onUpdate, index }) => {
     const [imagePreview, setImagePreview] = useState(null);
@@ -24,9 +24,9 @@ const PlayerCard = ({ player, onUpdate, index }) => {
         <div className="card bg-gray-900 p-6 rounded-lg text-center w-full flex flex-col items-center hover-glow">
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden mb-4 bg-gray-800">
                 {imagePreview || player.image ? (
-                    <img 
-                        src={imagePreview || player.image} 
-                        alt="Player" 
+                    <img
+                        src={imagePreview || player.image}
+                        alt="Player"
                         className="w-full h-full object-cover"
                     />
                 ) : (
@@ -60,7 +60,7 @@ const PlayerCard = ({ player, onUpdate, index }) => {
 const TournamentBracket = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    
+
     const [players, setPlayers] = useState(() => {
         const saved = localStorage.getItem('tournamentPlayers');
         return saved ? JSON.parse(saved) : [
@@ -70,26 +70,26 @@ const TournamentBracket = () => {
             { nickname: '', image: null }
         ];
     });
-    
+
     const [tournamentStarted, setTournamentStarted] = useState(() => {
         return localStorage.getItem('tournamentStarted') === 'true';
     });
-    
+
     const [round1Matches, setRound1Matches] = useState(() => {
         const saved = localStorage.getItem('round1Matches');
         return saved ? JSON.parse(saved) : [];
     });
-    
+
     const [finalMatch, setFinalMatch] = useState(() => {
         const saved = localStorage.getItem('finalMatch');
         return saved ? JSON.parse(saved) : null;
     });
-    
+
     const [winner, setWinner] = useState(() => {
         const saved = localStorage.getItem('tournamentWinner');
         return saved ? JSON.parse(saved) : null;
     });
-    
+
     const [currentMatch, setCurrentMatch] = useState(() => {
         return parseInt(localStorage.getItem('currentMatch')) || null;
     });
@@ -111,14 +111,14 @@ const TournamentBracket = () => {
             const winner = location.state.matchWinner;
             const matchIndex = location.state.matchIndex;
 
-            if (finalMatch && finalMatch.includes(winner)) {        
+            if (finalMatch && finalMatch.includes(winner)) {
                 return;
             }
             if (!finalMatch) {
                 setFinalMatch([winner]);
                 setCurrentMatch(matchIndex === 0 ? 1 : 0);
                 setNextMatchAvailable(true);
-                
+
                 localStorage.setItem('finalMatch', JSON.stringify([winner]));
                 localStorage.setItem('currentMatch', String(matchIndex === 0 ? 1 : 0));
             } else if (finalMatch.length === 1) {
@@ -126,7 +126,7 @@ const TournamentBracket = () => {
                 setFinalMatch(updatedFinalMatch);
                 setCurrentMatch(2);
                 setNextMatchAvailable(true);
-                
+
                 localStorage.setItem('finalMatch', JSON.stringify(updatedFinalMatch));
                 localStorage.setItem('currentMatch', '2');
             } else if (finalMatch.length === 2) {
@@ -150,12 +150,12 @@ const TournamentBracket = () => {
                 [shuffledPlayers[0], shuffledPlayers[1]],
                 [shuffledPlayers[2], shuffledPlayers[3]]
             ];
-            
+
             setRound1Matches(newRound1Matches);
             setCurrentMatch(0);
             setTournamentStarted(true);
             setNextMatchAvailable(true);
-            
+
             localStorage.setItem('round1Matches', JSON.stringify(newRound1Matches));
             localStorage.setItem('currentMatch', '0');
             localStorage.setItem('tournamentStarted', 'true');
@@ -211,7 +211,7 @@ const TournamentBracket = () => {
         localStorage.removeItem('finalMatch');
         localStorage.removeItem('tournamentWinner');
         localStorage.removeItem('currentMatch');
-        
+
         setPlayers([
             { nickname: '', image: null },
             { nickname: '', image: null },
@@ -263,12 +263,12 @@ const TournamentBracket = () => {
                                     <div key={index} className="card bg-gray-900 p-4 rounded-lg">
                                         <h3 className="text-cyan-400 text-center mb-4">Semi-Final {index + 1}</h3>
                                         {match.map((player, playerIndex) => (
-                                            <div key={playerIndex} 
+                                            <div key={playerIndex}
                                                 className="flex justify-between items-center mb-2 p-2 border border-cyan-500/30 rounded">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-800">
                                                         {player.image && (
-                                                            <img src={player.image} alt={player.nickname} 
+                                                            <img src={player.image} alt={player.nickname}
                                                                 className="w-full h-full object-cover" />
                                                         )}
                                                     </div>
@@ -291,12 +291,12 @@ const TournamentBracket = () => {
                                 <div className="card bg-gray-900 p-4 rounded-lg max-w-md mx-auto">
                                     <h3 className="text-cyan-400 text-center mb-4">Finals</h3>
                                     {finalMatch.map((player, index) => (
-                                        <div key={index} 
+                                        <div key={index}
                                             className="flex justify-between items-center mb-2 p-2 border border-cyan-500/30 rounded">
                                             <div className="flex items-center gap-2">
                                                 <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-800">
                                                     {player.image && (
-                                                        <img src={player.image} alt={player.nickname} 
+                                                        <img src={player.image} alt={player.nickname}
                                                             className="w-full h-full object-cover" />
                                                     )}
                                                 </div>

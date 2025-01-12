@@ -1,12 +1,12 @@
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
-from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.tokens import AccessToken
-from rest_framework_simplejwt.settings import api_settings
 from django.contrib.auth import get_user_model
 import urllib.parse
 from channels.middleware import BaseMiddleware
 from channels.db import database_sync_to_async
+from jwt.exceptions import ExpiredSignatureError
+import jwt
+from .utils import decode_jwt
 
 User = get_user_model()
 
@@ -15,24 +15,25 @@ class DefaultAuthentication(BaseAuthentication):
         token = request.headers.get('Token')
 
         if not token:
-            raise AuthenticationFailed('Authentication token not found in cookies.', code=401)
+            raise AuthenticationFailed('Authentication token not found in the request.', code=401)
 
         try:
-            access_token = AccessToken(token)
+            payload = decode_jwt(token)
 
-            access_token.verify()
-
-            mfa_required = access_token.get('mfa_required', False)
+            mfa_required = payload.get('mfa_required', False)
             if mfa_required and not request.path in ["/api/login/mfa/totp"]:
                 raise AuthenticationFailed('MFA active. Please complete MFA to proceed.', code=403)
-
-            user_id = access_token[api_settings.USER_ID_CLAIM]
+            user_id = payload.get('uid', None)
+            if not user_id:
+                raise Exception
             user = User.objects.get(id=user_id)
 
-            return (user, access_token)
+            return (user, token)
 
-        except TokenError as e:
-            raise AuthenticationFailed(f'Invalid token: {str(e)}', code=401)
+        except ExpiredSignatureError:
+            raise AuthenticationFailed(f'Token expired.', code=401)
+        except jwt.PyJWTError as e:
+            raise AuthenticationFailed(f'invalid Token: {e}', code=401)
         except User.DoesNotExist:
             raise AuthenticationFailed('User not found.', code=404)
 
@@ -58,10 +59,11 @@ class JWTAuthMiddleware(BaseMiddleware):
         scope['user'] = None
         if token:
             try:
-                access_token = AccessToken(token)
-                access_token.verify()
-
-                user_id = access_token[api_settings.USER_ID_CLAIM]
+                payload = decode_jwt(token)
+                mfa_required = payload.get('mfa_required', False)
+                if mfa_required:
+                    raise Exception
+                user_id = payload['uid']
                 user = await database_sync_to_async(User.objects.get)(id=user_id)
                 scope['user'] = user
             except Exception:

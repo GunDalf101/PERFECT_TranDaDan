@@ -14,7 +14,7 @@ const ProfileIcon = () => {
   useEffect(() => {
     setUser(user ? JSON.parse(user) : null);
   }, [user])
-  
+
   const avatarUrl =
     _user?.intra_connection &&
       JSON.parse(_user.intra_connection)?.[0]?.fields?.avatar_url

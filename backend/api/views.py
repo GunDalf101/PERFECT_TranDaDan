@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model, authenticate
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import AccessToken
 from .authentication import NoAuthenticationOnly
 from django.http import HttpResponseRedirect, HttpResponse
 import requests
@@ -13,7 +12,7 @@ import jwt
 from django.urls import reverse
 from django.utils import timezone
 from django.conf import settings
-from .utils import unset_cookie_header, get_free_username, reset_password_for_user, find_user_id_by_reset_token, minuser, maxuser, createRelativeRelation, RelativeRelationshipType
+from .utils import generate_jwt, unset_cookie_header, get_free_username, reset_password_for_user, find_user_id_by_reset_token, minuser, maxuser, createRelativeRelation, RelativeRelationshipType
 from .serializers import RegisterSerializer, LoginSerializer, RequestResetPasswordSerializer, ResetPasswordSerializer, UserUpdateSerializer
 from .tasks import send_registration_email
 from .models import IntraConnection
@@ -121,8 +120,7 @@ class OAuth2CallbackView(UnprotectedView):
             )
             message = f"registration successful!{' your username has already been claimed, we generated a new one for you.' if user.username != username else '' }"
 
-        access_token = AccessToken.for_user(user)
-        access_token["mfa_required"] = user.mfa_enabled
+        access_token = generate_jwt(user, mfa_required=user.mfa_enabled)
 
         # //Response({
         #     "access_token": str(access_token),
@@ -152,8 +150,7 @@ class MFATOTPView(APIView):
             return Response({
                 "error": "Invalid code."
             }, status=status.HTTP_401_UNAUTHORIZED)
-        access_token = AccessToken.for_user(current_user)
-        access_token["mfa_required"] = False
+        access_token = generate_jwt(current_user, mfa_required=False)
         return Response({
             "access_token": str(access_token),
             "user_id": current_user.id,
@@ -176,10 +173,10 @@ class SecurityMFATOTP(APIView):
     def put(self, request):
         current_user = request.user
         data = request.data
-        # if current_user.mfa_enabled:
-        #     return Response({
-        #         "error": "MFA is already enabled for this user."
-        #     }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        if current_user.mfa_enabled:
+            return Response({
+                "error": "MFA is already enabled for this user."
+            }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         secret_totp = current_user.mfa_totp_secret
         print("--------------------")
         print(secret_totp)
@@ -289,8 +286,7 @@ class LoginView(UnprotectedView):
             password = serializer.validated_data['password']
             user = authenticate(request, email=email, password=password)
             if user:
-                access_token = AccessToken.for_user(user)
-                access_token["mfa_required"] = user.mfa_enabled
+                access_token = generate_jwt(user, mfa_required=user.mfa_enabled)
                 return Response({
                     "access_token": str(access_token),
                     "message": "logged in successfully!",

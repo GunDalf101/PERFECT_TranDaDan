@@ -1,9 +1,9 @@
-import axiosInstance from './axiosInstance';
+import {unauthAxiosInstance} from './axiosInstance';
 
 
 const RegisterAx = async (data) => {
   try {
-    const response = await axiosInstance.post('api/register', data);
+    const response = await unauthAxiosInstance.post('api/register', data);
     return response;
   } catch (error) {
     throw(error);

@@ -1,5 +1,5 @@
-import axiosInstance from './axiosInstance';
-
+import {axiosInstance} from './axiosInstance';
+// cause merge issue
 
 const qrMFAreq = async () => {
   try {
