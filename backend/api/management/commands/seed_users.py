@@ -71,6 +71,8 @@ class Command(BaseCommand):
             {"content": "Your profile has been updated successfully.", "url": "/profile"},
             {"content": "A new message from third@example.com.", "url": "/messages"},
             {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
+            {"content": "Just an alert notification, no link.", "url": None},
         ]
 
         for notification in notifications:

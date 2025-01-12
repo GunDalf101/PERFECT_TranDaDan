@@ -300,8 +300,8 @@ const GameChoice = () => {
 
                 <div className="game-container" id="invaders-container">
                     <div className="game-title">SPACE INVADERS</div>
-                    <Link to="/game-lobby/matchmaking?gameType=space-rivalry"><div className="game-option" data-index="0">CLASSIC</div></Link> 
-                    <Link to="/"><div className="game-option" data-index="1">ENDLESS</div></Link> 
+                    <Link to="/game-lobby/space-rivalry"><div className="game-option" data-index="0">SPACE RIVALRY</div></Link> 
+                    <Link to="/game-lobby/matchmaking?gameType=space-rivalry"><div className="game-option" data-index="1">REMOTE RIVALRY</div></Link> 
                     <Link to="/"><div className="game-option" data-index="2">SPEED RUN</div></Link> 
                     <Link to="/"><div className="game-option" data-index="3">BOSS RUSH</div></Link>
                     <Link to="/"><div className="game-option" data-index="4">OPTIONS</div></Link> 

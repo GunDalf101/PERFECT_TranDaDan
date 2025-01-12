@@ -433,7 +433,6 @@ const CpuMode = () => {
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         };
         
-        // Animation loop
         const clock = new THREE.Clock();
         let oldElapsedTime = 0;
         
@@ -458,7 +457,6 @@ const CpuMode = () => {
                     if (gameObjectsRef.current.length > 0 && paddleRef.current?.mesh && paddleCPURef.current?.mesh) {
                         const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
                         
-                        // Update AI controller
                         advancedAISystem.update(
                             ball,
                             paddleCPURef.current.mesh,
@@ -469,8 +467,8 @@ const CpuMode = () => {
                         
                     }
 
-                    paddleCPURef.current.mesh.position.z = -10; // Keep AI paddle at proper distance
-                    paddleCPURef.current.mesh.position.y = Math.max(4.0387, Math.min(7, paddleCPURef.current.mesh.position.y)); // Height constraints
+                    paddleCPURef.current.mesh.position.z = -10;
+                    paddleCPURef.current.mesh.position.y = Math.max(4.0387, Math.min(7, paddleCPURef.current.mesh.position.y));
                     paddleCPURef.current.mesh.position.x = Math.max(-5.5, Math.min(5.5, paddleCPURef.current.mesh.position.x));
 
                     if (paddleRef.current.mesh.position.x > 0) {
@@ -511,7 +509,6 @@ const CpuMode = () => {
                     }
                 }
                 
-                // Physics and collision updates
                 simulatePhysics(deltaTime);
                 checkCollisions();
                 gameLogic();
@@ -524,18 +521,18 @@ const CpuMode = () => {
             requestAnimationFrame(animate);
             if (gameObjectsRef.current.length > 0 && paddleRef.current?.mesh && paddleCPURef.current?.mesh && tableObject.mesh && netObject.mesh) {
                 
-                // ballBoundingBox.setFromObject(gameObjectsRef.current[gameObjectsRef.current.length - 1].mesh);
-                // paddleBoundingBox.setFromObject(paddleRef.current.mesh);
-                // paddleCPUBoundingBox.setFromObject(paddleCPURef.current.mesh);
+                ballBoundingBox.setFromObject(gameObjectsRef.current[gameObjectsRef.current.length - 1].mesh);
+                paddleBoundingBox.setFromObject(paddleRef.current.mesh);
+                paddleCPUBoundingBox.setFromObject(paddleCPURef.current.mesh);
                 tableBoundingBox.setFromObject(tableObject.mesh);
                 netBoundingBox.setFromObject(netObject.mesh);
                 if (!isBoundingBoxVisible) {
-                    // const ballBoxHelper = new THREE.BoxHelper(gameObjectsRef.current[gameObjectsRef.current.length - 1].mesh, 0xffff00);
-                    // scene.add(ballBoxHelper);
-                    // const paddleBoxHelper = new THREE.BoxHelper(paddleRef.current.mesh, 0x00ff00);
-                    // scene.add(paddleBoxHelper);
-                    // const paddleCPUBoxHelper = new THREE.BoxHelper(paddleCPURef.current.mesh, 0x00ff00);
-                    // scene.add(paddleCPUBoxHelper);
+                    const ballBoxHelper = new THREE.BoxHelper(gameObjectsRef.current[gameObjectsRef.current.length - 1].mesh, 0xffff00);
+                    scene.add(ballBoxHelper);
+                    const paddleBoxHelper = new THREE.BoxHelper(paddleRef.current.mesh, 0x00ff00);
+                    scene.add(paddleBoxHelper);
+                    const paddleCPUBoxHelper = new THREE.BoxHelper(paddleCPURef.current.mesh, 0x00ff00);
+                    scene.add(paddleCPUBoxHelper);
                     const tableBoxHelper = new THREE.BoxHelper(tableObject.mesh, 0x00ff00);
                     scene.add(tableBoxHelper);
                     const netBoxHelper = new THREE.BoxHelper(netObject.mesh, 0x00ff00);
@@ -558,31 +555,22 @@ const CpuMode = () => {
             );
             CreateBall(position);
             
-            // Add event listeners
             window.addEventListener('mousemove', handleMouseMove);
             window.addEventListener('keydown', handleKeyDown);
             window.addEventListener('resize', handleResize);
             
-            // Start animation loop
             animate();
         };
         
-        // Initialize the scene
         init();
 
-        // Cleanup function
         return () => {
-            // Handle keyboard events
             window.removeEventListener('mousemove', handleMouseMove);
-            // Handle click events
             window.removeEventListener('keydown', handleKeyDown);
-            // Handle window resize events
 
-            // Start the animation loop
             window.removeEventListener('resize', handleResize);
             inGame = false;
-            
-            // Dispose of Three.js objects
+
             scene.traverse((object) => {
                 if (object instanceof THREE.Mesh) {
                     object.geometry.dispose();
@@ -594,9 +582,8 @@ const CpuMode = () => {
             renderer.dispose();
             if (controls) controls.dispose();
         };
-    }, []); // End of useEffect
-    
-    // Component render
+    }, []);
+
     return (
         <>
             <canvas ref={canvasRef} className="webgl" />
