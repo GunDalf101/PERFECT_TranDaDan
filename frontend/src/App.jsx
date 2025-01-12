@@ -30,6 +30,7 @@ import { ProtectedRoute, PublicRoute } from "./components/auth/ProtectedRoute";
 import { RealTimeProvider } from './context/RealTimeContext.jsx';
 import { WebSocketProvider } from "./chatContext/WebSocketContext";
 import ResetPasswordForm from "./pages/ResetPassword/ResetPasswordForm"
+import EmailVerificationPage from "./pages/EmailVerificationPage.jsx";
 import { Space } from "lucide-react";
 
 function App() {
@@ -100,8 +101,21 @@ function App() {
                   </PublicRoute>
                 }
               />
-              <Route path="/Intra/callback/" element={<IntraCallback />} />
-              <Route path="/reset-password/:token" element={<ResetPasswordForm />} />
+              <Route path="/email-verified/:token" element={
+              <PublicRoute>
+                <EmailVerificationPage />
+              </PublicRoute>
+              }>
+                </Route>
+              <Route path="/Intra/callback/" element={
+              <PublicRoute>
+              <IntraCallback />
+              </PublicRoute>
+              } />
+              <Route path="/reset-password/:token" element={
+
+              <ResetPasswordForm />
+              } />
               {/*           <Route path="*" element={<Link to="/"/>}></Route> */}
             </Routes>
           </RealTimeProvider>
@@ -112,3 +126,6 @@ function App() {
 }
 
 export default App;
+
+
+

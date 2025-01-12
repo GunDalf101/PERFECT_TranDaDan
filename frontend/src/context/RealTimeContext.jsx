@@ -17,11 +17,12 @@ export const RealTimeProvider = ({ children }) => {
   const [markedIds, setMarkedIds] = useState(new Set());
 
   useEffect(() => {
+    let socket;
     if (isAuthenticated) {
       const accessToken = localStorage.getItem("access_token");
 
       if (accessToken) {
-        const socket = new WebSocket(`ws://10.13.5.4:8000/ws/notifs/?token=${accessToken}`);
+        socket = new WebSocket(`ws://localhost:8000/ws/notifs/?token=${accessToken}`);
 
         socket.onopen = () => {
           console.log('WebSocket connection established');
@@ -41,12 +42,14 @@ export const RealTimeProvider = ({ children }) => {
         };
 
         setWs(socket);
-
-        return () => {
-          if (socket) socket.close();
-        };
       }
     }
+    return () => {
+      if (socket) {
+          socket.close();
+          clearRealTimeContext();
+      }
+    };
   }, [isAuthenticated]);
 
   const sendRelationshipUpdate = (action, username) => {
@@ -65,7 +68,7 @@ export const RealTimeProvider = ({ children }) => {
         type: 'mark_as_read',
         notification_id: notificationId,
       }));
-      
+
       setMarkedIds(prev => new Set([...prev, notificationId]));
     }
   }, [ws, markedIds]);

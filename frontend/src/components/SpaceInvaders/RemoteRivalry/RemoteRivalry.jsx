@@ -114,7 +114,7 @@ const RemoteRivalry = () => {
     }
 
     const ws = new WebSocket(
-      `ws://10.13.5.4:8000/ws/space-rivalry/${gameId}/?username=${username}`
+      `ws://localhost:8000/ws/space-rivalry/${gameId}/?username=${username}`
     );
 
     ws.onopen = () => {
@@ -123,7 +123,7 @@ const RemoteRivalry = () => {
       setErrorMessage('');
       reconnectAttempts.current = 0;
       isReconnecting.current = false;
-      
+
       // Send initial player data
       ws.send(JSON.stringify({
         type: 'init',
@@ -137,7 +137,7 @@ const RemoteRivalry = () => {
       console.log('WebSocket connection closed', event);
       setConnectionStatus('disconnected');
       setSocket(null);
-      
+
       // Only attempt reconnect if game isn't over and not already reconnecting
       if (gameState?.gameOver !== true && !isReconnecting.current) {
         isReconnecting.current = true;
@@ -160,28 +160,28 @@ const RemoteRivalry = () => {
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      
+
       switch(data.type) {
         case 'game_state':
           setGameState(data.state);
           break;
-          
+
         case 'player_disconnected':
           setErrorMessage(data.message);
           break;
-          
+
         case 'player_reconnected':
           setErrorMessage('');
           break;
-          
+
         case 'connection_warning':
           setErrorMessage(data.message);
           break;
-          
+
         case 'game_ended':
           handleGameEnd(data.state, false);
           break;
-          
+
         case 'game_ended_by_forfeit':
           handleGameEnd(data.state, true);
           break;
@@ -224,20 +224,20 @@ const RemoteRivalry = () => {
 
   const handleGameEnd = (state, isForfeit) => {
     let winnerMessage;
-    
+
     if (isForfeit) {
-      winnerMessage = state.winner === username ? 
-        'You won by forfeit!' : 
+      winnerMessage = state.winner === username ?
+        'You won by forfeit!' :
         `${state.winner} won by forfeit!`;
     } else {
-      winnerMessage = state.winner === username ? 
-        'You won!' : 
+      winnerMessage = state.winner === username ?
+        'You won!' :
         `${state.winner} won!`;
     }
-    
+
     setWinner(winnerMessage);
-    setGameState(prev => ({ 
-      ...prev, 
+    setGameState(prev => ({
+      ...prev,
       ...state,
       gameOver: true,
     }));
@@ -284,12 +284,12 @@ const RemoteRivalry = () => {
       </div>
 
       {/* Game Canvas */}
-      <div 
+      <div
         className="relative mt-16 bg-gray-800 rounded-lg overflow-hidden"
         style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
       >
         {/* Dividing Line */}
-        <div 
+        <div
           className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-gray-800"
           style={{ transform: 'translateX(-50%)' }}
         />
@@ -297,15 +297,15 @@ const RemoteRivalry = () => {
         {/* Health Bars and Power-ups */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">
           <div className="w-32 h-2 bg-gray-800 rounded">
-            <div 
+            <div
               className="h-full bg-blue-500 rounded transition-all duration-200"
               style={{ width: `${gameState.health1}%` }}
             />
           </div>
           <div className="flex gap-1">
-            {Object.entries(gameState.activeEffects1 || {}).map(([type, effect]) => 
+            {Object.entries(gameState.activeEffects1 || {}).map(([type, effect]) =>
               effect.active && (
-                <div 
+                <div
                   key={type}
                   className="w-6 h-6 rounded-full"
                   style={{ backgroundColor: POWERUP_COLORS[type] }}
@@ -317,15 +317,15 @@ const RemoteRivalry = () => {
 
         <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
           <div className="w-32 h-2 bg-gray-800 rounded">
-            <div 
+            <div
               className="h-full bg-red-500 rounded transition-all duration-200"
               style={{ width: `${gameState.health2}%` }}
             />
           </div>
           <div className="flex gap-1">
-            {Object.entries(gameState.activeEffects2 || {}).map(([type, effect]) => 
+            {Object.entries(gameState.activeEffects2 || {}).map(([type, effect]) =>
               effect.active && (
-                <div 
+                <div
                   key={type}
                   className="w-6 h-6 rounded-full"
                   style={{ backgroundColor: POWERUP_COLORS[type] }}
@@ -481,7 +481,7 @@ const RemoteRivalry = () => {
 
       {/* Error Messages */}
       {errorMessage && !gameState.gameOver && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
                       bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg">
           {errorMessage}
         </div>

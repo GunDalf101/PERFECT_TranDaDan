@@ -11,7 +11,6 @@ const MFAVerificationForm = ({onVerify,onCancel}) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validation
     if (!/^\d+$/.test(mfaCode)) {
       setError('Please enter numbers only');
       return;
@@ -22,19 +21,18 @@ const MFAVerificationForm = ({onVerify,onCancel}) => {
       return;
     }
     try {
+      setIsLoading(true); 
       await onVerify(mfaCode);
     } catch (err) {
       setError(err.message || 'Invalid code');
     } finally {
       setIsLoading(false);
     }
-    setIsLoading(true);  // Set loading state when the submission begins
-    
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-      <div className="bg-gray-900 p-8 rounded-lg shadow-lg w-96 border border-gray-800">
+      <div className="bg-gray-900 p-8 rounded-lg w-96 border border-gray-800 shadow-inner  shadow-blue-400">
         <h2 className={`text-2xl font-bold mb-6 text-center ${styles.glowText}`}>
           Two-Factor Authentication
         </h2>
@@ -42,7 +40,7 @@ const MFAVerificationForm = ({onVerify,onCancel}) => {
           Please enter the verification code to continue
         </p>
         
-        <form onSubmit={handleSubmit} className="flex flex-col items-center">
+        <form onSubmit={handleSubmit} className="flex flex-col items-center ">
           <div className="w-full mb-5">
             <input
               type="text"

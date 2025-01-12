@@ -66,7 +66,7 @@ const RemoteMode = () => {
             }
 
             const ws = new WebSocket(
-                `ws://10.13.5.4:8000/ws/game/${gameId}/?username=${username}`
+                `ws://localhost:8000/ws/game/${gameId}/?username=${username}`
             );
             websocketRef.current = ws;
 
@@ -79,7 +79,7 @@ const RemoteMode = () => {
                 }));
                 setErrorMessage('');
                 reconnectAttempts.current = 0;
-                
+
                 const initData = {
                     type: 'init',
                     username: username,
@@ -104,15 +104,15 @@ const RemoteMode = () => {
                     ...prev,
                     status: 'disconnected'
                 }));
-            
+
                 if (gameStatus !== 'completed' && !isReconnecting.current && !isUnmounting.current) {
                     isReconnecting.current = true;
                     setErrorMessage('Connection lost. Attempting to reconnect...');
-            
+
                     if (reconnectTimeoutId.current) {
                         clearTimeout(reconnectTimeoutId.current);
                     }
-            
+
                     reconnectTimeoutId.current = setTimeout(() => {
                         setupWebSocket();
                     }, 2000);
@@ -122,7 +122,7 @@ const RemoteMode = () => {
             websocketRef.current.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 lastPongReceived.current = Date.now();
-                
+
                 switch(data.type) {
                     case 'pong':
                         setConnectionState(prev => ({
@@ -145,7 +145,7 @@ const RemoteMode = () => {
                             inGame = true;
                         }, 3000);
                         break;
-                        
+
                     case 'player_disconnected':
                         setErrorMessage(`${data.message}`);
                         setConnectionState(prev => ({
@@ -154,7 +154,7 @@ const RemoteMode = () => {
                         }));
                         inGame = false;
                         break;
-                        
+
                     case 'player_reconnected':
                         setErrorMessage('');
                         setConnectionState(prev => ({
@@ -165,13 +165,13 @@ const RemoteMode = () => {
                             inGame = true;
                         }, 3000);
                         break;
-                        
+
                     case 'connection_warning':
                         if (connectionState.status === 'connected') {
                             setErrorMessage(data.message);
                         }
                         break;
-                        
+
                     case 'game_ended_by_forfeit':
                         handleGameEnd(data.state);
                         setGameStatus('completed');
@@ -205,15 +205,15 @@ const RemoteMode = () => {
         const handleGameEnd = (state) => {
             setGameStatus('completed');
             let winnerMessage;
-            
+
             if (state.disconnect_forfeit) {
-                winnerMessage = state.winner === username ? 
-                    'You won by forfeit (opponent disconnected)' : 
+                winnerMessage = state.winner === username ?
+                    'You won by forfeit (opponent disconnected)' :
                     `${state.winner} won by forfeit (you disconnected)`;
             } else {
                 winnerMessage = state.winner === username ? 'You won!' : `${state.winner} won!`;
             }
-            
+
             setWinner(winnerMessage);
         };
 
@@ -278,7 +278,7 @@ const RemoteMode = () => {
         const renderer = new THREE.WebGLRenderer({
             canvas: canvasRef.current
         });
-        
+
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.setClearColor(0x000000, 0);
@@ -395,13 +395,13 @@ const RemoteMode = () => {
             gameObjectsRef.current.forEach(obj => {
                 const gravity = -9.82;
                 obj.velocity.y += gravity * deltaTime;
-        
+
                 const airResistance = 1;
                 obj.velocity.multiplyScalar(airResistance);
 
                 const scaledVelocity = obj.velocity.clone().multiplyScalar(deltaTime);
                 obj.position.add(scaledVelocity);
-        
+
                 if (obj.position.y < 0.5) {
                     obj.velocity.y *= -0.5;
                     obj.position.y = 0.5;
@@ -409,19 +409,19 @@ const RemoteMode = () => {
                 obj.mesh.position.copy(obj.position);
             });
         };
-        
+
 
         const collisionTimestamps = new Map();
         const collisionDelay = 100;
-        
+
         const twoObjCollide = (objA, objB) => {
             const boxA = new THREE.Box3().setFromObject(objA.mesh);
             const boxB = new THREE.Box3().setFromObject(objB.mesh);
-            
+
             if (boxA.intersectsBox(boxB)) {
                 const currentTime = performance.now();
                 const key = `${objA.id}-${objB.id}`;
-                
+
                 if (!collisionTimestamps.has(key) ||
                 currentTime - collisionTimestamps.get(key) > collisionDelay) {
                     collisionTimestamps.set(key, currentTime);
@@ -433,7 +433,7 @@ const RemoteMode = () => {
 
         const checkCollisions = () => {
             if (!paddleRef.current || gameObjectsRef.current.length === 0 || !paddleOpponentRef.current) return;
-            
+
             const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
 
             if (twoObjCollide(paddleRef.current, ball) && lastHitAI) {
@@ -441,21 +441,21 @@ const RemoteMode = () => {
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
                 // ballSound.play();
-                
+
                 const paddleBox = new THREE.Box3().setFromObject(paddleRef.current.mesh);
                 const ballWidth = ball.position.x - paddleBox.min.x;
                 const paddleWidth = paddleBox.max.x - paddleBox.min.x;
                 const hitDirection = ballWidth / paddleWidth;
-                
+
                 let forceX = -(hitDirection - paddleWidth / 2) * 3;
                 const ballHeight = ball.position.y - paddleBox.min.y;
                 const paddleHeight = paddleBox.max.y - paddleBox.min.y;
                 let forceY = Math.log(ballHeight / paddleHeight + 1) * 6 + 2;
                 let forceZ = Math.log(ballHeight / paddleHeight + 1) * 13 + 10;
-                
+
                 playerSideBounces = 0;
                 aiSideBounces = 0;
-                
+
                 ball.velocity = new THREE.Vector3(0, 0, 0);
                 ball.applyImpulse(new THREE.Vector3(forceX, forceY, -forceZ));
             }
@@ -465,21 +465,21 @@ const RemoteMode = () => {
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
                 // ballSound.play();
-                
+
                 const paddleBox = new THREE.Box3().setFromObject(paddleOpponentRef.current.mesh);
                 const ballWidth = ball.position.x - paddleBox.min.x;
                 const paddleWidth = paddleBox.max.x - paddleBox.min.x;
                 const hitDirection = ballWidth / paddleWidth;
-                
+
                 let forceX = (hitDirection - paddleWidth / 2) * 3;
                 const ballHeight = ball.position.y - paddleBox.min.y;
                 const paddleHeight = paddleBox.max.y - paddleBox.min.y;
                 let forceY = Math.log(ballHeight / paddleHeight + 1) * 6 + 2;
                 let forceZ = Math.log(ballHeight / paddleHeight + 1) * 13 + 10;
-                
+
                 playerSideBounces = 0;
                 aiSideBounces = 0;
-                
+
                 ball.velocity = new THREE.Vector3(0, 0, 0);
                 ball.applyImpulse(new THREE.Vector3(forceX, forceY, forceZ));
             }
@@ -488,9 +488,9 @@ const RemoteMode = () => {
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
                 // ballSound.play();
-                
+
                 ball.velocity.y = -ball.velocity.y;
-                
+
                 if (ball.position.z < 0) {
                     aiSideBounces++;
                     if (aiSideBounces === 2) {
@@ -541,7 +541,7 @@ const RemoteMode = () => {
                 obj.mesh.material.dispose();
             });
             gameObjectsRef.current = [];
-            
+
             const position = new THREE.Vector3(0, 5.0387, 8 * direction);
             CreateBall(position, direction);
 
@@ -549,12 +549,12 @@ const RemoteMode = () => {
             playerSideBounces = 0;
             aiSideBounces = 0;
         };
-        
+
         const updateScore = () => {
             setScores({ player1: playerScore, player2: aiScore });
             setMatches({ player1: playerGamesWon, player2: aiGamesWon });
         };
-        
+
         const winCheck = () => {
             if (playerScore >= maxScore || aiScore >= maxScore) {
                 if (Math.abs(playerScore - aiScore) >= 2) {
@@ -563,7 +563,7 @@ const RemoteMode = () => {
                     } else {
                         aiGamesWon++;
                     }
-                    
+
                     if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
                         websocketRef.current.send(JSON.stringify({
                             type: 'game_won',
@@ -574,15 +574,15 @@ const RemoteMode = () => {
                             }
                         }));
                     }
-                    
+
                     playerScore = 0;
                     aiScore = 0;
-                    
+
                     if (playerGamesWon >= Math.ceil(maxGames / 2) ||
                         aiGamesWon >= Math.ceil(maxGames / 2)) {
                         isGameOver = true;
                         inGame = false;
-                        
+
                         if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
                             websocketRef.current.send(JSON.stringify({
                                 type: 'match_complete',
@@ -594,11 +594,11 @@ const RemoteMode = () => {
                                 forfeit: false
                             }));
                         }
-                        
+
                         playerGamesWon = 0;
                         aiGamesWon = 0;
                     }
-                    
+
                     updateScore();
                 }
             }
@@ -606,13 +606,13 @@ const RemoteMode = () => {
 
         const gameLogic = () => {
             if (gameObjectsRef.current.length === 0) return;
-            
+
             const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
             const tableBounds = new THREE.Box3().setFromObject(tableObject.mesh);
-            
+
             let scoreUpdate = false;
             let scoringPlayer = null;
-        
+
             if (ball.position.z > tableBounds.max.z + 3 && playerSideBounces === 1) {
                 aiScore++;
                 scoreUpdate = true;
@@ -638,7 +638,7 @@ const RemoteMode = () => {
                 updateScore();
                 resetBall(-1);
             }
-        
+
             if (scoreUpdate && websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
                 websocketRef.current.send(JSON.stringify({
                     type: 'score_update',
@@ -651,7 +651,7 @@ const RemoteMode = () => {
                     aiGamesWon: aiGamesWon
                 }));
             }
-            
+
             winCheck();
         };
 
@@ -668,7 +668,7 @@ const RemoteMode = () => {
         const setupLighting = () => {
             const ambientLight = new THREE.AmbientLight(0xffffff, 2.1);
             scene.add(ambientLight);
-            
+
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
             directionalLight.castShadow = true;
             directionalLight.shadow.mapSize.set(1024, 1024);
@@ -684,23 +684,23 @@ const RemoteMode = () => {
         const handleResize = () => {
             const width = window.innerWidth;
             const height = window.innerHeight;
-            
+
             camera.aspect = width / height;
             camera.updateProjectionMatrix();
-            
+
             renderer.setSize(width, height);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         };
-        
+
         const clock = new THREE.Clock();
         let oldElapsedTime = 0;
-        
+
         let isBoundingBoxVisible = false;
         const animate = () => {
             const elapsedTime = clock.getElapsedTime();
             const deltaTime = elapsedTime - oldElapsedTime;
             oldElapsedTime = elapsedTime;
-            
+
             if (inGame) {
                 if (paddleRef.current?.mesh) {
                     console.log("WEEE IN");
@@ -771,11 +771,11 @@ const RemoteMode = () => {
 
             }
             controls.update();
-            
+
             renderer.render(scene, camera);
             requestAnimationFrame(animate);
             if (gameObjectsRef.current.length >= 0 && paddleRef.current?.mesh && paddleOpponentRef.current?.mesh && tableObject.mesh && netObject.mesh) {
-                
+
                 tableBoundingBox.setFromObject(tableObject.mesh);
                 netBoundingBox.setFromObject(netObject.mesh);
                 if (!isBoundingBoxVisible) {
@@ -785,44 +785,44 @@ const RemoteMode = () => {
                     scene.add(netBoxHelper);
                     isBoundingBoxVisible = true;
                 }
-            
+
             }
         };
-        
+
         const init = () => {
             setupLighting();
             const { netObject, tableObject } = createTableAndNet();
             CreatePaddle();
             CreateBall(new THREE.Vector3(0, 5.0387, -8));
-            
+
             window.addEventListener('beforeunload', handleBeforeUnload);
             // document.addEventListener('visibilitychange', handleVisibilityChange);
             window.addEventListener('mousemove', handleMouseMove);
             window.addEventListener('resize', handleResize);
-            
+
             animate();
         };
-        
+
          init();
 
          return () => {
             isUnmounting.current = true;
-            
+
             if (reconnectTimeout.current) {
                 clearTimeout(reconnectTimeout.current);
                 reconnectTimeout.current = null;
             }
-    
+
             if (reconnectTimeoutId.current) {
                 clearTimeout(reconnectTimeoutId.current);
                 reconnectTimeoutId.current = null;
             }
-    
+
             if (pingInterval.current) {
                 clearInterval(pingInterval.current);
                 pingInterval.current = null;
             }
-    
+
             if (websocketRef.current) {
                 if (websocketRef.current.readyState === WebSocket.OPEN) {
                     websocketRef.current.send(JSON.stringify({
@@ -833,17 +833,17 @@ const RemoteMode = () => {
                 websocketRef.current.close();
                 websocketRef.current = null;
             }
-    
+
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('resize', handleResize);
             window.removeEventListener('beforeunload', handleBeforeUnload);
             // document.removeEventListener('visibilitychange', handleVisibili0tyChange);
-    
+
             inGame = false;
             reconnectAttempts.current = 0;
             setErrorMessage('');
             setConnectionState(prev => ({ ...prev, status: 'disconnected' }));
-    
+
             if (sceneRef.current) {
                 sceneRef.current.traverse((object) => {
                     if (object instanceof THREE.Mesh) {
@@ -853,7 +853,7 @@ const RemoteMode = () => {
                     }
                 });
             }
-    
+
             if (renderer) renderer.dispose();
             if (controls) controls.dispose();
         };
@@ -862,12 +862,12 @@ const RemoteMode = () => {
     return (
         <>
             <canvas ref={canvasRef} className="webgl" />
-        
+
             <div className="absolute top-10 left-1/2 transform -translate-x-1/2 flex items-center justify-between w-full max-w-4xl px-6 py-4 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full border-4 border-neon-cyan shadow-glow">
 
                 <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-cyan-400 neon-glow-cyan">
-                    <img 
-                        src="/api/placeholder/64/64" 
+                    <img
+                        src="/api/placeholder/64/64"
                         alt={isPlayer1 ? username : opponent}
                         className="w-full h-full object-cover"
                     />
@@ -884,8 +884,8 @@ const RemoteMode = () => {
                 </div>
 
                 <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-rose-400 neon-glow-rose">
-                    <img 
-                        src="/api/placeholder/64/64" 
+                    <img
+                        src="/api/placeholder/64/64"
                         alt={isPlayer1 ? opponent : username}
                         className="w-full h-full object-cover"
                     />

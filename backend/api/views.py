@@ -269,7 +269,7 @@ class VerifyEmailView(UnprotectedView):
 
     def get(self, _, token):
         try:
-            user = User.objects.filter(email_token=token).first()
+            user = User.objects.get(email_token=token)
             user.email_token = get_random_string(32) # set the token for the next verification.
             user.email_verified = True
             user.save()
@@ -313,6 +313,7 @@ class UsersMeView(APIView):
 
     def patch(self, request):
         user = request.user
+        print(request.data)
         email = user.email
         serializer = UserUpdateSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
