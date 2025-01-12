@@ -4,7 +4,7 @@ import alogo from "../../assets/image/42_Logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
 import LoginAx from "../../api/authServiceLogin";
-import getMyData from "../../api/authServiceMe";
+import {getMyData} from "../../api/authServiceMe";
 import RequestResetPassword from "../../api/authServiceRequestRp";
 import MFAVerificationForm from "./MFAVerificationForm";
 import authVerifyMFA from "../../api/authVerifyMFA"

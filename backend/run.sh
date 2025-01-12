@@ -18,7 +18,7 @@ docker run -d \
   redis:latest
 
 python3 manage.py makemigrations
-python3 manage.py migrate
+python3 manage.py migrate --run-syncdb
 
 echo "!!!!! Run in another terminal: 'python manage.py process_tasks' to receive emails. !!!!!"
 export DJANGO_SETTINGS_MODULE=transcendence.settings

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 // import {axiosInstance} from '../../api/axiosInstance';
 // import { getUserData } from "../../api/authService42Intra";
 import { useUser } from '../../components/auth/UserContext'
-import getMyData from "../../api/authServiceMe";
+import {getMyData} from "../../api/authServiceMe";
 
 
 const IntraCallback = () => {

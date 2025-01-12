@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import './MatchMaking.css';
 import { Link, useNavigate, useSearchParams  } from 'react-router-dom';
-import getMyData from '../../api/authServiceMe';
+import {getMyData} from '../../api/authServiceMe';
 
 const ProfileCard = ({ username, title, picture }) => (
   <div className="card bg-gray-900 p-6 rounded-lg text-center w-full max-w-xs flex flex-col items-center hover-glow">

@@ -1,11 +1,14 @@
 import styles from "./Profile.module.scss";
 import { useState, useEffect } from "react";
-import getMyData from "../../api/authServiceMe";
+import {getMyData} from "../../api/authServiceMe";
 import getMatches from "../../api/gameService"
 
 const Profile = () => {
   const [mydata, setMyData] = useState(null);
-  const [mymatches, setMymatches] = useState(null);
+  const [mymatches, setMymatches] = useState({
+    pong: [],
+    space: []
+  });
 
   useEffect(() => {
     // Fetch user data
@@ -13,12 +16,11 @@ const Profile = () => {
       try {
         const data = await getMyData();
         setMyData(data);
-        console.log(mydata)
         const matches = await getMatches(data.id);
+        console.log(matches)
         setMymatches(matches)
       } catch (error) {
         console.error("Error fetching user data:", error);
-        // window.location.href = "/login";
       }
     };
 
@@ -39,7 +41,7 @@ const Profile = () => {
       {/* Profile and Friends Section */}
       <div className="flex flex-wrap m-10 justify-between w-11/12 gap-4 mt-20">
         {/* User Box */}
-        <div className="flex-1 min-w-[500px] h-[400px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
+        <div className="flex-1 min-w-[500px] h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
           {/* Profile Image */}
           <div className="flex flex-col items-center">
             <img
@@ -68,38 +70,36 @@ const Profile = () => {
           </div>
         </div>
 
+
         {/* Friends Box */}
-        <div className="flex-1 min-w-[400px] h-[400px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink overflow-y-auto">
+        <div className="flex-1 min-w-[500px] h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink overflow-y-auto">
           <h2 className="text-2xl text-center text-neonPink mb-4">Friends</h2>
           {mydata.friends && mydata.friends.length > 0 ? (
-            <ul className="space-y-4">
-              {mydata.friends.map((friend) => (
-                <li
-                  key={friend.id}
-                  className="flex items-center gap-4 bg-gray-800 p-3 rounded-lg border border-gray-600 shadow-md hover:shadow-lg transition-shadow duration-300"
-                >
-                  <img
-                    src={friend.avatar}
-                    alt={`${friend.username}'s avatar`}
-                    className="w-12 h-12 rounded-full border-2 border-white"
-                  />
-                  <a href={"user/" + friend.username}><p className="text-lg text-white font-medium">{friend.username}</p></a>
-                </li>
+              <ul className="space-y-4">
+                {mydata.friends.map((friend) => (
+                  <li
+                    key={friend.id}
+                    className="flex items-center gap-4 bg-gray-800 p-3 rounded-lg border border-gray-600 shadow-md hover:shadow-lg transition-shadow duration-300"
+                  >
+                    <img
+                      src={friend.avatar}
+                      alt={`${friend.username}'s avatar`}
+                      className="w-12 h-12 rounded-full border-2 border-white"
+                    />
+                    <a href={"user/" + friend.username}><p className="text-lg text-white font-medium">{friend.username}</p></a>
+                  </li>
               ))}
             </ul>
           ) : (
             <p className="text-center text-gray-400">No friends to display.</p>
           )}
         </div>
-      </div>
-
-      {/* Match History and Statistics Section */}
-      <div className="flex flex-wrap justify-between w-11/12 gap-4">
         {/* Match History Card */}
-        <div className="flex-1 min-w-[300px] h-fit p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
+        <div className="flex-1 min-w-[500px] min-h-[500px] h-fit p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
+        <p className="text-3xl text-center text-neonBlue mb-5">PingPong</p>
           <h2 className="text-2xl text-center text-neonPink mb-4">Match History</h2>
-          <div className="overflow-x-auto">
-          {mymatches && mymatches.length > 0 ? (
+          <div className="overflow-x-auto h-72 overflow-y-auto">
+          {mymatches.pong && mymatches.pong.length > 0 ? (
             <table className="w-full text-center text-white border-collapse">
               <thead>
                 <tr className="bg-neonBlue text-black">
@@ -110,7 +110,7 @@ const Profile = () => {
                 </tr>
               </thead>
               <tbody>
-                {mymatches.map((match) => (
+                {mymatches.pong.map((match) => (
                   <tr key={match.id} className="odd:bg-gray-800 even:bg-gray-700">
                     <td className="p-2 border border-white">{match.id}</td>
                     <td className="p-2 border border-white">{match.opponent}</td>
@@ -126,6 +126,41 @@ const Profile = () => {
           </div>
         </div>
 
+        {/* Match History Card */}
+        <div className="flex-1 min-w-[500px] min-h-[500px] h-fit p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
+          <p className="text-3xl text-center text-red-600 mb-5">SPACExRIVALRY</p>
+          <h2 className="text-2xl text-center text-neonPink mb-4">Match History</h2>
+          <div className="overflow-x-auto h-72 overflow-y-auto">
+          {mymatches.space && mymatches.space.length > 0 ? (
+            <table className="w-full text-center text-white border-collapse">
+              <thead>
+                <tr className="bg-neonBlue text-black">
+                  <th className="p-2 border border-white">#</th>
+                  <th className="p-2 border border-white">Opponent</th>
+                  <th className="p-2 border border-white">Result</th>
+                  <th className="p-2 border border-white">Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mymatches.space.map((match) => (
+                  <tr key={match.id} className="odd:bg-gray-800 even:bg-gray-700">
+                    <td className="p-2 border border-white">{match.id}</td>
+                    <td className="p-2 border border-white">{match.opponent}</td>
+                    <td className="p-2 border border-white">{match.result}</td>
+                    <td className="p-2 border border-white">{match.score}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            ):(
+              <p className="text-center text-gray-400">No matches to display.</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Match History and Statistics Section */}
+      <div className="flex flex-wrap justify-between w-11/12 gap-4">
         {/* Statistics Card */}
         <div className="flex-1 min-w-[300px] h-fit p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
           <h2 className="text-2xl text-center text-neonBlue mb-4">Game Statistics</h2>

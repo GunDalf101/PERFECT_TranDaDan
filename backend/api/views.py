@@ -222,7 +222,7 @@ class RegisterView(UnprotectedView):
                     "id": user.id,
                     "username": user.username,
                     "email": user.email,
-                    "avatar_url": user.avatar_url
+                    'avatar': '/default_profile.webp'
                 }
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -307,7 +307,8 @@ class UsersMeView(APIView):
             'username': user.username,
             'email': user.intra_connection.email if not user.email else user.email,
             'mfa_enabled': user.mfa_enabled,
-            'friends': getFriendList(user.id)
+            'friends': getFriendList(user.id),
+            'avatar': '/default_profile.webp'
         }
         return Response(user_data, status=status.HTTP_200_OK)
 
@@ -378,6 +379,7 @@ class UserView(APIView):
             'id': target_user.id,
             'username': target_user.username,
             'email': target_user.intra_connection.email if not target_user.email else target_user.email,
+            'avatar': target_user.avatar_url,
             'relationship': relationship_n,
             'isOnline': target_user.online,
             'friends': getFriendList(target_user.id)

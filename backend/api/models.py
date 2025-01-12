@@ -22,6 +22,11 @@ class User(AbstractBaseUser):
         null=True,
         blank=True
     )
+    # tournament_alias = models.CharField(
+    #     max_length=50,
+    #     unique=True,
+    #     validators=[RegexValidator(regex=r'^[a-zA-Z0-9]*$', message="tournament alias must contain only alphanumeric characters")]
+    # )
     avatar_url = models.CharField(max_length=255, blank=True, null=True)
     email_token = models.CharField(max_length=32, blank=True, null=True)
     online = models.BooleanField(default=False)

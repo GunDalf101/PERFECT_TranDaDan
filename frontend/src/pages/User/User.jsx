@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import NotFound from "../NotFound/NotFound";
 import getUserData from "../../api/authServiceUser";
-import getMyData from "../../api/authServiceMe"
+import {getMyData} from "../../api/authServiceMe"
 import { sendFriendReq, cancelFriendReq, acceptFriendReq, unfriendReq} from "../../api/friendService";
 import { blockUser, unblockUser } from "../../api/blockService";
 import getMatches from "../../api/gameService";
@@ -25,7 +25,10 @@ const User = () => {
   const [reload, setReload] = useState(false); // State to trigger useEffect
   const [isAddHovering, setIsAddHovering] = useState(false); // State to manage hover
   const [isBlockHovering, setIsBlockHovering] = useState(false); // State to manage hover for block button
-  const [userMatches, setUserMatches] = useState(null);
+  const [userMatches, setUserMatches] = useState({
+    pong: [],
+    space: []
+  });
   const { sendRelationshipUpdate, relationshipUpdate } = useRealTime();
   const { username } = useParams();
 
@@ -134,7 +137,7 @@ const User = () => {
     <div className="flex flex-col items-center min-h-screen bg-cover bg-center bg-[url('/retro_1.jpeg')] from-darkBackground via-purpleGlow to-neonBlue text-white font-retro">
       <div className="flex flex-wrap m-10 justify-between w-11/12 gap-4 mt-20">
         {/* User Box */}
-        <div className="flex-1 min-w-[500px] h-[460px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
+        <div className="flex-1 min-w-[500px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
           {/* Profile Image */}
           <div className="flex flex-col items-center">
           <div className="flex flex-col items-center relative">
@@ -223,7 +226,7 @@ const User = () => {
         </div>
 
         {/* Friends Box */}
-        <div className="flex-1 min-w-[300px] h-[460px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink overflow-y-auto">
+        <div className="flex-1 min-w-[500px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink overflow-y-auto">
           <h2 className="text-2xl text-center text-neonPink mb-4">Friends</h2>
           {userdata.friends && userdata.friends.length > 0 ? (
             <ul className="space-y-4">
@@ -245,15 +248,13 @@ const User = () => {
             <p className="text-center text-gray-400">No friends to display.</p>
           )}
         </div>
-      </div>
 
-      {/* Match History and Statistics Section */}
-      <div className="flex flex-wrap justify-between w-11/12 gap-4">
         {/* Match History Card */}
-        <div className="flex-1 min-w-[300px] h-fit p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
+        <div className="flex-1 min-w-[500px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
+          <p className="text-3xl text-center text-neonBlue mb-5">PingPong</p>
           <h2 className="text-2xl text-center text-neonPink mb-4">Match History</h2>
-          <div className="overflow-x-auto">
-          {userMatches && userMatches.length > 0 ? (
+          <div className="overflow-x-auto h-72 overflow-y-auto">
+          {userMatches.pong && userMatches.pong.length > 0 ? (
             <table className="w-full text-center text-white border-collapse">
               <thead>
                 <tr className="bg-neonBlue text-black">
@@ -264,7 +265,7 @@ const User = () => {
                 </tr>
               </thead>
               <tbody>
-                {userMatches.map((match) => (
+                {userMatches.pong.map((match) => (
                   <tr key={match.id} className="odd:bg-gray-800 even:bg-gray-700">
                     <td className="p-2 border border-white">{match.id}</td>
                     <td className="p-2 border border-white">{match.opponent}</td>
@@ -279,6 +280,41 @@ const User = () => {
             )}
           </div>
         </div>
+        {/* Match History Card */}
+        <div className="flex-1 min-w-[500px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
+          <p className="text-3xl text-center text-red-600 mb-5">SPACExRIVALRY</p>
+          <h2 className="text-2xl text-center text-neonPink mb-4">Match History</h2>
+          <div className="overflow-x-auto h-72 overflow-y-auto">
+          {userMatches.space && userMatches.space.length > 0 ? (
+            <table className="w-full text-center text-white border-collapse">
+              <thead>
+                <tr className="bg-neonBlue text-black">
+                  <th className="p-2 border border-white">#</th>
+                  <th className="p-2 border border-white">Opponent</th>
+                  <th className="p-2 border border-white">Result</th>
+                  <th className="p-2 border border-white">Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {userMatches.space.map((match) => (
+                  <tr key={match.id} className="odd:bg-gray-800 even:bg-gray-700">
+                    <td className="p-2 border border-white">{match.id}</td>
+                    <td className="p-2 border border-white">{match.opponent}</td>
+                    <td className="p-2 border border-white">{match.result}</td>
+                    <td className="p-2 border border-white">{match.score}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            ):(
+              <p className="text-center text-gray-400">No matches to display.</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Match History and Statistics Section */}
+      <div className="flex flex-wrap justify-between w-11/12 gap-4">
 
         {/* Statistics Card */}
         <div className="flex-1 min-w-[300px] h-fit p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">

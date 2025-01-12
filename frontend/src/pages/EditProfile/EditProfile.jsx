@@ -1,31 +1,35 @@
-import styles from "./EditProfile.module.scss";
-import Navbar from "../../components/Navbar/Logged";
-import getMyData from "../../api/authServiceMe";
+import {getMyData, editMyData} from "../../api/authServiceMe";
 import {qrMFAreq, disableMFAreq, enableMFA} from "../../api/mfaService"
 import {myToast} from "../../lib/utils1"
 import { useState, useEffect } from "react";
+import { changeAvatarReq } from "../../api/avatarService";
 
 
 const EditProfile = () => {
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    avatar: "/default_profile.webp",
-    password: "",
-    confirmPassword: "",
+
+  const [avatar, setAvatar] = useState({
+    data: null,
+    path: null
   });
-  const [successMessage, setSuccessMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [passwordError, setPasswordError] = useState("");
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [qrCode, setQrCode] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
-
+  const [userData, setUserData] = useState();
+  const [reload, setReload] = useState(false)
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+    password_confirmation: "",
+  });
   useEffect(() => {
+  
     const fetchUserData = async () => {
       try {
         const mydata = await getMyData();
-        setFormData((prev) => ({ ...prev, ...mydata }));
+        setUserData(mydata)
+        console.log(mydata.avatar)
+        setAvatar({data: null, path: mydata.avatar})
         setIs2FAEnabled(mydata.mfa_enabled); // Assuming `mydata` contains a property `is2FAEnabled`
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -33,37 +37,58 @@ const EditProfile = () => {
     };
 
     fetchUserData();
-  }, []); // Empty dependency array to run only on component mount
+  }, [reload]); // Empty dependency array to run only on component mount
 
-
-
-  
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        setFormData((prev) => ({ ...prev, avatar: reader.result })); // Update the avatar state with the file preview
+        setAvatar((prev) => ({...prev, data: reader.result}))
       };
       reader.readAsDataURL(file);
     }
   };
 
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.password && formData.password !== formData.confirmPassword) {
-      setPasswordError("Passwords do not match.");
+    if (formData.password && formData.password !== formData.password_confirmation) {
+      myToast(2, "Passwords do not match.");
       return;
     }
     try {
-      await updateProfileData(formData); // Replace with actual API call
+      // await updateProfileData(formData); // Replace with actual API call
+      if(avatar.data)
+        await changeAvatarReq(avatar.data);
+      let keys = ["username", "email"];
+      console.log(formData);
+      keys.forEach((key) => {
+        if (formData[key] == "" || formData[key] === userData[key]) {
+          delete formData[key];
+        }
+      });
+      if(formData["password"] == "")
+        delete formData["password"], formData["password_confirmation"]
+      console.log(formData);
+      await editMyData(formData);
+      setReload(!reload);
+      myToast(0, "you profile has been updated.")
+      setFormData({
+        username: "",
+        email: "",
+        password: "",
+        password_confirmation: "",
+      });
+      set
     } catch (error) {
-      console.error("zaba")
+      myToast(2, Object.values(error.response.data)[0][0])
     }
   };
   const toggle2FA = async () => {
@@ -85,19 +110,13 @@ const EditProfile = () => {
   const handle2FAVerification = async () => {
     try {
       // Logic to verify the 2FA code
-      const isValid = await enableMFA(verificationCode); // Replace with your API call
-      if (isValid) {
-        alert("2FA setup is complete!");
-        setSuccessMessage("2FA setup is complete!");
+      await enableMFA(verificationCode); // Replace with your API call
         setIs2FAEnabled(true)
         myToast(0, "MFA has been enabled.")
         setQrCode(null)
-      } else {
-        myToast(2, "invalid code.")
-      }
     } catch (error) {
       console.error("Error verifying 2FA code:", error);
-      alert("Failed to verify 2FA code. Please try again.");
+      myToast(2, "invalid code.")
     }
   };
 
@@ -111,9 +130,8 @@ const EditProfile = () => {
             <div className="relative w-32 h-32">
               <img
                 src={
-                  formData.avatar ||
-                  "https://via.placeholder.com/150?text=Your+Avatar"
-                } // Default avatar if none is set
+                  avatar.data || avatar.path
+                }
                 alt="Profile Avatar"
                 className="w-full h-full rounded-full border-4 border-neonPink object-cover"
               />
@@ -144,7 +162,6 @@ const EditProfile = () => {
               value={formData.username}
               onChange={handleInputChange}
               className="p-2 rounded bg-gray-800 text-white border border-gray-600"
-              required
             />
           </div>
 
@@ -153,16 +170,29 @@ const EditProfile = () => {
               Email
             </label>
             <input
-              type="email"
+              type="text"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleInputChange}
               className="p-2 rounded bg-gray-800 text-white border border-gray-600"
-              required
             />
           </div>
 
+          <div className="flex flex-col">
+            <label htmlFor="talias" className="text-neonBlue">
+            Tournament Alias
+            </label>
+            <input
+              type="text"
+              id="email"
+              name="talias"
+              // value={formData.username}
+              onChange={handleInputChange}
+              className="p-2 rounded bg-gray-800 text-white border border-gray-600"
+            />
+          </div>
+            
           <div className="flex flex-col">
             <label htmlFor="password" className="text-neonBlue">
               New Password
@@ -179,23 +209,19 @@ const EditProfile = () => {
           </div>
 
           <div className="flex flex-col">
-            <label htmlFor="confirmPassword" className="text-neonBlue">
+            <label htmlFor="password_confirmation" className="text-neonBlue">
               Confirm Password
             </label>
             <input
               type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
+              id="password_confirmation"
+              name="password_confirmation"
+              value={formData.password_confirmation}
               onChange={handleInputChange}
               className="p-2 rounded bg-gray-800 text-white border border-gray-600"
               placeholder="Confirm new password"
             />
           </div>
-
-          {passwordError && (
-            <p className="text-red-500">{passwordError}</p>
-          )}
 
           <button
             type="submit"

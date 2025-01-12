@@ -39,6 +39,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         user.set_password(validated_data['password'])
         user.email_token = get_random_string(32)
+        # user.tournament_alias = user.username
         user.save()
 
         return user
