@@ -4,7 +4,7 @@ import { axiosInstance } from '../../../api/axiosInstance';
 import _ from 'lodash';
 import { useNavigate } from 'react-router-dom';
 import { useClickOutside } from '../../../hooks/useClickOutside';
-
+import "./SubNav.css";
 const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [results, setResults] = useState([]);
@@ -126,7 +126,7 @@ const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
                     {showDropdown && (results.length > 0 || isLoading) && (
                         <div 
                             ref={dropdownRef}
-                            className="absolute w-full mt-2 bg-gray-800 border-2 border-pink-500 rounded-md shadow-lg z-50 max-h-[60vh] overflow-y-auto"
+                            className={`dropdownScroll absolute w-full mt-2 bg-gray-800 border-2 border-pink-500 rounded-md shadow-lg z-50 max-h-[60vh] overflow-y-auto`}
                         >
                             {isLoading ? (
                                 <div className="p-4 text-teal-200 text-center">Loading...</div>
@@ -194,7 +194,7 @@ const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
                         <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={24} />
 
                         {showDropdown && (results.length > 0 || isLoading) && (
-                            <div className="absolute w-full mt-2 bg-gray-800 border-2 border-pink-500 rounded-md shadow-lg max-h-[40vh] overflow-y-auto">
+                            <div className={`dropdownScroll absolute w-full mt-2 bg-gray-800 border-2 border-pink-500 rounded-md shadow-lg max-h-[40vh] overflow-y-auto`}>
                                 {isLoading ? (
                                     <div className="p-4 text-teal-200 text-center">Loading...</div>
                                 ) : (
