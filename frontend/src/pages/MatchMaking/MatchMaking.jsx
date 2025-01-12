@@ -67,7 +67,7 @@ const MatchMaking = ({ gameType = "pong" }) => {
   useEffect(() => {
     if (!isDataReady || !username) return;
 
-    const ws = new WebSocket(`ws://10.13.6.5:8000/ws/matchmaking/?username=${username}`);
+    const ws = new WebSocket(`ws://10.12.7.6:8000/ws/matchmaking/?username=${username}`);
 
     ws.onopen = () => {
       console.log("WebSocket connected");
@@ -114,7 +114,11 @@ const MatchMaking = ({ gameType = "pong" }) => {
       }
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
+      console.log(event);
+      if (event.code === 4001) {
+        alert("Connection failed: You are already in a game.");
+      }
       if (!matchFound) {
         console.log("WebSocket disconnected");
         setIsSearching(false);

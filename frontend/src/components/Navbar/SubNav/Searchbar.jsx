@@ -126,7 +126,7 @@ const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
                     {showDropdown && (results.length > 0 || isLoading) && (
                         <div 
                             ref={dropdownRef}
-                            className={`dropdownScroll absolute w-full mt-2 bg-gray-800 border-2 border-pink-500 rounded-md shadow-lg z-50 max-h-[60vh] overflow-y-auto`}
+                            className={`dropdownScroll absolute w-full mt-2 bg-gray-800 border-2 border-pink-500 rounded-md shadow-lg z-50 max-h-[26vh] overflow-y-auto`}
                         >
                             {isLoading ? (
                                 <div className="p-4 text-teal-200 text-center">Loading...</div>

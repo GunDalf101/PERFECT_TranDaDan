@@ -30,6 +30,17 @@ class PongConsumer(AsyncWebsocketConsumer):
         except Match.DoesNotExist:
             return False
 
+    @database_sync_to_async
+    def get_user_ingame(self, username):
+        user = get_user_model().objects.filter(username=username).first()
+        return user.ingame
+
+    @database_sync_to_async
+    def update_user_ingame(self, username, ingame):
+        user = get_user_model().objects.filter(username=username).first()
+        user.ingame = ingame
+        user.save()
+
     async def connect(self):
         # Extract game_id and username from URL
         self.game_id = self.scope['url_route']['kwargs']['game_id']
@@ -37,40 +48,36 @@ class PongConsumer(AsyncWebsocketConsumer):
         params = dict(param.split('=') for param in query_string.split('&'))
         self.username = params.get('username')
 
+        await self.update_user_ingame(self.username, True)
+
         if not self.game_id or not self.username:
             await self.close()
             return
 
         self.room_group_name = f'pong_{self.game_id}'
 
-        # Check if match is already completed
         is_completed = await self.check_match_status()
         if is_completed:
             await self.close(code=4000)
             return
 
-        # Record connection timestamp
         self.connection_timestamps[self.channel_name] = time.time()
 
-        # Cancel any pending cleanup tasks
         if self.game_id in self.disconnection_cleanup_tasks:
             self.disconnection_cleanup_tasks[self.game_id].cancel()
             del self.disconnection_cleanup_tasks[self.game_id]
 
-        # Join room group
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
         await self.accept()
 
-        # Initialize game state if needed
         if self.game_id not in self.shared_games:
             self.initialize_game_state()
             if self.game_id not in self.game_loops:
                 self.game_loops[self.game_id] = asyncio.create_task(self.game_loop())
 
-        # Notify about reconnection
         if self.active_connections.get(self.game_id, 0) > 0:
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -80,33 +87,27 @@ class PongConsumer(AsyncWebsocketConsumer):
                 }
             )
 
-        # Update active connections count
         self.active_connections[self.game_id] = self.active_connections.get(self.game_id, 0) + 1
 
     async def disconnect(self, close_code):
         if not hasattr(self, 'game_id'):
             return
 
-        # Calculate connection duration
         disconnect_time = time.time()
         connection_time = self.connection_timestamps.get(self.channel_name, disconnect_time)
         connection_duration = disconnect_time - connection_time
 
-        # Clean up connection timestamp
         self.connection_timestamps.pop(self.channel_name, None)
 
-        # Handle unstable connections
         if connection_duration < 1:
             await self.handle_unstable_connection()
             return
 
-        # Start cleanup task
         cleanup_task = asyncio.create_task(
             self.delayed_cleanup(self.game_id, self.player_number)
         )
         self.disconnection_cleanup_tasks[self.game_id] = cleanup_task
 
-        # Notify about disconnection
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -116,13 +117,13 @@ class PongConsumer(AsyncWebsocketConsumer):
             }
         )
 
-        # Leave room group
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
 
-        # Update active connections count
+        await self.update_user_ingame(self.username, False)
+
         if self.game_id in self.active_connections:
             self.active_connections[self.game_id] -= 1
 
@@ -464,6 +465,10 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
     matchmaking_queues = {}
     player_to_user = {}
 
+    @database_sync_to_async
+    def get_user_ingame(self, user):
+        return user.ingame
+
     async def connect(self):
         username = self.scope['query_string'].decode().split('=')[1]
 
@@ -474,6 +479,16 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
             return
         
         self.scope['user'] = user
+        for queue in self.matchmaking_queues.values():
+            for player in queue:
+                if player.scope['user'] == user:
+                    await self.close()
+                    return
+
+        ingame_status = await self.get_user_ingame(user)
+        if ingame_status:
+            await self.close()
+            return
 
         await self.accept()
 
@@ -483,7 +498,6 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
         })
 
     async def disconnect(self, code):
-        # Remove player from their game type queue if they're in one
         for queue in self.matchmaking_queues.values():
             if self in queue:
                 queue.remove(self)
@@ -505,6 +519,9 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
             self.matchmaking_queues[game_type].append(self)
 
             if len(self.matchmaking_queues[game_type]) >= 2:
+                print("the Queue:", self.matchmaking_queues[game_type][0].scope['user'].username)
+                print("the Queue:", self.matchmaking_queues[game_type][1].scope['user'].username)
+
                 player1 = self.matchmaking_queues[game_type].pop(0)
                 player2 = self.matchmaking_queues[game_type].pop(0)
 
@@ -607,11 +624,19 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         except Match.DoesNotExist:
             return False
 
+    @database_sync_to_async
+    def update_user_ingame(self, username, ingame):
+        user = get_user_model().objects.filter(username=username).first()
+        user.ingame = ingame
+        user.save()
+
     async def connect(self):
         self.game_id = self.scope['url_route']['kwargs']['game_id']
         query_string = self.scope['query_string'].decode()
         params = dict(param.split('=') for param in query_string.split('&'))
         self.username = params.get('username')
+
+        await self.update_user_ingame(self.username, True)
 
         if not self.game_id or not self.username:
             await self.close()
@@ -671,8 +696,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
                     game_state['score1'] = winner_score if winning_player == 'player1' else 0
                     game_state['score2'] = winner_score if winning_player == 'player2' else 0
                     
-                    await self.update_match_record_on_forfeit(game_state, winning_player)
-
                     await self.channel_layer.group_send(
                         self.room_group_name,
                         {
@@ -705,6 +728,8 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         connection_duration = disconnect_time - connection_time
 
         self.connection_timestamps.pop(self.channel_name, None)
+
+        await self.update_user_ingame(self.username, False)
 
         if connection_duration < 1:
             await self.handle_unstable_connection()

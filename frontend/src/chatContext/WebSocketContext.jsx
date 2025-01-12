@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { useUser } from '../components/auth/UserContext';
 import PropTypes from 'prop-types';
 
-const WEBSOCKET_URL = 'ws://10.13.6.5:8000/ws/chat';
+const WEBSOCKET_URL = 'ws://10.12.7.6:8000/ws/chat';
 const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_DELAY = 3000;
 

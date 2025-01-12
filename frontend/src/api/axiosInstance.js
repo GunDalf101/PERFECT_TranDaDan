@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-    baseURL: 'http://10.13.6.5:8000/',
+    baseURL: 'http://10.12.7.6:8000/',
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
@@ -9,7 +9,7 @@ const axiosInstance = axios.create({
 });
 
 const unauthAxiosInstance = axios.create({ 
-  baseURL: 'http://10.13.6.5:8000/',
+  baseURL: 'http://10.12.7.6:8000/',
   withCredentials: true,
   headers: {
       'Content-Type': 'application/json',
