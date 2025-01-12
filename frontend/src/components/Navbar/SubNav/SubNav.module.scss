@@ -65,3 +65,21 @@
     transform: translateX(0);
   }
 }
+
+.notificationDropdown ::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notificationDropdown ::-webkit-scrollbar-track {
+  background: #1f2937;
+  border-radius: 3px;
+}
+
+.notificationDropdown ::-webkit-scrollbar-thumb {
+  background: #ec4899;
+  border-radius: 3px;
+}
+
+.notificationDropdown ::-webkit-scrollbar-thumb:hover {
+  background: #f472b6;
+}

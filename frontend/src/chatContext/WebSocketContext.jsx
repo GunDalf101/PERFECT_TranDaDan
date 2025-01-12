@@ -55,7 +55,7 @@ export const WebSocketProvider = ({ children }) => {
       ws.onclose = (event) => {
         console.log("WebSocket Disconnected", event.code);
         setIsConnected(false);
-        
+
         if (!event.wasClean && reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
           reconnectTimerRef.current = setTimeout(() => {
             reconnectAttemptsRef.current++;

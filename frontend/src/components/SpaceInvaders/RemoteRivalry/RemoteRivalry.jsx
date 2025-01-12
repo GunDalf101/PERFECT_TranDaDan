@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
 
@@ -19,14 +19,17 @@ const POWERUP_COLORS = {
   SLOW_MOTION: 'lime'
 };
 
-const SpaceRivalry = () => {
+const RemoteRivalry = () => {
   const [socket, setSocket] = useState(null);
   const [gameState, setGameState] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [errorMessage, setErrorMessage] = useState('');
-  const [reconnectAttempts, setReconnectAttempts] = useState(0);
+  const reconnectAttempts = useRef(0);
+  const maxReconnectAttempts = 1;
+  const reconnectTimeout = useRef(null);
+  const reconnectTimeoutId = useRef(null);
+  const isReconnecting = useRef(false);
   const [winner, setWinner] = useState(null);
-  const maxReconnectAttempts = 3;
   const navigate = useNavigate();
 
   // Get game session
@@ -72,7 +75,6 @@ const SpaceRivalry = () => {
       if (!gameState?.gameStarted || gameState?.gameOver) return;
 
       let key = null;
-      // Same controls for both players
       if (event.key === 'ArrowLeft') key = 'left';
       if (event.key === 'ArrowRight') key = 'right';
       if (event.key === 'Space' || event.key === ' ') key = 'shoot';
@@ -85,7 +87,6 @@ const SpaceRivalry = () => {
 
     const handleKeyUp = (event) => {
       let key = null;
-      // Same controls for both players
       if (event.key === 'ArrowLeft') key = 'left';
       if (event.key === 'ArrowRight') key = 'right';
       if (event.key === 'Space' || event.key === ' ') key = 'shoot';
@@ -103,111 +104,143 @@ const SpaceRivalry = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [gameState, isPlayer1]);
+  }, [gameState]);
 
   // WebSocket connection
   useEffect(() => {
-    let wsCleanup = null;
+    if (socket) {
+      socket.close();
+      setSocket(null);
+    }
 
-    const connectWebSocket = () => {
-      const ws = new WebSocket(
-        `ws://localhost:8000/ws/space-rivalry/${gameId}/?username=${username}`
-      );
+    const ws = new WebSocket(
+      `ws://localhost:8000/ws/space-rivalry/${gameId}/?username=${username}`
+    );
 
-      ws.onopen = () => {
-        console.log('Connected to game server');
-        setConnectionStatus('connected');
-        setErrorMessage('');
-        setReconnectAttempts(0);
-        
-        // Send initial player data
-        ws.send(JSON.stringify({
-          type: 'init',
-          username,
-          opponent,
-          isPlayer1
-        }));
-      };
+    ws.onopen = () => {
+      console.log('Connected to game server');
+      setConnectionStatus('connected');
+      setErrorMessage('');
+      reconnectAttempts.current = 0;
+      isReconnecting.current = false;
 
-      ws.onclose = (event) => {
-        setConnectionStatus('disconnected');
-        setSocket(null);
-        
-        // Only attempt reconnect if game isn't over
-        if (!event.wasClean && reconnectAttempts < maxReconnectAttempts) {
-          setErrorMessage('Connection lost. Attempting to reconnect...');
-          setTimeout(() => {
-            setReconnectAttempts(prev => prev + 1);
-            connectWebSocket();
-          }, 2000);
-        } else if (reconnectAttempts >= maxReconnectAttempts) {
-          setErrorMessage('Connection lost. Please return to lobby.');
-        }
-      };
-
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        
-        switch(data.type) {
-          case 'game_state':
-            setGameState(data.state);
-            break;
-            
-          case 'player_disconnected':
-            setErrorMessage(data.message);
-            break;
-            
-          case 'player_reconnected':
-            setErrorMessage('');
-            break;
-            
-          case 'connection_warning':
-            setErrorMessage(data.message);
-            break;
-            
-          case 'game_ended_by_forfeit':
-            handleGameEnd(data.state);
-            break;
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-      };
-
-      setSocket(ws);
-
-      wsCleanup = () => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.close();
-        }
-      };
+      // Send initial player data
+      ws.send(JSON.stringify({
+        type: 'init',
+        username,
+        opponent,
+        isPlayer1
+      }));
     };
 
-    connectWebSocket();
+    ws.onclose = (event) => {
+      console.log('WebSocket connection closed', event);
+      setConnectionStatus('disconnected');
+      setSocket(null);
+
+      // Only attempt reconnect if game isn't over and not already reconnecting
+      if (gameState?.gameOver !== true && !isReconnecting.current) {
+        isReconnecting.current = true;
+        setErrorMessage('Connection lost. Attempting to reconnect...');
+
+        if (reconnectTimeoutId.current) {
+          clearTimeout(reconnectTimeoutId.current);
+        }
+
+        reconnectTimeoutId.current = setTimeout(() => {
+          if (reconnectAttempts.current < maxReconnectAttempts) {
+            reconnectAttempts.current++;
+            setSocket(ws);
+          } else {
+            setErrorMessage('Connection lost. Please return to lobby.');
+          }
+        }, 2000);
+      }
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      switch(data.type) {
+        case 'game_state':
+          setGameState(data.state);
+          break;
+
+        case 'player_disconnected':
+          setErrorMessage(data.message);
+          break;
+
+        case 'player_reconnected':
+          setErrorMessage('');
+          break;
+
+        case 'connection_warning':
+          setErrorMessage(data.message);
+          break;
+
+        case 'game_ended':
+          handleGameEnd(data.state, false);
+          break;
+
+        case 'game_ended_by_forfeit':
+          handleGameEnd(data.state, true);
+          break;
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    setSocket(ws);
+
+    const handleBeforeUnload = (e) => {
+      if (gameState && !gameState.gameOver) {
+        ws.close();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
-      if (wsCleanup) {
-        wsCleanup();
+      if (reconnectTimeout.current) {
+        clearTimeout(reconnectTimeout.current);
+        reconnectTimeout.current = null;
       }
+      if (reconnectTimeoutId.current) {
+        clearTimeout(reconnectTimeoutId.current);
+        reconnectTimeoutId.current = null;
+      }
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      reconnectAttempts.current = 0;
+      isReconnecting.current = false;
+      setErrorMessage('');
+      setConnectionStatus('connecting');
     };
   }, [gameId, username, opponent, isPlayer1]);
 
-  const handleGameEnd = (state) => {
+  const handleGameEnd = (state, isForfeit) => {
     let winnerMessage;
-    
-    if (state.disconnect_forfeit) {
-      winnerMessage = state.winner === username ? 
-        'You won by forfeit!' : 
+
+    if (isForfeit) {
+      winnerMessage = state.winner === username ?
+        'You won by forfeit!' :
         `${state.winner} won by forfeit!`;
     } else {
-      winnerMessage = state.winner === username ? 
-        'You won!' : 
+      winnerMessage = state.winner === username ?
+        'You won!' :
         `${state.winner} won!`;
     }
-    
+
     setWinner(winnerMessage);
-    setGameState(prev => ({ ...prev, gameOver: true }));
+    setGameState(prev => ({
+      ...prev,
+      ...state,
+      gameOver: true,
+    }));
   };
 
   // Loading state
@@ -218,6 +251,7 @@ const SpaceRivalry = () => {
       </div>
     );
   }
+
   return (
     <div className="relative flex flex-col items-center min-h-screen bg-gray-900 text-white">
       {/* Score Display */}
@@ -249,14 +283,13 @@ const SpaceRivalry = () => {
         </div>
       </div>
 
-
       {/* Game Canvas */}
-      <div 
+      <div
         className="relative mt-16 bg-gray-800 rounded-lg overflow-hidden"
         style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
       >
         {/* Dividing Line */}
-        <div 
+        <div
           className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-gray-800"
           style={{ transform: 'translateX(-50%)' }}
         />
@@ -264,15 +297,15 @@ const SpaceRivalry = () => {
         {/* Health Bars and Power-ups */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">
           <div className="w-32 h-2 bg-gray-800 rounded">
-            <div 
+            <div
               className="h-full bg-blue-500 rounded transition-all duration-200"
               style={{ width: `${gameState.health1}%` }}
             />
           </div>
           <div className="flex gap-1">
-            {Object.entries(gameState.activeEffects1 || {}).map(([type, effect]) => 
+            {Object.entries(gameState.activeEffects1 || {}).map(([type, effect]) =>
               effect.active && (
-                <div 
+                <div
                   key={type}
                   className="w-6 h-6 rounded-full"
                   style={{ backgroundColor: POWERUP_COLORS[type] }}
@@ -284,15 +317,15 @@ const SpaceRivalry = () => {
 
         <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
           <div className="w-32 h-2 bg-gray-800 rounded">
-            <div 
+            <div
               className="h-full bg-red-500 rounded transition-all duration-200"
               style={{ width: `${gameState.health2}%` }}
             />
           </div>
           <div className="flex gap-1">
-            {Object.entries(gameState.activeEffects2 || {}).map(([type, effect]) => 
+            {Object.entries(gameState.activeEffects2 || {}).map(([type, effect]) =>
               effect.active && (
-                <div 
+                <div
                   key={type}
                   className="w-6 h-6 rounded-full"
                   style={{ backgroundColor: POWERUP_COLORS[type] }}
@@ -312,21 +345,19 @@ const SpaceRivalry = () => {
             bottom: SHIP_HEIGHT,
             width: SHIP_WIDTH,
             height: SHIP_HEIGHT,
-            backgroundColor: 'rgb(59, 130, 246)',
-            transform: `translateX(${keys.left ? -2 : keys.right ? 2 : 0}px)`
+            backgroundColor: 'rgb(59, 130, 246)'
           }}
         />
         <div
           className={`absolute rounded transition-transform duration-50 ${
-            gameState.activeEffects1?.SHIELD?.active ? 'ring-4 ring-cyan-400' : ''
+            gameState.activeEffects2?.SHIELD?.active ? 'ring-4 ring-cyan-400' : ''
           }`}
           style={{
             left: gameState.player2Pos - SHIP_WIDTH/2,
             bottom: SHIP_HEIGHT,
             width: SHIP_WIDTH,
             height: SHIP_HEIGHT,
-            backgroundColor: 'rgb(239, 68, 68)',
-            transform: `translateX(${keys.left ? -2 : keys.right ? 2 : 0}px)`
+            backgroundColor: 'rgb(239, 68, 68)'
           }}
         />
 
@@ -450,7 +481,7 @@ const SpaceRivalry = () => {
 
       {/* Error Messages */}
       {errorMessage && !gameState.gameOver && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
                       bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg">
           {errorMessage}
         </div>
@@ -467,4 +498,4 @@ const SpaceRivalry = () => {
   );
 };
 
-export default SpaceRivalry;
+export default RemoteRivalry;
