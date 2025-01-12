@@ -67,7 +67,7 @@ const MatchMaking = ({ gameType = "pong" }) => {
   useEffect(() => {
     if (!isDataReady || !username) return;
 
-    const ws = new WebSocket(`ws://10.13.5.4:8000/ws/matchmaking/?username=${username}`);
+    const ws = new WebSocket(`ws://localhost:8000/ws/matchmaking/?username=${username}`);
 
     ws.onopen = () => {
       console.log("WebSocket connected");
@@ -80,10 +80,10 @@ const MatchMaking = ({ gameType = "pong" }) => {
 
       if (data.status === "matched") {
         setMatchFound(true);
-        setOpponent({ 
+        setOpponent({
           username: data.opponent,
           title: 'Opponent',
-          picture: 'https://randomuser.me' 
+          picture: 'https://randomuser.me'
         });
         setIsSearching(false);
 
@@ -99,7 +99,7 @@ const MatchMaking = ({ gameType = "pong" }) => {
         // Navigate to remote-play within game-lobby
         setTimeout(() => {
           if (receivedGameType === "pong") {
-            navigate('/game-lobby/remote-play', { 
+            navigate('/game-lobby/remote-play', {
               state: gameSession
             });
           }
@@ -164,10 +164,10 @@ const MatchMaking = ({ gameType = "pong" }) => {
           )}
         </div>
       </div>
-      
+
       <div className="absolute bottom-10 w-full flex justify-center">
         {!matchFound && (
-          <button 
+          <button
             className="cancel-button"
             onClick={handleLeaveQueue}
           >

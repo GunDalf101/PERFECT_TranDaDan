@@ -122,7 +122,7 @@ const Login = () => {
 		try {
 			const response = await LoginAx(formData);
 			const { access_token } = response.data;
-			
+
 			if (response.data.mfa_required) {
 				localStorage.setItem('2fa_access_token', access_token);
 				setShowMFAForm(true); // Show the MFA form
@@ -163,7 +163,7 @@ const Login = () => {
 	};
 
     const handle42Login = () => {
-        window.location.href = `http://10.13.5.4:8000/api/oauth2/42/`;
+        window.location.href = `http://localhost:8000/api/oauth2/42/`;
     };
 
 	const handleMFAVerify = async (Mfadata) => {
@@ -373,7 +373,7 @@ const Login = () => {
 			></div>
 
 			<div className={`hidden lg:flex flex-1 ${styles.imagePlaceholder}`}></div>
-			
+
 		</div>
 	);
 };
