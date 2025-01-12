@@ -1,55 +1,59 @@
 import React, { useEffect } from 'react';
-import { useRealTime } from '../../../context/RealTimeContext';  // Import the context
-import { formatDistanceToNow } from 'date-fns'; // Import date-fns for time formatting
+import { useRealTime } from '../../../context/RealTimeContext';
+import { formatDistanceToNow } from 'date-fns';
+import styles from './SubNav.module.scss';
 
 const NotifDropdown = React.forwardRef(({ isVisible }, ref) => {
-  const { notifications, markAsRead } = useRealTime();
+  const { notifications, markAsRead, removeMarkedNotifications } = useRealTime();
 
-  // Effect to mark notifications as read when they are visible
   useEffect(() => {
     if (isVisible) {
-      notifications.forEach((notif) => {
-        // If a notification doesn't have a link and is visible, mark as read
-        if (!notif.url && !notif.read_at) {
-          markAsRead(notif.id);
-        }
-      });
+      notifications
+        .filter(notif => !notif.url && !notif.read_at)
+        .forEach(notif => markAsRead(notif.id));
+    } else {
+      removeMarkedNotifications();
     }
-  }, [isVisible, notifications, markAsRead]);
+  }, [isVisible]);
 
   return isVisible ? (
-    <div id="notificationDropdown" className="notification-dropdown absolute text-white right-0 mt-2 w-auto bg-gray-900 border-2 border-pink-500 shadow-lg rounded-md font-pixel z-10" ref={ref}>
-      <div className="p-2">
+    <div 
+      id="notificationDropdown" 
+      className={`${styles.notificationDropdown} absolute text-white right-0 mt-2 w-80 bg-gray-900 border-2 border-pink-500 shadow-lg rounded-md font-pixel z-10 max-h-96`}
+      ref={ref}
+    >
+      {/* Fixed header */}
+      <div className="p-2 border-b border-pink-500 bg-gray-900 sticky top-0 z-10">
         <p className="text-center font-bold text-lg">Notifications</p>
-        <ul className="mt-2 text-sm">
-          {/* If there are no notifications, show a placeholder message */}
+      </div>
+
+      {/* Scrollable content with styled scrollbar */}
+      <div className="overflow-y-auto max-h-80 scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-pink-500 hover:scrollbar-thumb-pink-400">
+        <ul className="text-sm">
           {notifications.length === 0 ? (
             <li className="py-2 px-4 text-center text-gray-500">
-              It's quite in here for now...
+              It's quiet in here for now...
             </li>
           ) : (
-            // Render the list of notifications
             notifications.map((notif) => (
-              <li key={notif.id} className="py-2 px-4 border-b border-pink-500">
-                {/* Only render <a> if there is a URL */}
+              <li key={notif.id} className="py-2 px-4 border-b border-pink-500 last:border-b-0">
                 {notif.url ? (
                   <a
                     href={notif.url}
-                    className="cursor-pointer"
-                    onClick={(e) => {
-                      markAsRead(notif.id);
-                    }}
+                    className="cursor-pointer block"
+                    onClick={() => markAsRead(notif.id)}
                   >
                     <p className="font-semibold">{notif.content}</p>
-                    {/* Format created_at to show time ago */}
-                    <p className="text-xs opacity-75">{formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}</p>
+                    <p className="text-xs opacity-75">
+                      {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
+                    </p>
                   </a>
                 ) : (
-                  // If no URL, just render the notification content as plain text
-                  <div className="cursor-pointer" onClick={() => markAsRead(notif.id)}>
+                  <div className="cursor-pointer">
                     <p className="font-semibold">{notif.content}</p>
-                    {/* Format created_at to show time ago */}
-                    <p className="text-xs opacity-75">{formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}</p>
+                    <p className="text-xs opacity-75">
+                      {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
+                    </p>
                   </div>
                 )}
               </li>

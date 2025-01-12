@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useUser } from '../components/auth/UserContext';
+import { useCallback } from 'react';
 
 const RealTimeContext = createContext();
 
@@ -12,6 +13,8 @@ export const RealTimeProvider = ({ children }) => {
   const [relationshipUpdate, setRelationshipUpdate] = useState(null);
   const [ws, setWs] = useState(null);
   const { isAuthenticated } = useUser();
+  const [markedNotifications, setMarkedNotifications] = useState(new Set());
+  const [markedIds, setMarkedIds] = useState(new Set());
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -56,14 +59,23 @@ export const RealTimeProvider = ({ children }) => {
     }
   };
 
-  const markAsRead = (notificationId) => {
-    if (ws) {
+  const markAsRead = useCallback((notificationId) => {
+    if (ws && !markedIds.has(notificationId)) {
       ws.send(JSON.stringify({
         type: 'mark_as_read',
         notification_id: notificationId,
       }));
+      
+      setMarkedIds(prev => new Set([...prev, notificationId]));
     }
-  };
+  }, [ws, markedIds]);
+
+  const removeMarkedNotifications = useCallback(() => {
+    if (markedIds.size > 0) {
+      setNotifications(prev => prev.filter(notif => !markedIds.has(notif.id)));
+      setMarkedIds(new Set());
+    }
+  }, [markedIds]);
 
   const clearRealTimeContext = () => {
     setNotifications([]);
@@ -71,7 +83,7 @@ export const RealTimeProvider = ({ children }) => {
   };
 
   return (
-    <RealTimeContext.Provider value={{ notifications, relationshipUpdate, sendRelationshipUpdate, markAsRead, clearRealTimeContext }}>
+    <RealTimeContext.Provider value={{ notifications, removeMarkedNotifications , relationshipUpdate, sendRelationshipUpdate, markAsRead, clearRealTimeContext }}>
       {children}
     </RealTimeContext.Provider>
   );
