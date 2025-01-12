@@ -35,10 +35,6 @@ const Login = () => {
 		password: "",
 	});
 
-	const [Mfadata, setMfadata] = useState({
-		mfaCode: "",
-	});
-
 	const [resetFormData, setResetFormData] = useState({
 		email: "",
 	});
@@ -125,8 +121,8 @@ const Login = () => {
 			
 			if (response.data.mfa_required) {
 				localStorage.setItem('2fa_access_token', access_token);
-				setShowMFAForm(true); // Show the MFA form
-				setLoading(false); //
+				setShowMFAForm(true); 
+				setLoading(false); 
 				return;
 			}
 			localStorage.setItem('access_token', access_token);
@@ -214,6 +210,7 @@ const Login = () => {
 									placeholder="Email"
 									value={formData.email}
 									onChange={handleLoginChange}
+									autoComplete="current-email"
 									className={`w-full px-8 py-4 rounded-lg font-medium bg-gray-800 border ${loginErrors.email ? "border-red-500" : "border-gray-600"
 										} placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-gray-900 text-white`}
 								/>
@@ -229,6 +226,7 @@ const Login = () => {
 									placeholder="Password"
 									value={formData.password}
 									onChange={handleLoginChange}
+									autoComplete="current-password"
 									className={`w-full px-8 py-4 rounded-lg font-medium bg-gray-800 border ${loginErrors.password ? "border-red-500" : "border-gray-600"
 										} placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-gray-900 text-white`}
 								/>
