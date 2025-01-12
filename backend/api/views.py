@@ -313,6 +313,7 @@ class UsersMeView(APIView):
 
     def patch(self, request):
         user = request.user
+        print(request.data)
         email = user.email
         serializer = UserUpdateSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
