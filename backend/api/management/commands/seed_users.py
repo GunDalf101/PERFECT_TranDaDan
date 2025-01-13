@@ -28,11 +28,11 @@ class Command(BaseCommand):
             second_user.save()
             third_user.save()
             self.stdout.write(self.style.SUCCESS('Successfully created 3 users'))
-            for i in range(50):
-                user = User.objects.create_user(email=f'user{i}@example.com', username=f'user{i}', password=f'user{i}', email_verified=True)
-                self.stdout.write(self.style.SUCCESS(f'Successfully created user{i}'))
-                user.email_token = None
-                user.save()
+            # for i in range(50):
+            #     user = User.objects.create_user(email=f'user{i}@example.com', username=f'user{i}', password=f'user{i}', email_verified=True)
+            #     self.stdout.write(self.style.SUCCESS(f'Successfully created user{i}'))
+            #     user.email_token = None
+            #     user.save()
 
 
             # Create friendships (relationships)

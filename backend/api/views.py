@@ -626,10 +626,7 @@ class UserSearchView(APIView):
         print(f"query: {query}")
         if not query:
             return Response({'results': []}, status=status.HTTP_200_OK)
-        users = User.objects.filter(
-            Q(username__icontains=query) |
-            Q(email__icontains=query)
-        ).distinct()[:10]
+        users = User.objects.filter(Q(username__icontains=query)).distinct()[:10]
 
         print(f"users: {users}")
 
