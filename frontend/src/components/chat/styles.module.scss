@@ -26,7 +26,7 @@
 :root {
   --chat-height: 80vh; /* 80% of viewport height */
   --sidebar-width: 90px;
-  --chat-width: 70%;
+  --chat-width: 90%;
   --bg-color: rgba(17, 25, 40, 0.437);
   --border-color: rgba(80, 173, 178, 0.943);
   --icon-size: 40px; /* Consistent icon size */
@@ -385,7 +385,7 @@
   overflow: hidden;
   display: flex;
   position: fixed;
-  gap: 15px;
+  gap: 8px;
   transform: translate(-50%, -50%);
   top: 50%;
   left: 50%;
@@ -396,12 +396,13 @@
     transform: translate(-50%, -42%);
   }
 
-  @media screen and (max-width: 920px) {
+  @media screen and (max-width: 1024px) {
     width: 95%;
     transform: translate(-50%, -48%);
     bottom: 0%;
     height: 85%;
-    // border-style: none;
+    // gap: 4px;
+
   }
 }
 
@@ -481,13 +482,30 @@
   flex-direction: column;
   background-color: #1b243bae;
   height: 100%;
-  width: 82%;
+  width: 72%;
   scrollbar-color: rgba(122, 214, 234, 0.832) transparent;
   // box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.925);
   // background-color: rgba(#32343900, 0.8);
   // border-radius: 1px;
   // scrollbar-gutter: stable both-edges;
   // background-color: #7ee0ed;
+  @media screen and (max-width: 920px) {
+    width: 88%; // Take full width on mobile
+  }
+}
+
+.chat_profile
+{
+  width: 14%;
+  // border-radius: 8px;
+  // background-color: #1b243bae;
+  padding: 1px;
+
+  @media screen and (max-width: 1024px) {
+    display: none; // Hide on mobile
+  
+  }
+  // border: 2px solid #70b9d3ae;
 }
 .dynamic_sidebar_container {
   position: fixed;

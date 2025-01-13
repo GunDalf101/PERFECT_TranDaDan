@@ -11,6 +11,16 @@ const getMyData = async () => {
   }
 };
 
+const editMyData = async (form) => {
+  try {
+    const response = await axiosInstance.patch('api/users/me', form);
+    return response.data;
+  } catch (error) {
+    // console.error('Get user data error:', error);
+    throw (error);
+  }
+};
 
 
-export default getMyData;
+
+export {getMyData, editMyData};

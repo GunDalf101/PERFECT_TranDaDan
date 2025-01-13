@@ -1,35 +1,46 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Search } from "lucide-react";
 import styles from "../styles.module.scss";
+import {useRealTime} from "../../../context/RealTimeContext"
 
-const UserList = ({ 
-  friends, 
-  selectedChat, 
-  setSelectedChat, 
+const UserList = ({
+  friends,
+  selectedChat,
+  setSelectedChat,
   isLoading,
-  currentUsername 
+  currentUsername
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredUsers = friends.filter(friend =>
+  const {onlineFriends} = useRealTime()
+
+  
+  const friendsWithOnlineStatus = useMemo(() => {
+    return friends.map(friend => ({
+      ...friend,
+      online: onlineFriends.includes(friend.name)
+    }));
+  }, [friends, onlineFriends]);
+  
+  const filteredUsers = friendsWithOnlineStatus.filter(friend =>
     friend.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
+  
   const handleUserClick = (userId) => {
     setSelectedChat(userId);
   };
 
   const formatTime = (timestamp) => {
     if (!timestamp) return "";
-    
+
     const date = new Date(timestamp);
     const now = new Date();
     const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 24) {
-      return date.toLocaleTimeString([], { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      return date.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit'
       });
     } else if (diffInHours < 48) {
       return "Yesterday";
@@ -74,8 +85,8 @@ const UserList = ({
               key={user.id}
               onClick={() => handleUserClick(user.id)}
               className={`
-                md:p-[5px] rounded-md border cursor-pointer 
-                transition-all duration-300 ease-in-out 
+                md:p-[5px] rounded-md border cursor-pointer
+                transition-all duration-300 ease-in-out
                 hover:bg-blue-100 hover:shadow-sm
                 active:scale-[0.98]
                 ${selectedChat === user.id ? "bg-blue-200 shadow-md" : "bg-transparent"}
@@ -85,15 +96,15 @@ const UserList = ({
                 <div className="relative">
                   <div
                     className={`
-                      w-12 h-12 md:w-16 md:h-16 rounded-full 
+                      w-12 h-12 md:w-16 md:h-16 rounded-full
                       bg-blue-300
-                      flex items-center justify-center 
-                      transition-transform duration-300 
+                      flex items-center justify-center
+                      transition-transform duration-300
                       hover:rotate-6 overflow-hidden
                     `}
                   >
                     <img
-                      src={user.avatar || "/default_profile.webp"}
+                      src={user.avatar_url || "/default_profile.webp"}
                       className={`w-full h-full object-cover rounded-full`}
                       alt={`${user.name}'s avatar`}
                     />

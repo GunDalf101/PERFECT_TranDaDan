@@ -26,7 +26,7 @@ const Sidebar = () => {
             <span className={`${styles.tooltip}`}>Profile</span>
           </li>
           <li>
-            <a href="/game-lobby">
+            <a href="/game-lobby" onClick={() => navigate(`/game-lobby`)}>
               <i className="material-icons-outlined"> sports_esports </i>
             </a>
             <span className={`${styles.tooltip}`}>Game</span>

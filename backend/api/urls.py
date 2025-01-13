@@ -1,5 +1,11 @@
 from django.urls import path
-from .views import OAuth2StartView, OAuth2CallbackView, UsersMeView, MFATOTPView, RegisterView, VerifyEmailView, LoginView, SecurityMFATOTP, RequestResetPasswordView, ResetPasswordView, UserView, UsersMeTestView, SendFriendRequest, DeleteFriendRequest, AcceptFriendRequestView, BlockUser, UnfriendView, FriendsView
+from .views import (
+    OAuth2StartView, OAuth2CallbackView, UsersMeView,
+    MFATOTPView, RegisterView, VerifyEmailView, LoginView,
+    SecurityMFATOTP, RequestResetPasswordView, ResetPasswordView,
+    UserView, UsersMeAvatarView, SendFriendRequest, DeleteFriendRequest,
+    AcceptFriendRequestView, BlockUser, UnfriendView, FriendsView
+    )
 from .views import UserSearchView
 
 urlpatterns = [
@@ -13,7 +19,7 @@ urlpatterns = [
     path("reset", RequestResetPasswordView.as_view(), name="reset"),
     path('reset/<str:token>', ResetPasswordView.as_view(), name='reset-token'),
     path('users/me', UsersMeView.as_view(), name='users-me'),
-    path('users/meTest', UsersMeTestView.as_view(), name='users-me'),
+    path('users/me/avatar', UsersMeAvatarView.as_view(), name='users-me-avatar'),
     path('user/<str:username>', UserView.as_view(), name='get-user'),
     path('friend/request', SendFriendRequest.as_view(), name='send-friend-request'),
     path('friend/deleterequest', DeleteFriendRequest.as_view(), name='delete-friend-request'),

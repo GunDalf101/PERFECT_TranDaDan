@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import getMyData from '../../api/authServiceMe'
+import {getMyData} from '../../api/authServiceMe'
 
 const UserContext = createContext({
   user: null,
@@ -36,7 +36,7 @@ const UserProvider = ({ children }) => {
     };
 
     checkAuthStatus();
-  }, [user,isAuthenticated]);
+  }, []);
 
 
 

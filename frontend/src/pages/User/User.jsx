@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import NotFound from "../NotFound/NotFound";
 import getUserData from "../../api/authServiceUser";
-import getMyData from "../../api/authServiceMe"
+import {getMyData} from "../../api/authServiceMe"
 import { sendFriendReq, cancelFriendReq, acceptFriendReq, unfriendReq} from "../../api/friendService";
 import { blockUser, unblockUser } from "../../api/blockService";
 import getMatches from "../../api/gameService";
 import { useRealTime } from "../../context/RealTimeContext";
+import {myToast} from "../../lib/utils1"
+import { useNavigate } from 'react-router-dom';
 
 const r = {
   NONE: 0,
@@ -19,18 +21,23 @@ const r = {
 };
 
 const User = () => {
+  const navigate = useNavigate();
   const [userdata, setuserdata] = useState(null); // Store user data
   const [error, setError] = useState(false); // Handle errors
   const [reload, setReload] = useState(false); // State to trigger useEffect
   const [isAddHovering, setIsAddHovering] = useState(false); // State to manage hover
   const [isBlockHovering, setIsBlockHovering] = useState(false); // State to manage hover for block button
-  const [userMatches, setUserMatches] = useState(null);
-  const { sendRelationshipUpdate, relationshipUpdate } = useRealTime();
+  const [userMatches, setUserMatches] = useState({
+    pong: [],
+    space: []
+  });
+  const { sendRelationshipUpdate, relationshipUpdate, onlineFriends } = useRealTime();
   const { username } = useParams();
 
   useEffect(() => {
     setReload(!reload);
-  }, [relationshipUpdate]);
+  }, [relationshipUpdate, username, onlineFriends]);
+
   // Fetch user data and friend request status
   useEffect(() => {
     const fetchUserData = async () => {
@@ -41,7 +48,7 @@ const User = () => {
         const matches = await getMatches(data.id)
         setUserMatches(matches)
         if(mydata.id == data.id)
-            window.location.href = "/profile"
+            navigate("/profile");
       } catch (error) {
         console.error("Error fetching user data:", error);
         setError(true);
@@ -56,6 +63,7 @@ const User = () => {
     try {
       await sendFriendReq(username);
       setIsAddHovering(false);
+      myToast(0, "friend request has been sent")
       sendRelationshipUpdate("sent_friend_request", username);
     } catch (error) {
       console.error("Error sending friend request:", error);
@@ -67,6 +75,7 @@ const User = () => {
     try {
         await cancelFriendReq(username);
         setIsAddHovering(false);
+        myToast(1, "friend request has been canceled")
         sendRelationshipUpdate("cancel_friend_request", username);
       } catch (error) {
         console.error("Error sending friend request:", error);
@@ -78,6 +87,7 @@ const User = () => {
     try {
         await unfriendReq(username);
         setIsAddHovering(false);
+        myToast(2, "I'm sorry mi amori")
         sendRelationshipUpdate("unfriended", username);
       } catch (error) {
         console.error("Error sending friend request:", error);
@@ -88,7 +98,7 @@ const User = () => {
   const handleAcceptRequest = async () => {
     try {
       await acceptFriendReq(username)
-      console.log("Friend request accepted");
+      myToast(1, "friend request has been accepted.")
       sendRelationshipUpdate("friends", username);
     } catch (error) {
       console.error("Error accepting friend request:", error);
@@ -101,10 +111,14 @@ const User = () => {
       if (userdata.relationship == r.YOU_BLOCK || userdata.relationship == r.BLOCK_BOTH)
         {
           await unblockUser(username);
+          myToast(0, "unblocked.")
+          sendRelationshipUpdate("unblocked", username);
         }
-      else
-      {
-        await blockUser(username);
+        else
+        {
+          await blockUser(username);
+          myToast(2, "blocked.")
+        sendRelationshipUpdate("blocked", username);
       }
     } catch (error) {
       console.error("Error sending friend request:", error);
@@ -126,19 +140,19 @@ const User = () => {
     <div className="flex flex-col items-center min-h-screen bg-cover bg-center bg-[url('/retro_1.jpeg')] from-darkBackground via-purpleGlow to-neonBlue text-white font-retro">
       <div className="flex flex-wrap m-10 justify-between w-11/12 gap-4 mt-20">
         {/* User Box */}
-        <div className="flex-1 min-w-[300px] h-[460px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
+        <div className="flex-1 min-w-[500px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
           {/* Profile Image */}
           <div className="flex flex-col items-center">
           <div className="flex flex-col items-center relative">
             <img
-              src="/default_profile.webp"
+              src={userdata.avatar_url || "/default_profile.webp"}
               alt="Profile"
               className="w-36 h-36 rounded-full border-4 border-white shadow-[0_0_20px_5px] shadow-neonPink mb-4"
             />
             {/* Status Dot */}
             <div
               className={`absolute top-1 right-1 w-4 h-4 rounded-full border-2 ${
-                userdata.isOnline ? "bg-green-500" : "bg-gray-500"
+                onlineFriends.includes(userdata.username) ? "bg-green-500" : "bg-gray-500"
               }`}
               title={userdata.isOnline ? "Online" : "Offline"} // Tooltip for accessibility
             ></div>
@@ -215,7 +229,7 @@ const User = () => {
         </div>
 
         {/* Friends Box */}
-        <div className="flex-1 min-w-[300px] h-[460px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink overflow-y-auto">
+        <div className="flex-1 min-w-[500px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink overflow-y-auto">
           <h2 className="text-2xl text-center text-neonPink mb-4">Friends</h2>
           {userdata.friends && userdata.friends.length > 0 ? (
             <ul className="space-y-4">
@@ -225,11 +239,11 @@ const User = () => {
                   className="flex items-center gap-4 bg-gray-800 p-3 rounded-lg border border-gray-600 shadow-md hover:shadow-lg transition-shadow duration-300"
                 >
                   <img
-                    src={friend.avatar}
+                    src={friend.avatar_url || '/default_profile.webp'}
                     alt={`${friend.username}'s avatar`}
                     className="w-12 h-12 rounded-full border-2 border-white"
                   />
-                  <a href={friend.username}><p className="text-lg text-white font-medium">{friend.username}</p></a>
+                  <a href="#" onClick={() => navigate(`/user/${friend.username}`)}><p className="text-lg text-white font-medium">{friend.username}</p></a>
                 </li>
               ))}
             </ul>
@@ -237,15 +251,13 @@ const User = () => {
             <p className="text-center text-gray-400">No friends to display.</p>
           )}
         </div>
-      </div>
 
-      {/* Match History and Statistics Section */}
-      <div className="flex flex-wrap justify-between w-11/12 gap-4">
         {/* Match History Card */}
-        <div className="flex-1 min-w-[300px] h-fit p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
+        <div className="flex-1 min-w-[500px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
+          <p className="text-3xl text-center text-neonBlue mb-5">PingPong</p>
           <h2 className="text-2xl text-center text-neonPink mb-4">Match History</h2>
-          <div className="overflow-x-auto">
-          {userMatches && userMatches.length > 0 ? (
+          <div className="overflow-x-auto h-72 overflow-y-auto">
+          {userMatches.pong && userMatches.pong.length > 0 ? (
             <table className="w-full text-center text-white border-collapse">
               <thead>
                 <tr className="bg-neonBlue text-black">
@@ -256,7 +268,7 @@ const User = () => {
                 </tr>
               </thead>
               <tbody>
-                {userMatches.map((match) => (
+                {userMatches.pong.map((match) => (
                   <tr key={match.id} className="odd:bg-gray-800 even:bg-gray-700">
                     <td className="p-2 border border-white">{match.id}</td>
                     <td className="p-2 border border-white">{match.opponent}</td>
@@ -271,6 +283,41 @@ const User = () => {
             )}
           </div>
         </div>
+        {/* Match History Card */}
+        <div className="flex-1 min-w-[500px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
+          <p className="text-3xl text-center text-red-600 mb-5">SPACExRIVALRY</p>
+          <h2 className="text-2xl text-center text-neonPink mb-4">Match History</h2>
+          <div className="overflow-x-auto h-72 overflow-y-auto">
+          {userMatches.space && userMatches.space.length > 0 ? (
+            <table className="w-full text-center text-white border-collapse">
+              <thead>
+                <tr className="bg-neonBlue text-black">
+                  <th className="p-2 border border-white">#</th>
+                  <th className="p-2 border border-white">Opponent</th>
+                  <th className="p-2 border border-white">Result</th>
+                  <th className="p-2 border border-white">Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {userMatches.space.map((match) => (
+                  <tr key={match.id} className="odd:bg-gray-800 even:bg-gray-700">
+                    <td className="p-2 border border-white">{match.id}</td>
+                    <td className="p-2 border border-white">{match.opponent}</td>
+                    <td className="p-2 border border-white">{match.result}</td>
+                    <td className="p-2 border border-white">{match.score}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            ):(
+              <p className="text-center text-gray-400">No matches to display.</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Match History and Statistics Section */}
+      <div className="flex flex-wrap justify-between w-11/12 gap-4">
 
         {/* Statistics Card */}
         <div className="flex-1 min-w-[300px] h-fit p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">

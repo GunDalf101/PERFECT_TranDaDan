@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 // import {axiosInstance} from '../../api/axiosInstance';
 // import { getUserData } from "../../api/authService42Intra";
 import { useUser } from "../../components/auth/UserContext";
-import getMyData from "../../api/authServiceMe";
+import {getMyData} from "../../api/authServiceMe";
 import MFAVerificationForm from "../../pages/Login/MFAVerificationForm";
 import authVerifyMFA from "../../api/authVerifyMFA";
 
@@ -24,7 +24,7 @@ const IntraCallback = () => {
       }
       localStorage.setItem("access_token", accessToken);
       if (!accessToken) {
-        window.location.href = "/login";
+        navigate("/login");
         return;
       }
       try {

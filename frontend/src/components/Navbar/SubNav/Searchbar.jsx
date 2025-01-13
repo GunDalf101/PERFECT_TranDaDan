@@ -10,7 +10,7 @@ const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
     const [results, setResults] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
-    
+
     // Add refs for click outside detection
     const searchWrapperRef = useRef(null);
     const dropdownRef = useRef(null);
@@ -107,8 +107,8 @@ const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
 
     return (
         <>
-            <div 
-                id="searchBarWrapper" 
+            <div
+                id="searchBarWrapper"
                 className="hidden flex-grow md:flex justify-center relative"
                 ref={searchWrapperRef}
             >
@@ -124,7 +124,7 @@ const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
                     <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
 
                     {showDropdown && (results.length > 0 || isLoading) && (
-                        <div 
+                        <div
                             ref={dropdownRef}
                             className={`dropdownScroll absolute w-full mt-2 bg-gray-800 border-2 border-pink-500 rounded-md shadow-lg z-50 max-h-[26vh] overflow-y-auto`}
                         >
@@ -139,7 +139,7 @@ const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
                                             className="p-3 hover:bg-gray-700 cursor-pointer text-teal-200 border-b border-gray-700 last:border-b-0 flex items-center"
                                         >
                                             <img
-                                                src={result.avatar_url}
+                                                src={result.avatar_url || '/default_profile.webp'}
                                                 alt={result.username}
                                                 className="w-8 h-8 rounded-full !mr-3"
                                             />
@@ -249,7 +249,7 @@ const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
                                                         className="flex items-center justify-between w-full"
                                                     >
                                                         <img
-                                                            src={result.avatar_url}
+                                                            src={result.avatar_url || '/default_profile.webp'}
                                                             alt={result.username}
                                                             className="w-8 h-8 rounded-full mr-3"
                                                         />

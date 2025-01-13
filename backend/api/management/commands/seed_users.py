@@ -20,19 +20,19 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f'Successfully deleted {deleted_count} users.'))
             else:
                 self.stdout.write(self.style.WARNING('Action cancelled. No users were deleted.'))
-            first_user = User.objects.create_user(email='first@example.com', username='first', password='first', email_verified=True)
-            second_user = User.objects.create_user(email='second@example.com', username='second', password='second', email_verified=True)
-            third_user = User.objects.create_user(email='third@example.com', username='third', password='third', email_verified=True)
+            first_user = User.objects.create_user(email='first@example.com', username='first', tournament_alias='first', password='first', email_verified=True)
+            second_user = User.objects.create_user(email='second@example.com', username='second', tournament_alias='second', password='second', email_verified=True)
+            third_user = User.objects.create_user(email='third@example.com', username='third', tournament_alias='third', password='third', email_verified=True)
             first_user.email_token = second_user.email_token = third_user.email_token = get_random_string(32)
             first_user.save()
             second_user.save()
             third_user.save()
             self.stdout.write(self.style.SUCCESS('Successfully created 3 users'))
-            for i in range(50):
-                user = User.objects.create_user(email=f'user{i}@example.com', username=f'user{i}', password=f'user{i}', email_verified=True)
-                self.stdout.write(self.style.SUCCESS(f'Successfully created user{i}'))
-                user.email_token = None
-                user.save()
+            # for i in range(50):
+            #     user = User.objects.create_user(email=f'user{i}@example.com', username=f'user{i}', tournament_alias=f'user{i}', password=f'user{i}', email_verified=True)
+            #     self.stdout.write(self.style.SUCCESS(f'Successfully created user{i}'))
+            #     user.email_token = None
+            #     user.save()
 
 
             # Create friendships (relationships)

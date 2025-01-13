@@ -4,7 +4,7 @@ import alogo from "../../assets/image/42_Logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
 import LoginAx from "../../api/authServiceLogin";
-import getMyData from "../../api/authServiceMe";
+import {getMyData} from "../../api/authServiceMe";
 import RequestResetPassword from "../../api/authServiceRequestRp";
 import MFAVerificationForm from "./MFAVerificationForm";
 import authVerifyMFA from "../../api/authVerifyMFA"
@@ -121,8 +121,8 @@ const Login = () => {
 
 			if (response.data.mfa_required) {
 				localStorage.setItem('2fa_access_token', access_token);
-				setShowMFAForm(true); 
-				setLoading(false); 
+				setShowMFAForm(true);
+				setLoading(false);
 				return;
 			}
 			localStorage.setItem('access_token', access_token);
@@ -159,7 +159,7 @@ const Login = () => {
 	};
 
     const handle42Login = () => {
-        window.location.href = `http://10.13.5.8:8000/api/oauth2/42/`;
+        window.location.href = `http://localhost:8000/api/oauth2/42/`;
     };
 
 	const handleMFAVerify = async (Mfadata) => {
