@@ -519,8 +519,6 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
             self.matchmaking_queues[game_type].append(self)
 
             if len(self.matchmaking_queues[game_type]) >= 2:
-                print("the Queue:", self.matchmaking_queues[game_type][0].scope['user'].username)
-                print("the Queue:", self.matchmaking_queues[game_type][1].scope['user'].username)
 
                 player1 = self.matchmaking_queues[game_type].pop(0)
                 player2 = self.matchmaking_queues[game_type].pop(0)

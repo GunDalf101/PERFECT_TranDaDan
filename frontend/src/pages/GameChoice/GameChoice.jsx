@@ -247,7 +247,7 @@ const GameChoice = () => {
 
             invadersSection.addEventListener('mouseenter', () => {
                 playSound(523.25);
-                title.textContent = 'SPACE INVADERS';
+                title.textContent = 'SPACE RIVALRY';
             });
         }
 
@@ -299,7 +299,7 @@ const GameChoice = () => {
                 </div>
 
                 <div className="game-container" id="invaders-container">
-                    <div className="game-title">SPACE INVADERS</div>
+                    <div className="game-title">SPACE RIVALRY</div>
                     <Link to="/game-lobby/space-rivalry"><div className="game-option" data-index="0">SPACE RIVALRY</div></Link> 
                     <Link to="/game-lobby/matchmaking?gameType=space-rivalry"><div className="game-option" data-index="1">REMOTE RIVALRY</div></Link> 
                     <Link to="/"><div className="game-option" data-index="2">SPEED RUN</div></Link> 
