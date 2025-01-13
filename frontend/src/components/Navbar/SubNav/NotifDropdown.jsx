@@ -2,10 +2,11 @@ import React, { useEffect } from 'react';
 import { useRealTime } from '../../../context/RealTimeContext';
 import { formatDistanceToNow } from 'date-fns';
 import styles from './SubNav.module.scss';
+import { useNavigate } from 'react-router-dom';
 
 const NotifDropdown = React.forwardRef(({ isVisible }, ref) => {
   const { notifications, markAsRead, removeMarkedNotifications } = useRealTime();
-
+  const navigate = useNavigate()
   useEffect(() => {
     if (isVisible) {
       notifications
@@ -17,8 +18,8 @@ const NotifDropdown = React.forwardRef(({ isVisible }, ref) => {
   }, [isVisible]);
 
   return isVisible ? (
-    <div 
-      id="notificationDropdown" 
+    <div
+      id="notificationDropdown"
       className={`${styles.notificationDropdown} absolute text-white right-0 mt-2 w-80 bg-gray-900 border-2 border-pink-500 shadow-lg rounded-md font-pixel z-10 max-h-96`}
       ref={ref}
     >
@@ -41,7 +42,7 @@ const NotifDropdown = React.forwardRef(({ isVisible }, ref) => {
                   <a
                     href={notif.url}
                     className="cursor-pointer block"
-                    onClick={() => markAsRead(notif.id)}
+                    onClick={() => {markAsRead(notif.id); navigate(notif.url)}}
                   >
                     <p className="font-semibold">{notif.content}</p>
                     <p className="text-xs opacity-75">
