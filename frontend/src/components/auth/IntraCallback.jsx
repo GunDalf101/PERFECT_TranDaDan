@@ -24,7 +24,7 @@ const IntraCallback = () => {
       }
       localStorage.setItem("access_token", accessToken);
       if (!accessToken) {
-        window.location.href = "/login";
+        navigate("/login");
         return;
       }
       try {

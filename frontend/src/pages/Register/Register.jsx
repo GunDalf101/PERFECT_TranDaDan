@@ -2,12 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./Register.module.scss";
 import alogo from "../../assets/image/42_Logo.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import RegisterAx from "../../api/authServiceRegister";
 import { toast } from 'react-toastify';
 
 
 const Register = () => {
+
 	const navigate = useNavigate();
 	const [formData, setFormData] = useState({
 		username: "",

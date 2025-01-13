@@ -21,6 +21,11 @@ def get_free_username(username):
         username = f"{username}_{''.join(random.choices(string.ascii_letters + string.digits, k=5))}"
     return username
 
+def get_free_game_nickname(nickname):
+    while User.objects.filter(tournament_alias=nickname).first():
+        nickname = f"{nickname}_{''.join(random.choices(string.ascii_letters + string.digits, k=5))}"
+    return nickname
+
 def get_reset_password_token_cache_key(token):
     return f"api_user_rest_password_token_{token}"
 
