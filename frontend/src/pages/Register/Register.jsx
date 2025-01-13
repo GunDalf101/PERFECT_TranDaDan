@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import styles from "./Register.module.scss";
 import alogo from "../../assets/image/42_Logo.png";
 import { Link } from "react-router-dom";
@@ -7,8 +8,7 @@ import { toast } from 'react-toastify';
 
 
 const Register = () => {
-
-	// const navigate = useNavigate();
+	const navigate = useNavigate();
 	const [formData, setFormData] = useState({
 		username: "",
 		email: "",
@@ -98,7 +98,7 @@ const Register = () => {
 		setLoading(true);
 		try {
 			const response = await RegisterAx(formData);
-			if (response.status === 201) window.location.href = "/login";
+			if (response.status === 201) navigate("/login");
 		} catch (err) {
 			if (err.response?.data) {
 				const apiErrors = err.response.data;
@@ -170,6 +170,7 @@ const Register = () => {
 								placeholder="Username"
 								value={formData.username}
 								onChange={handleChange}
+								autoComplete="username"
 								className={`w-full px-8 py-4 rounded-lg font-medium bg-gray-800 border ${errors.username ? "border-red-500" : "border-gray-600"
 									} placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-gray-900 text-white`}
 							/>
@@ -185,6 +186,7 @@ const Register = () => {
 								placeholder="Email"
 								value={formData.email}
 								onChange={handleChange}
+								autoComplete="email"
 								className={`w-full px-8 py-4 rounded-lg font-medium bg-gray-800 border ${errors.email ? "border-red-500" : "border-gray-600"
 									} placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-gray-900 text-white`}
 							/>
@@ -200,6 +202,7 @@ const Register = () => {
 								placeholder="Password"
 								value={formData.password}
 								onChange={handleChange}
+								autoComplete="Password"
 								className={`w-full px-8 py-4 rounded-lg font-medium bg-gray-800 border ${errors.password ? "border-red-500" : "border-gray-600"
 									} placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-gray-900 text-white`}
 							/>
@@ -216,6 +219,7 @@ const Register = () => {
 									placeholder="Confirm Password"
 									value={formData.password_confirmation}
 									onChange={handleChange}
+									autoComplete="password_confirmation"
 									className={`w-full px-8 py-4 rounded-lg font-medium bg-gray-800 border ${errors.password_confirmation
 										? "border-red-500"
 										: "border-gray-600"

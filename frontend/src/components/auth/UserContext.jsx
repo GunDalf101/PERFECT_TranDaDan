@@ -36,7 +36,7 @@ const UserProvider = ({ children }) => {
     };
 
     checkAuthStatus();
-  }, [user,isAuthenticated]);
+  }, []);
 
 
 
