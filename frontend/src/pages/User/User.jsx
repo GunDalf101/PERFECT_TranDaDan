@@ -31,12 +31,13 @@ const User = () => {
     pong: [],
     space: []
   });
-  const { sendRelationshipUpdate, relationshipUpdate } = useRealTime();
+  const { sendRelationshipUpdate, relationshipUpdate, onlineFriends } = useRealTime();
   const { username } = useParams();
 
   useEffect(() => {
     setReload(!reload);
-  }, [relationshipUpdate]);
+  }, [relationshipUpdate, onlineFriends]);
+
   // Fetch user data and friend request status
   useEffect(() => {
     const fetchUserData = async () => {
@@ -151,7 +152,7 @@ const User = () => {
             {/* Status Dot */}
             <div
               className={`absolute top-1 right-1 w-4 h-4 rounded-full border-2 ${
-                userdata.isOnline ? "bg-green-500" : "bg-gray-500"
+                onlineFriends.includes(userdata.username) ? "bg-green-500" : "bg-gray-500"
               }`}
               title={userdata.isOnline ? "Online" : "Offline"} // Tooltip for accessibility
             ></div>
