@@ -36,7 +36,7 @@ const User = () => {
 
   useEffect(() => {
     setReload(!reload);
-  }, [relationshipUpdate]);
+  }, [relationshipUpdate, username]);
   // Fetch user data and friend request status
   useEffect(() => {
     const fetchUserData = async () => {
@@ -242,7 +242,7 @@ const User = () => {
                     alt={`${friend.username}'s avatar`}
                     className="w-12 h-12 rounded-full border-2 border-white"
                   />
-                  <a href={friend.username}><p className="text-lg text-white font-medium">{friend.username}</p></a>
+                  <a href="#" onClick={() => navigate(`/user/${friend.username}`)}><p className="text-lg text-white font-medium">{friend.username}</p></a>
                 </li>
               ))}
             </ul>
