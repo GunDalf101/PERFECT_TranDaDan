@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import styles from "./Register.module.scss";
 import alogo from "../../assets/image/42_Logo.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import RegisterAx from "../../api/authServiceRegister";
 import { toast } from 'react-toastify';
 
 
 const Register = () => {
 
-	// const navigate = useNavigate();
+	const navigate = useNavigate();
 	const [formData, setFormData] = useState({
 		username: "",
 		email: "",
@@ -98,7 +98,7 @@ const Register = () => {
 		setLoading(true);
 		try {
 			const response = await RegisterAx(formData);
-			if (response.status === 201) window.location.href = "/login";
+			if (response.status === 201) navigate("/login");
 		} catch (err) {
 			if (err.response?.data) {
 				const apiErrors = err.response.data;

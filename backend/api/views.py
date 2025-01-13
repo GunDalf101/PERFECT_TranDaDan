@@ -12,8 +12,15 @@ import jwt
 from django.urls import reverse
 from django.utils import timezone
 from django.conf import settings
-from .utils import generate_jwt, unset_cookie_header, get_free_username, get_free_game_nickname, reset_password_for_user, find_user_id_by_reset_token, minuser, maxuser, createRelativeRelation, RelativeRelationshipType
-from .serializers import RegisterSerializer, LoginSerializer, RequestResetPasswordSerializer, ResetPasswordSerializer, UserUpdateSerializer
+from .utils import (
+    generate_jwt, unset_cookie_header, get_free_username,
+    get_free_game_nickname, reset_password_for_user, find_user_id_by_reset_token,
+    createRelativeRelation, RelativeRelationshipType
+    )
+from .serializers import (
+    RegisterSerializer, LoginSerializer, RequestResetPasswordSerializer,
+    ResetPasswordSerializer, UserUpdateSerializer, UserSearchSerializer
+    )
 from .tasks import send_registration_email
 from .models import IntraConnection
 import pyotp
@@ -22,6 +29,10 @@ import io
 from django.utils.crypto import get_random_string
 from .models import UserRelationship, RelationshipType
 from django.db.models import Q
+import base64
+import uuid
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 
 User = get_user_model()
 
@@ -310,13 +321,12 @@ class UsersMeView(APIView):
             'email': user.intra_connection.email if not user.email else user.email,
             'mfa_enabled': user.mfa_enabled,
             'friends': getFriendList(user.id),
-            'avatar': '/default_profile.webp'
+            'avatar_url': user.avatar_url
         }
         return Response(user_data, status=status.HTTP_200_OK)
 
     def patch(self, request):
         user = request.user
-        print(request.data)
         email = user.email
         serializer = UserUpdateSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
@@ -328,19 +338,7 @@ class UsersMeView(APIView):
                 confirmation_link = request.build_absolute_uri(reverse("verify-email", kwargs={"token": token}))
                 send_registration_email(confirmation_link, user.email, schedule=timezone.now())
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class UsersMeTestView(UnprotectedView):
-
-    def get(self, request):
-        user_data = {
-            'id': 1,
-            'username': 'abdellah',
-            'email': "abdellah@gmail.com",
-            'intra_connection': None
-        }
-
-        return Response(user_data, status=status.HTTP_200_OK)
+        return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 def getFriendList(user_id):
     friendList = []
@@ -355,7 +353,7 @@ def getFriendList(user_id):
         friendList.append({
             'id': friend.id,
             'username': friend.username,
-            'avatar': '/default_profile.webp'
+            'avatar_url': friend.avatar_url
         })
     return friendList
 
@@ -383,7 +381,7 @@ class UserView(APIView):
             'username': target_user.username,
             'tournament_alias': target_user.tournament_alias,
             'email': target_user.intra_connection.email if not target_user.email else target_user.email,
-            'avatar': target_user.avatar_url,
+            'avatar_url': target_user.avatar_url,
             'relationship': relationship_n,
             'friends': getFriendList(target_user.id)
         }
@@ -613,14 +611,6 @@ class FriendsView(APIView):
         ]
         return Response({"friends": friends_usernames}, status=status.HTTP_200_OK)
 
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.db.models import Q
-from .serializers import UserSearchSerializer
-from .models import User
-
 class UserSearchView(APIView):
     def get(self, request):
         print(f"request.GET: {request.GET}")
@@ -634,3 +624,28 @@ class UserSearchView(APIView):
 
         serializer = UserSearchSerializer(users, many=True)
         return Response({'results': serializer.data}, status=status.HTTP_200_OK)
+
+class UsersMeAvatarView(APIView):
+
+    def put(self, request):
+        data_url = request.data.get('avatar')
+        if not data_url:
+            return Response({'error': 'No avatar provided.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            header, base64_data = data_url.split(';base64,')
+            mime_type = header.split(':')[1]
+            allowed_types = ["image/png", "image/jpeg", "image/jpg"]
+            if mime_type not in allowed_types:
+                return Response({'error': 'Unsupported image type.'}, status=status.HTTP_400_BAD_REQUEST)
+            ext = mime_type.split('/')[-1]
+            filename = f"{uuid.uuid4()}.{ext}"
+            image_data = base64.b64decode(base64_data)
+            file_path = default_storage.save(filename, ContentFile(image_data))
+            file_url = default_storage.url(file_path)
+            if settings.DEBUG:
+                file_url = request.build_absolute_uri(default_storage.url(file_path))
+            request.user.avatar_url = file_url
+            request.user.save()
+            return Response({'url': file_url}, status=status.HTTP_200_OK)
+        except (ValueError, KeyError) as e:
+            return Response({'error': 'Invalid data URL format.'}, status=status.HTTP_400_BAD_REQUEST)

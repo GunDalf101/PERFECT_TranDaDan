@@ -8,6 +8,7 @@ import { blockUser, unblockUser } from "../../api/blockService";
 import getMatches from "../../api/gameService";
 import { useRealTime } from "../../context/RealTimeContext";
 import {myToast} from "../../lib/utils1"
+import { useNavigate } from 'react-router-dom';
 
 const r = {
   NONE: 0,
@@ -20,6 +21,7 @@ const r = {
 };
 
 const User = () => {
+  const navigate = useNavigate();
   const [userdata, setuserdata] = useState(null); // Store user data
   const [error, setError] = useState(false); // Handle errors
   const [reload, setReload] = useState(false); // State to trigger useEffect
@@ -45,7 +47,7 @@ const User = () => {
         const matches = await getMatches(data.id)
         setUserMatches(matches)
         if(mydata.id == data.id)
-            window.location.href = "/profile"
+            navigate("/profile");
       } catch (error) {
         console.error("Error fetching user data:", error);
         setError(true);
@@ -142,7 +144,7 @@ const User = () => {
           <div className="flex flex-col items-center">
           <div className="flex flex-col items-center relative">
             <img
-              src="/default_profile.webp"
+              src={userdata.avatar_url || "/default_profile.webp"}
               alt="Profile"
               className="w-36 h-36 rounded-full border-4 border-white shadow-[0_0_20px_5px] shadow-neonPink mb-4"
             />
@@ -236,7 +238,7 @@ const User = () => {
                   className="flex items-center gap-4 bg-gray-800 p-3 rounded-lg border border-gray-600 shadow-md hover:shadow-lg transition-shadow duration-300"
                 >
                   <img
-                    src={friend.avatar}
+                    src={friend.avatar_url || '/default_profile.webp'}
                     alt={`${friend.username}'s avatar`}
                     className="w-12 h-12 rounded-full border-2 border-white"
                   />

@@ -4,6 +4,18 @@ import {myToast} from "../../lib/utils1"
 import { useState, useEffect } from "react";
 import { changeAvatarReq } from "../../api/avatarService";
 
+function formatSerializerErrors(errors) {
+  if (typeof errors === "string") return [errors];
+  else if (Array.isArray(errors)) return errors;
+
+  let errorsArr = [];
+
+  for (const [field, messages] of Object.entries(errors)) {
+    errorsArr = errorsArr.concat([...new Set(messages)]);
+  }
+
+  return errorsArr;
+}
 
 const EditProfile = () => {
 
@@ -23,13 +35,13 @@ const EditProfile = () => {
     password_confirmation: "",
   });
   useEffect(() => {
-  
+
     const fetchUserData = async () => {
       try {
         const mydata = await getMyData();
         setUserData(mydata)
         console.log(mydata.avatar)
-        setAvatar({data: null, path: mydata.avatar})
+        setAvatar({data: null, path: mydata.avatar_url})
         setIs2FAEnabled(mydata.mfa_enabled); // Assuming `mydata` contains a property `is2FAEnabled`
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -75,7 +87,7 @@ const EditProfile = () => {
         }
       });
       if(formData["password"] == "")
-        delete formData["password"], formData["password_confirmation"]
+        delete formData["password"], delete formData["password_confirmation"]
       console.log(formData);
       await editMyData(formData);
       setReload(!reload);
@@ -86,9 +98,9 @@ const EditProfile = () => {
         password: "",
         password_confirmation: "",
       });
-      set
     } catch (error) {
-      myToast(2, Object.values(error.response.data)[0][0])
+      let errors = formatSerializerErrors(error.response.data['error']);
+      for (let e of errors) myToast(2, e);
     }
   };
   const toggle2FA = async () => {
@@ -185,14 +197,14 @@ const EditProfile = () => {
             </label>
             <input
               type="text"
-              id="email"
+              id="tournament-alias"
               name="talias"
               // value={formData.username}
               onChange={handleInputChange}
               className="p-2 rounded bg-gray-800 text-white border border-gray-600"
             />
           </div>
-            
+
           <div className="flex flex-col">
             <label htmlFor="password" className="text-neonBlue">
               New Password

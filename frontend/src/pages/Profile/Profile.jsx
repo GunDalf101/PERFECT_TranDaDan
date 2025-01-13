@@ -2,6 +2,7 @@ import styles from "./Profile.module.scss";
 import { useState, useEffect } from "react";
 import {getMyData} from "../../api/authServiceMe";
 import getMatches from "../../api/gameService"
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
   const [mydata, setMyData] = useState(null);
@@ -9,6 +10,7 @@ const Profile = () => {
     pong: [],
     space: []
   });
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch user data
@@ -45,7 +47,7 @@ const Profile = () => {
           {/* Profile Image */}
           <div className="flex flex-col items-center">
             <img
-              src="/default_profile.webp"
+              src={mydata.avatar_url || '/default_profile.webp'}
               alt="Profile"
               className="w-36 h-36 rounded-full border-4 border-white shadow-[0_0_20px_5px] shadow-neonPink mb-4"
             />
@@ -62,7 +64,7 @@ const Profile = () => {
 
             {/* Edit Profile Button */}
             <button
-              onClick={() => (window.location.href = "/Profile/edit")}
+              onClick={() => (navigate("/Profile/edit"))}
               className="mt-4 px-6 py-2 bg-neonPink text-black font-bold rounded-lg shadow-[0_0_10px_2px] shadow-neonPink hover:shadow-[0_0_15px_3px] transition-all"
             >
               Edit Profile
@@ -82,7 +84,7 @@ const Profile = () => {
                     className="flex items-center gap-4 bg-gray-800 p-3 rounded-lg border border-gray-600 shadow-md hover:shadow-lg transition-shadow duration-300"
                   >
                     <img
-                      src={friend.avatar}
+                      src={friend.avatar_url || '/default_profile.webp'}
                       alt={`${friend.username}'s avatar`}
                       className="w-12 h-12 rounded-full border-2 border-white"
                     />

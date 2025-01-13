@@ -10,3 +10,4 @@ v
 *.pyd
 *.pyc
 node_modules/
+backend/media/*
