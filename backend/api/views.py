@@ -385,7 +385,6 @@ class UserView(APIView):
             'email': target_user.intra_connection.email if not target_user.email else target_user.email,
             'avatar': target_user.avatar_url,
             'relationship': relationship_n,
-            'isOnline': target_user.online,
             'friends': getFriendList(target_user.id)
         }
 
