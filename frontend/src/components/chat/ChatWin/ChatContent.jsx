@@ -1,7 +1,8 @@
-import React, { useRef, useEffect,memo, useMemo, useState } from "react";
-import { MoreVertical, Send } from "lucide-react";
+import React, { useRef, useEffect, memo, useMemo, useState, Profiler } from "react";
+import { MoreVertical, Send, User, Gamepad2, X, Blocks } from "lucide-react";
 import styles from "../styles.module.scss";
-import {useRealTime} from "../../../context/RealTimeContext"
+import { useRealTime } from "../../../context/RealTimeContext"
+import FriendProfile from "./FriendProfile";
 
 
 const ChatContent = memo(
@@ -34,7 +35,7 @@ const ChatContent = memo(
     const prevScrollHeightRef = useRef(0);
     const isLoadingRef = useRef(false);
 
-    const {onlineFriends} = useRealTime()
+    const { onlineFriends } = useRealTime()
 
     const isNewMessageReceived = () => {
       const isNewMessage = messages.length > previousMessagesLength.current;
@@ -42,6 +43,21 @@ const ChatContent = memo(
       const isReceivedMessage = latestMessage?.sender === selectedUser?.name;
       return isNewMessage && isReceivedMessage;
     };
+
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+          setIsOpen(false);
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const selectedUser = useMemo(() => {
       const user = friends.find((friend) => friend.id === selectedChat);
@@ -65,7 +81,7 @@ const ChatContent = memo(
       if (!chatBodyRef.current) return false;
       const { scrollTop, scrollHeight, clientHeight } = chatBodyRef.current;
       return scrollHeight - scrollTop - clientHeight < 100;
-      
+
     };
 
     const scrollToLatest = (behavior = 'smooth') => {
@@ -81,10 +97,10 @@ const ChatContent = memo(
       if (!chatBodyRef.current || isLoadingRef.current || !hasMore || isLoadingMore) return;
 
       const { scrollTop, scrollHeight } = chatBodyRef.current;
-      
+
       if (scrollHeight + scrollTop < 1000) {
         isLoadingRef.current = true;
-       
+
         const scrollHeight = chatBodyRef.current.scrollHeight;
         try {
           await loadMoreMessages();
@@ -94,26 +110,26 @@ const ChatContent = memo(
           }
         } finally {
           isLoadingRef.current = false;
-        } 
+        }
       }
     };
 
     useEffect(() => {
       if (!chatBodyRef.current || isLoadingMore) return;
 
-      // const messagesAdded = messages.length > prevMessagesLengthRef.current;
-      
-      // if (messagesAdded && isLoadingRef.current) {
-      //   scrollToBottom('smooth');
-      //   setInitialLoad(false);
-      //   previousMessagesLength.current = messages.length;
-      // }
-      
-      if (isNewMessageReceived() ) {
-        if (isNearBottom()) {
-          scrollToLatest();
-        }
+      const messagesAdded = messages.length > prevMessagesLengthRef.current;
+
+      if (messagesAdded ) {
+        scrollToBottom('smooth');
+        setInitialLoad(false);
+        previousMessagesLength.current = messages.length;
       }
+
+      // if (isNewMessageReceived()) {
+      //   if (isNearBottom()) {
+      //     scrollToLatest();
+      //   }
+      // }
 
       prevMessagesLengthRef.current = messages.length;
     }, [messages, isLoadingMore]);
@@ -232,7 +248,7 @@ const ChatContent = memo(
     const TypingIndicator = () => (
       <div className="flex items-start space-x-2 mb-4">
         <div className="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center">
-          <span className="text-blue-400 text-sm">{selectedUser?.name[0]}</span>
+          <img src={selectedUser.avatar_url} alt="" />
         </div>
         <div className="bg-gray-200 p-3 rounded-2xl rounded-tl-none">
           <LoadingIndicator />
@@ -249,87 +265,133 @@ const ChatContent = memo(
     }
 
     return (
-      <div className={`${styles.chat_content}`}>
-        <div className="h-16 border-b px-6 flex justify-between">
-          <div className="flex gap-2 items-center">
-            <div className="w-14 h-14 rounded-full bg-gray-300 flex items-center justify-center">
-              <span className="text-blue-300 font-semibold">
-                {selectedUser.name[0]}
-              </span>
-            </div>
-            <div>
-              <h2 className="font-semibold">{selectedUser.name}</h2>
-              <span
-                className={`text-sm ${selectedUser.online ? "text-green-500" : "text-red-500"
-                  }`}
-              >
-                {selectedUser.online ? "Online" : "Offline"}
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center">
-            <button
-              onClick={() => handleSidebarToggle("settings")}
-              className="text-blue-300 hover:text-blue-600"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        <div ref={chatBodyRef} onScroll={handleScroll} className="flex-1 overflow-y-auto flex flex-col-reverse p-5">
-          {messages.slice().map((message) => (
-            <div key={message.id} className="mb-4">
-              <div className={`flex items-start space-x-2 ${message.sender === selectedUser.name ? "justify-start" : "justify-end"}`}>
-                {message.sender === selectedUser.name && (
-                  <div className="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center">
-                    <span className="text-blue-400 text-sm">{selectedUser.name[0]}</span>
-                  </div>
-                )}
-                <div className={`relative max-w-[70%] ${message.sender === selectedUser.name ? "mr-auto" : "ml-auto"}`}>
-                  <div className={`p-3 rounded-2xl ${message.sender === selectedUser.name
-                    ? "bg-gray-200 text-black rounded-tl-none"
-                    : "bg-blue-500 text-white rounded-tr-none"
-                    }`}>
-                    <p className="break-words whitespace-pre-wrap">{message.text}</p>
-                  </div>
-                  <span className={`text-xs mt-1 ${message.sender === selectedUser.name ? "text-gray-500 ml-2" : "text-gray-500 text-right mr-2"
-                    }`}>
-                    {formatMessageTime(message.timestamp)}
-                  </span>
-                </div>
+      <>
+        <div className={`${styles.chat_content}`}>
+          <div className="h-16 border-b px-6 flex justify-between">
+            <div className="flex gap-2 items-center">
+              <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center">
+                <img src={selectedUser.avatar_url || "/default_profile.webp"} alt="" />
+              </div>
+              <div>
+                <h2 className="font-semibold">{selectedUser.name}</h2>
+                <span
+                  className={`text-sm ${selectedUser.online ? "text-green-500" : "text-red-500"
+                    }`}
+                >
+                  {selectedUser.online ? "Online" : "Offline"}
+                </span>
               </div>
             </div>
-          ))}
+            <div className="relative inline-block left-7 top-2 " ref={dropdownRef}>
+              <div className="flex  lg:hidden">
+                <button
+                  onClick={() => setIsOpen(!isOpen)}
+                  className="text-blue-300 hover:text-blue-600 focus:outline-none p-2"
+                  aria-label="Menu"
+                >
+                  <MoreVertical className="w-5 h-5" />
+                </button>
+              </div>
 
-          {isTyping && <TypingIndicator />}
-        </div>
+              {/* Dropdown Menu */}
+              {isOpen && (
+                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-50">
+                  <div className="py-1">
+                    <button
+                      className="w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                      onClick={() => {
+                        console.log('Profile clicked');
+                        setIsOpen(false);
+                      }}
+                    >
+                      <User className="w-4 h-4" />
+                      Profile
+                    </button>
 
-        {/* Message Input */}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit(e);
-          }}
-          className="h-20 px-2 md:px-4 flex items-center"
-        >
-          <div className="flex flex-1 space-x-2 p-2 bg-black rounded-lg h-[80%]">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type a message..."
-              className="flex-1 p-2 rounded-lg bg-[#2c2a2aa8] text-white  focus:outline-none "
-            />
-            <button
-              type="submit"
-              className={`bg-[#1b243b] p-2 rounded-lg hover:bg-blue-500 text-white flex items-center justify-center transition-colors`}
-            >
-              <Send className="w-5 h-5 text-white" />
-            </button>
+                    <button
+                      className="w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                      onClick={() => {
+                        console.log('Settings clicked');
+                        setIsOpen(false);
+                      }}
+                    >
+                      <Gamepad2 className="w-4 h-4" />
+                      Game
+                    </button>
+
+                    <button
+                      className="w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                      onClick={() => {
+                        console.log('Logout clicked');
+                        setIsOpen(false);
+                      }}
+                    >
+                      <X className="w-4 h-4" />
+                      Blocks
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </form>
-      </div>
+
+          <div ref={chatBodyRef} onScroll={handleScroll} className="flex-1 overflow-y-auto flex flex-col-reverse p-5">
+            {messages.slice().map((message) => (
+              <div key={message.id} className="mb-4">
+                <div className={`flex items-start space-x-2 ${message.sender === selectedUser.name ? "justify-start" : "justify-end"}`}>
+                  {message.sender === selectedUser.name && (
+                    <div className="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center">
+                      <span className="text-blue-400 text-sm">{selectedUser.name[0]}</span>
+                    </div>
+                  )}
+                  <div className={`relative max-w-[70%] ${message.sender === selectedUser.name ? "mr-auto" : "ml-auto"}`}>
+                    <div className={`p-3 rounded-2xl ${message.sender === selectedUser.name
+                      ? "bg-gray-200 text-black rounded-tl-none"
+                      : "bg-blue-500 text-white rounded-tr-none"
+                      }`}>
+                      <p className="break-words whitespace-pre-wrap">{message.text}</p>
+                    </div>
+                    <span className={`text-xs mt-1 ${message.sender === selectedUser.name ? "text-gray-500 ml-2" : "text-gray-500 text-right mr-2"
+                      }`}>
+                      {formatMessageTime(message.timestamp)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {isTyping && <TypingIndicator />}
+          </div>
+
+          {/* Message Input */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit(e);
+            }}
+            className="h-20 px-2 md:px-4 flex items-center"
+          >
+            <div className="flex flex-1 space-x-2 p-2 bg-black rounded-lg h-[80%] sm:w-1/2">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message..."
+                className="flex-1 p-2 rounded-lg bg-[#2c2a2aa8] text-white  focus:outline-none "
+              />
+              <button
+                type="submit"
+                className={`bg-[#1b243b] p-2 rounded-lg hover:bg-blue-500 text-white flex items-center justify-center transition-colors`}
+              >
+                <Send className="w-8 h-5 text-white" />
+              </button>
+            </div>
+          </form>
+        </div>
+        <FriendProfile
+          selectedUser={friends.find((user) => user.id === selectedChat)}
+        />
+      </>
     );
   }
 );
