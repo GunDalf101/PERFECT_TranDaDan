@@ -22,74 +22,100 @@ const ChatContent = memo(
     const [isLoading, setIsLoading] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
     const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
-
+    const prevMessagesLengthRef = useRef(messages.length);
     const [lastScrollHeight, setLastScrollHeight] = useState(0);
     const loadingRef = useRef(false);
     const selectedUser = friends.find((friend) => friend.id === selectedChat);
-    
+    const previousMessagesLength = useRef(messages.length);
 
     const [initialLoad, setInitialLoad] = useState(true);
     const prevScrollHeightRef = useRef(0);
     const isLoadingRef = useRef(false);
 
+    const isNewMessageReceived = () => {
+      const isNewMessage = messages.length > previousMessagesLength.current;
+      const latestMessage = messages[0];
+      const isReceivedMessage = latestMessage?.sender === selectedUser?.name;
+      return isNewMessage && isReceivedMessage;
+    };
 
+
+
+    const scrollToBottom = (behavior = 'auto') => {
+      if (chatBodyRef.current) {
+        chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
+      }
+    };
+
+    // Check if the user is near bottom
+    const isNearBottom = () => {
+      if (!chatBodyRef.current) return false;
+      const { scrollTop, scrollHeight, clientHeight } = chatBodyRef.current;
+      return scrollHeight - scrollTop - clientHeight < 100;
+      
+    };
+
+    const scrollToLatest = (behavior = 'smooth') => {
+      if (chatBodyRef.current) {
+        chatBodyRef.current.scrollTo({
+          top: 0,
+          behavior: behavior
+        });
+      }
+    };
 
     const handleScroll = async () => {
       if (!chatBodyRef.current || isLoadingRef.current || !hasMore || isLoadingMore) return;
 
-      const { scrollTop, scrollHeight} = chatBodyRef.current;
-      
-  
+      const { scrollTop, scrollHeight } = chatBodyRef.current;
+      // console.log(chatBodyRef.current.scrollTop);
       if (scrollHeight + scrollTop < 1000) {
-        console.log("ok");
         isLoadingRef.current = true;
-        prevScrollHeightRef.current = scrollHeight;
-        
+       
+        // console.log(scrollHeight + scrollTop);
         try {
+          console.log("ok");
           await loadMoreMessages();
+          // chatBodyRef.current.scrollHeight = scrollHeight + scrollTop - 100;
         } finally {
-          isLoadingRef.current = false;
-        }
+          // isLoadingRef.current = false;
+        } 
       }
     };
 
-    // Initialize scroll listener
     useEffect(() => {
-      const chatBody = chatBodyRef.current;
-      // if (chatBody) {
-      //   chatBody.addEventListener('scroll', handleScroll);
-      //   return () => chatBody.removeEventListener('scroll', handleScroll);
-      // }
-    }, [hasMore, isLoadingMore]);
+      if (!chatBodyRef.current || isLoadingMore) return;
 
-    // Maintain scroll position after loading more messages
-    useEffect(() => {
-      if (!chatBodyRef.current || initialLoad) {
+      const messagesAdded = messages.length > prevMessagesLengthRef.current;
+      
+      if (messagesAdded) {
+        scrollToBottom('smooth');
         setInitialLoad(false);
-        return;
+        previousMessagesLength.current = messages.length;
       }
-
-      if (prevScrollHeightRef.current > 0) {
-        const newScrollHeight = chatBodyRef.current.scrollHeight;
-        const scrollDiff = newScrollHeight - prevScrollHeightRef.current;
-        if (scrollDiff > 0) {
-          chatBodyRef.current.scrollTop = scrollDiff;
-        }
-        prevScrollHeightRef.current = 0;
-      }
-    }, [messages, initialLoad]);
-
-    // Auto-scroll to bottom for new messages
-    useEffect(() => {
-      if (chatBodyRef.current && !isLoadingMore && !initialLoad) {
-        const { scrollTop, scrollHeight, clientHeight } = chatBodyRef.current;
-        const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-        
-        if (isNearBottom) {
-          chatBodyRef.current.scrollTop = scrollHeight;
+      
+      if (isNewMessageReceived()) {
+        if (isNearBottom()) {
+          scrollToLatest();
         }
       }
-    }, [messages, isLoadingMore, initialLoad]);
+
+      prevMessagesLengthRef.current = messages.length;
+    }, [messages, isLoadingMore]);
+
+    // useEffect(() => {
+    //   if (initialLoad && messages.length > 0) {
+    //     scrollToBottom();
+    //     setInitialLoad(false);
+    //   }
+    // }, [messages, initialLoad]);
+
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      handleSendMessage(e);
+      setTimeout(() => scrollToBottom('smooth'), 100);
+    };
+
 
     const formatMessageTime = (timestamp) => {
       const date = new Date(timestamp);
@@ -128,10 +154,7 @@ const ChatContent = memo(
       });
       return groups;
     };
-    // useEffect(() => {
-    //   console.log("Messages content:", messages);
 
-    // }, [messages]);
 
     useEffect(() => {
       const currentObserverRef = observerRef.current;
@@ -168,18 +191,18 @@ const ChatContent = memo(
     }, [hasMore, isLoading, loadMoreMessages]);
 
     // Scroll to bottom when new messages arrive
-    useEffect(() => {
-      const chatBody = chatBodyRef.current;
-      if (chatBody) {
-        const shouldScroll =
-          chatBody.scrollHeight - chatBody.scrollTop - chatBody.clientHeight <
-          100;
+    // useEffect(() => {
+    //   const chatBody = chatBodyRef.current;
+    //   if (chatBody) {
+    //     const shouldScroll =
+    //       chatBody.scrollHeight - chatBody.scrollTop - chatBody.clientHeight <
+    //       100;
 
-        if (shouldScroll) {
-          chatBody.scrollTop = chatBody.scrollHeight;
-        }
-      }
-    }, [messages]);
+    //     if (shouldScroll) {
+    //       chatBody.scrollTop = chatBody.scrollHeight;
+    //     }
+    //   }
+    // }, [messages]);
 
     // Loading indicator component
     const LoadingIndicator = () => (
@@ -271,7 +294,7 @@ const ChatContent = memo(
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            handleSendMessage(e);
+            handleSubmit(e);
           }}
           className="h-20 px-2 md:px-4 flex items-center"
         >

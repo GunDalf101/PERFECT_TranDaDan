@@ -11,9 +11,10 @@ export const useRealTime = () => {
 export const RealTimeProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [relationshipUpdate, setRelationshipUpdate] = useState(null);
+  const [onlineFriends, setOnlineFriends] = useState([]);
   const [ws, setWs] = useState(null);
   const { isAuthenticated } = useUser();
-  const [markedNotifications, setMarkedNotifications] = useState(new Set());
+  // const [markedNotifications, setMarkedNotifications] = useState(new Set());
   const [markedIds, setMarkedIds] = useState(new Set());
 
   useEffect(() => {
@@ -34,10 +35,23 @@ export const RealTimeProvider = ({ children }) => {
             setNotifications(notifications => data.notifications.concat(notifications));
           } else if (data.msgtype === 'relationship_update') {
             setRelationshipUpdate(data);
+          } else if (data.msgtype === 'friend_status_change') {
+            const { username, is_online } = data;
+
+            setOnlineFriends(prevOnlineFriends => {
+              if (is_online && !prevOnlineFriends.includes(username)) {
+                return [...prevOnlineFriends, username];
+              }
+              if (!is_online && prevOnlineFriends.includes(username)) {
+                return prevOnlineFriends.filter(friend => friend !== username);
+              }
+              return prevOnlineFriends;
+            });
           }
         };
 
         socket.onclose = (event) => {
+          clearRealTimeContext();
           console.log('WebSocket connection closed:', event);
         };
 
@@ -86,7 +100,7 @@ export const RealTimeProvider = ({ children }) => {
   };
 
   return (
-    <RealTimeContext.Provider value={{ notifications, removeMarkedNotifications , relationshipUpdate, sendRelationshipUpdate, markAsRead, clearRealTimeContext }}>
+    <RealTimeContext.Provider value={{ notifications, removeMarkedNotifications , relationshipUpdate, sendRelationshipUpdate, markAsRead, clearRealTimeContext, onlineFriends }}>
       {children}
     </RealTimeContext.Provider>
   );

@@ -55,22 +55,24 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
 
         await self.accept()
         if UserConnectionManager.increment_connection(self.user.username) == 1:
-            print(f"first connect: {self.user.username}")
-            await self.notify_friends_of_status_change(self.user, True)
+            #print(f"first connect: {self.user.username}")
+            await self.notify_friends_of_my_status_change(self.user, True)
         else:
-            print(f"not first conn: {self.user.username} >> {UserConnectionManager.get_connection_count(self.user.username)}")
+            pass
+            #print(f"not first conn: {self.user.username} >> {UserConnectionManager.get_connection_count(self.user.username)}")
         self.group_name = f"notifs_user_{self.user.username}"
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.send_notifications()
-        await self.scan_and_notify_friends_of_status(self.user)
+        await self.scan_for_online_friends(self.user)
 
     async def disconnect(self, close_code):
-        print("WTdisconnectdisconnectsdisconnectFfFFFFF")
+        #print("WTdisconnectdisconnectsdisconnectFfFFFFF")
         if UserConnectionManager.decrement_connection(self.user.username) < 1:
-            print(f"first disco: {self.user.username}")
-            await self.notify_friends_of_status_change(self.user, False)
+            #print(f"first disco: {self.user.username}")
+            await self.notify_friends_of_my_status_change(self.user, False)
         else:
-            print(f"noot first disco: {self.user.username}")
+            pass
+            #print(f"noot first disco: {self.user.username}")
         if hasattr(self, "user_group_name"):
             if self.user_group_name:
                 await self.channel_layer.group_discard(self.group_name, self.channel_name)
@@ -153,7 +155,7 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         if event.get("type"):
             del event['type']
         else:
-            print(f"WTFFF: {event}")
+            #print(f"WTFFF: {event}")
             raise Exception
         await self.send_json(event)
 
@@ -170,12 +172,12 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         notif = Notification.objects.create(content=content, url=url, user=user)
         return notif
 
-    async def notify_friends_of_status_change(self, user, is_online):
+    async def notify_friends_of_my_status_change(self, user, is_online):
         """Notify the user's friends about their online/offline status."""
         friends = await self.get_user_friends(user)
 
         for friend in friends:
-            print(f"f > {friend.username}")
+            #print(f"f > {friend.username}")
             friend_group_name = f"notifs_user_{friend.username}"
             await self.channel_layer.group_send(
                 friend_group_name,
@@ -195,15 +197,14 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         friends_list = [rel.first_user if rel.second_user == user else rel.second_user for rel in friends]
         return friends_list
 
-    async def scan_and_notify_friends_of_status(self, user):
-        """Scan Redis for all users' online status and notify friends."""
+    async def scan_for_online_friends(self, user):
         friends = await self.get_user_friends(user)
         for friend in friends:
-            print(f"scan_and_notify_friends_of_status> >> {friend.username}")
+            #print(f"scan_for_online_friends> >> {friend.username}")
             is_online = True if UserConnectionManager.get_connection_count(friend.username) > 0 else False
             if is_online:
                 await self.send(text_data=json.dumps({
-                    'type': 'friend_status_change',
+                    'msgtype': 'friend_status_change',
                     'username': friend.username,
                     'is_online': is_online,
                 }))
@@ -222,10 +223,10 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
             return False
 
     async def friend_status_change(self, event):
-        print(f"recevied smtg [{self.user.username}]: {event}")
+        #print(f"recevied smtg [{self.user.username}]: {event}")
         """Handle notifications when a friend's status changes."""
         await self.send(text_data=json.dumps({
-            'type': 'friend_status_change',
+            'msgtype': 'friend_status_change',
             'username': event['username'],
             'is_online': event['is_online'],
         }))

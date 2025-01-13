@@ -22,7 +22,7 @@ const ChatApp = () => {
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  
+  const wasAtBottomRef = useRef(false);
   const messageIdsRef = useRef(new Set());
   const lastMessageLoadingRef = useRef(new Set());
   const pageTrackingRef = useRef(new Map());
@@ -151,18 +151,32 @@ const ChatApp = () => {
     }
   };
 
-    const saveScrollPosition = useCallback(() => {
+  const saveScrollPosition = useCallback(() => {
     if (selectedChat) {
-      scrollPositionRef.current = document.querySelector('.chat-body')?.scrollTop || 0;
-    }
-  }, [selectedChat]);
-
-  const restoreScrollPosition = useCallback(() => {
-    if (scrollPositionRef.current !== null) {
       const chatBody = document.querySelector('.chat-body');
       if (chatBody) {
-        chatBody.scrollTop = scrollPositionRef.current;
+        // Check if we're at the bottom (with small threshold for rounding)
+        const isAtBottom = Math.abs(
+          chatBody.scrollHeight - chatBody.scrollTop - chatBody.clientHeight
+        ) < 10;
+        console.log(isAtBottom);
+        wasAtBottomRef.current = isAtBottom;
+        scrollPositionRef.current = 0;
       }
+    }
+  }, [selectedChat]);
+  
+  // Modify restoreScrollPosition
+  const restoreScrollPosition = useCallback(() => {
+    const chatBody = document.querySelector('.chat-body');
+    if (!chatBody) return;
+  
+    if (wasAtBottomRef.current) {
+      // If we were at bottom, scroll to new bottom
+      chatBody.scrollTop = chatBody.scrollHeight;
+    } else if (scrollPositionRef.current !== null) {
+      // Otherwise restore previous position
+      chatBody.scrollTop = scrollPositionRef.current;
     }
   }, []);
 
@@ -178,11 +192,16 @@ const ChatApp = () => {
 
       const loadedPages = pageTrackingRef.current.get(selectedChat) || new Set([1]);
       const nextPage = Math.max(...Array.from(loadedPages)) + 1;
-
-      if (loadedPages.has(nextPage)) {
-        restoreScrollPosition(); // Restore if we've already loaded this page
+      // console.log(loadedPages);
+      // console.log(nextPage);
+      // console.log((nextPage) * 50);
+      // console.log(messages.length);
+      if(((nextPage - 1) * 50) > messages.length)
         return;
-      }
+      // if (loadedPages.has(nextPage)) {
+      //   restoreScrollPosition(); // Restore if we've already loaded this page
+      //   return;
+      // }
 
       const response = await getAllMessage(`${selectedFriend.name}?page=${nextPage}`);
       
@@ -210,8 +229,14 @@ const ChatApp = () => {
       });
 
     } catch (error) {
-      console.error('Error loading more messages:', error);
-      setError('Failed to load more messages. Please try again.');
+      const loadedPagesArray = Array.from(pageTrackingRef.current.get(selectedChat));
+
+      loadedPagesArray.pop();
+
+      // Update the Set in pageTrackingRef after modification
+      pageTrackingRef.current.set(selectedChat, new Set(loadedPagesArray));
+      // console.error('Error loading more messages:', error);
+      // setError('Failed to load more messages. Please try again.');
     } finally {
       setIsLoadingMore(false);
     }
@@ -372,17 +397,6 @@ const ChatApp = () => {
   return (
     <div className={`flex flex-col ${styles.nwbody}`}>
       <Logged />
-      {error && (
-        <div className="bg-red-100 text-red-700 p-3 mb-4">
-          {error}
-          <button
-            className="ml-2 text-sm underline"
-            onClick={() => setError(null)}
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
       <div className="flex">
         <div className={`${styles.chat_win}`}>
           <UserList
