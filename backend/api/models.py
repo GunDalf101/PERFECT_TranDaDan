@@ -22,20 +22,19 @@ class User(AbstractBaseUser):
         null=True,
         blank=True
     )
-    # tournament_alias = models.CharField(
-    #     max_length=50,
-    #     unique=True,
-    #     validators=[RegexValidator(regex=r'^[a-zA-Z0-9]*$', message="tournament alias must contain only alphanumeric characters")]
-    # )
+    tournament_alias = models.CharField(
+        max_length=50,
+        unique=True,
+        validators=[RegexValidator(regex=r'^[a-zA-Z0-9]*$', message="tournament alias must contain only alphanumeric characters")]
+    )
     avatar_url = models.CharField(max_length=255, blank=True, null=True)
     email_token = models.CharField(max_length=32, blank=True, null=True)
-    online = models.BooleanField(default=False)
     mfa_enabled = models.BooleanField(default=False)
     email_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     mfa_totp_secret = models.CharField(max_length=60, blank=True, null=True)
-    ingame = models.BooleanField(default=False)
+    # ingame = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']

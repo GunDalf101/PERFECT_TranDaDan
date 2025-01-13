@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.utils.crypto import get_random_string
 from django.contrib.auth import get_user_model
 from django.core.validators import EmailValidator
+from .utils import get_free_game_nickname
 
 User = get_user_model()
 
@@ -39,7 +40,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         user.set_password(validated_data['password'])
         user.email_token = get_random_string(32)
-        # user.tournament_alias = user.username
+        user.tournament_alias = get_free_game_nickname(user.username)
         user.save()
 
         return user
@@ -107,9 +108,6 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         if password:
             instance.set_password(password)
         return super().update(instance, validated_data)
-
-from rest_framework import serializers
-from .models import User
 
 class UserSearchSerializer(serializers.ModelSerializer):
     class Meta:

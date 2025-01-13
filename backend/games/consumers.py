@@ -5,6 +5,27 @@ import time
 from channels.db import database_sync_to_async, sync_to_async
 from django.contrib.auth import get_user_model
 from .models import Match
+import threading
+
+class PlayersManager:
+    _players = []
+    _lock = threading.Lock()
+
+    @classmethod
+    def add_player(cls, username):
+        with cls._lock:
+            cls._players.append(username)
+
+    @classmethod
+    def remove_player(cls, username):
+        with cls._lock:
+            cls._players.remove(username)
+
+    @classmethod
+    def player_exists(cls, username):
+        with cls._lock:
+            return username in cls._players
+
 
 class PongConsumer(AsyncWebsocketConsumer):
     shared_games = {}
@@ -12,7 +33,7 @@ class PongConsumer(AsyncWebsocketConsumer):
     active_connections = {}
     connection_timestamps = {}
     disconnection_cleanup_tasks = {}
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.room_group_name = None
@@ -30,16 +51,16 @@ class PongConsumer(AsyncWebsocketConsumer):
         except Match.DoesNotExist:
             return False
 
-    @database_sync_to_async
-    def get_user_ingame(self, username):
-        user = get_user_model().objects.filter(username=username).first()
-        return user.ingame
+    # @database_sync_to_async
+    # def get_user_ingame(self, username):
+    #     user = get_user_model().objects.filter(username=username).first()
+    #     return user.ingame
 
-    @database_sync_to_async
-    def update_user_ingame(self, username, ingame):
-        user = get_user_model().objects.filter(username=username).first()
-        user.ingame = ingame
-        user.save()
+    # @database_sync_to_async
+    # def update_user_ingame(self, username, ingame):
+    #     user = get_user_model().objects.filter(username=username).first()
+    #     user.ingame = ingame
+    #     user.save()
 
     async def connect(self):
         # Extract game_id and username from URL
@@ -48,7 +69,8 @@ class PongConsumer(AsyncWebsocketConsumer):
         params = dict(param.split('=') for param in query_string.split('&'))
         self.username = params.get('username')
 
-        await self.update_user_ingame(self.username, True)
+        # await self.update_user_ingame(self.username, True)
+        PlayersManager.add_player(self.username)
 
         if not self.game_id or not self.username:
             await self.close()
@@ -122,7 +144,8 @@ class PongConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
-        await self.update_user_ingame(self.username, False)
+        # await self.update_user_ingame(self.username, False)
+        PlayersManager.remove_player(self.username)
 
         if self.game_id in self.active_connections:
             self.active_connections[self.game_id] -= 1
@@ -137,14 +160,14 @@ class PongConsumer(AsyncWebsocketConsumer):
                 if not game_state.get('winner'):
                     disconnected_player = player_number
                     winning_player = 'player2' if disconnected_player == 'player1' else 'player1'
-                    
+
                     game_state['winner'] = game_state[winning_player]
                     game_state['final_score'] = {
                         'player1': 3 if winning_player == 'player1' else 0,
                         'player2': 3 if winning_player == 'player2' else 0
                     }
                     game_state['disconnect_forfeit'] = True
-                    
+
                     await self.update_match_record({
                         'winner': winning_player,
                         'finalScore': game_state['final_score'],
@@ -163,10 +186,10 @@ class PongConsumer(AsyncWebsocketConsumer):
                 if game_id in self.game_loops:
                     self.game_loops[game_id].cancel()
                     del self.game_loops[game_id]
-                
+
                 if game_id in self.shared_games:
                     del self.shared_games[game_id]
-                
+
                 if game_id in self.active_connections:
                     del self.active_connections[game_id]
 
@@ -221,7 +244,7 @@ class PongConsumer(AsyncWebsocketConsumer):
                     'timestamp': time.time()
                 }))
                 return
-            
+
             if data['type'] == 'client_disconnect':
                 await self.channel_layer.group_send(
                     self.room_group_name,
@@ -233,7 +256,7 @@ class PongConsumer(AsyncWebsocketConsumer):
                 )
                 await self.close()
                 return
-            
+
             if data['type'] == 'init':
                 await self.handle_init(data)
             elif data['type'] == 'mouse_move':
@@ -287,7 +310,7 @@ class PongConsumer(AsyncWebsocketConsumer):
     async def handle_score_update(self, data):
         game_state = self.shared_games[self.game_id]
         game_state['scores'] = data['scores']
-        
+
         if 'scoring_history' not in game_state:
             game_state['scoring_history'] = []
         game_state['scoring_history'].append({
@@ -306,9 +329,9 @@ class PongConsumer(AsyncWebsocketConsumer):
         winner_username = self.get_user_from_player_number(data['winner'])
         game_state['winner'] = winner_username
         game_state['final_score'] = data['finalScore']
-        
+
         await self.update_match_record(data)
-        
+
         game_state['scores'] = {'player1': 0, 'player2': 0}
         game_state['rounds_won'] = {'player1': 0, 'player2': 0}
 
@@ -319,13 +342,13 @@ class PongConsumer(AsyncWebsocketConsumer):
                     game_state = self.shared_games[self.game_id]
                     current_time = time.time()
                     dt = current_time - game_state['last_update']
-                    
+
                     if game_state['game_started'] and not game_state.get('winner'):
                         game_state['last_update'] = current_time
                         await self.broadcast_game_state()
-                
+
                 await asyncio.sleep(self.delta_time)
-                
+
         except asyncio.CancelledError:
             pass
         except Exception as e:
@@ -337,7 +360,7 @@ class PongConsumer(AsyncWebsocketConsumer):
             match = Match.objects.get(id=self.game_id)
             winner_username = self.get_user_from_player_number(data['winner'])
             winner_user = get_user_model().objects.get(username=winner_username)
-            
+
             match.winner = winner_user
             match.final_score = f"{data['finalScore']['player1']}-{data['finalScore']['player2']}"
             match.score_player1 = self.shared_games[self.game_id]['rounds_won']['player1']
@@ -413,19 +436,19 @@ class PongConsumer(AsyncWebsocketConsumer):
     def handle_game_state_update(self, game_state):
         """Update game state based on current conditions"""
         current_time = time.time()
-        
+
         # Update timestamps and check for timeouts
         if 'last_activity' in game_state:
             if current_time - game_state['last_activity'] > 30:  # 30 second timeout
                 game_state['connection_warning'] = True
-        
+
         game_state['last_activity'] = current_time
-        
+
         # Check win conditions
         if not game_state.get('winner'):
             p1_score = game_state['rounds_won'].get('player1', 0)
             p2_score = game_state['rounds_won'].get('player2', 0)
-            
+
             if p1_score >= 3 or p2_score >= 3:
                 game_state['winner'] = game_state['player1'] if p1_score > p2_score else game_state['player2']
                 game_state['game_complete'] = True
@@ -434,10 +457,10 @@ class PongConsumer(AsyncWebsocketConsumer):
         """Validate current game state"""
         if self.game_id not in self.shared_games:
             return False
-            
+
         game_state = self.shared_games[self.game_id]
         required_fields = ['player1', 'player2', 'scores', 'rounds_won']
-        
+
         return all(field in game_state for field in required_fields)
 
     async def handle_reconnection(self):
@@ -445,11 +468,11 @@ class PongConsumer(AsyncWebsocketConsumer):
         if not self.validate_game_state():
             await self.send_error("Invalid game state on reconnection")
             return False
-            
+
         game_state = self.shared_games[self.game_id]
         game_state['connection_warning'] = False
         game_state['last_activity'] = time.time()
-        
+
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -465,9 +488,9 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
     matchmaking_queues = {}
     player_to_user = {}
 
-    @database_sync_to_async
-    def get_user_ingame(self, user):
-        return user.ingame
+    # @database_sync_to_async
+    # def get_user_ingame(self, user):
+    #     return user.ingame
 
     async def connect(self):
         username = self.scope['query_string'].decode().split('=')[1]
@@ -477,7 +500,7 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
         except get_user_model().DoesNotExist:
             await self.close()
             return
-        
+
         self.scope['user'] = user
         for queue in self.matchmaking_queues.values():
             for player in queue:
@@ -485,7 +508,8 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
                     await self.close()
                     return
 
-        ingame_status = await self.get_user_ingame(user)
+        # ingame_status = await self.get_user_ingame(user)
+        ingame_status = PlayersManager.player_exists(user.username)
         if ingame_status:
             await self.close()
             return
@@ -526,7 +550,7 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
                 player2 = self.matchmaking_queues[game_type].pop(0)
 
                 match = await sync_to_async(self.create_match)(
-                    player1, 
+                    player1,
                     player2,
                     game_type
                 )
@@ -552,7 +576,7 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
         """Create a match between two players for a specific game type"""
         if not player1.scope.get('user') or not player2.scope.get('user'):
             raise ValueError("User data missing")
-        
+
         player1_user = player1.scope['user']
         player2_user = player2.scope['user']
 
@@ -581,7 +605,7 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
     active_connections = {}
     connection_timestamps = {}
     disconnection_cleanup_tasks = {}
-    
+
     GAME_WIDTH = 800
     GAME_HEIGHT = 600
     SHIP_WIDTH = 40
@@ -606,7 +630,7 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         'SPLIT': {'speed': 2, 'size': ASTEROID_SIZE * 1.2, 'health': 1, 'points': 200},
         'EXPLODING': {'speed': 2, 'size': ASTEROID_SIZE * 1.3, 'health': 1, 'points': 300}
     }
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.room_group_name = None
@@ -624,11 +648,11 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         except Match.DoesNotExist:
             return False
 
-    @database_sync_to_async
-    def update_user_ingame(self, username, ingame):
-        user = get_user_model().objects.filter(username=username).first()
-        user.ingame = ingame
-        user.save()
+    # @database_sync_to_async
+    # def update_user_ingame(self, username, ingame):
+    #     user = get_user_model().objects.filter(username=username).first()
+    #     user.ingame = ingame
+    #     user.save()
 
     async def connect(self):
         self.game_id = self.scope['url_route']['kwargs']['game_id']
@@ -636,7 +660,8 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         params = dict(param.split('=') for param in query_string.split('&'))
         self.username = params.get('username')
 
-        await self.update_user_ingame(self.username, True)
+        # await self.update_user_ingame(self.username, True)
+        PlayersManager.add_player(self.username)
 
         if not self.game_id or not self.username:
             await self.close()
@@ -687,15 +712,15 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
                 if not game_state.get('winner'):
                     disconnected_player = player_number
                     winning_player = 'player2' if disconnected_player == 'player1' else 'player1'
-                    
+
                     game_state['winner'] = game_state[winning_player]
                     game_state['gameOver'] = True
                     game_state['disconnect_forfeit'] = True
-                    
+
                     winner_score = max(game_state['score1'], game_state['score2'])
                     game_state['score1'] = winner_score if winning_player == 'player1' else 0
                     game_state['score2'] = winner_score if winning_player == 'player2' else 0
-                    
+
                     await self.channel_layer.group_send(
                         self.room_group_name,
                         {
@@ -704,17 +729,17 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
                             'message': f'Game ended due to player disconnection. {game_state[winning_player]} wins by forfeit.'
                         }
                     )
-                
+
                 if game_id in self.game_loops:
                     self.game_loops[game_id].cancel()
                     del self.game_loops[game_id]
-                
+
                 if game_id in self.shared_games:
                     del self.shared_games[game_id]
-                
+
                 if game_id in self.active_connections:
                     del self.active_connections[game_id]
-        
+
         except asyncio.CancelledError:
             pass
         except Exception as e:
@@ -729,7 +754,8 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
 
         self.connection_timestamps.pop(self.channel_name, None)
 
-        await self.update_user_ingame(self.username, False)
+        # await self.update_user_ingame(self.username, False)
+        PlayersManager.remove_player(self.username)
 
         if connection_duration < 1:
             await self.handle_unstable_connection()
@@ -798,17 +824,17 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         """Handle player movement and shooting"""
         game_state = self.shared_games[self.game_id]
         player_pos_key = f'player{self.player_num[-1]}Pos'
-        
+
         if input_type == 'left':
             current_pos = game_state[player_pos_key]
             min_pos = self.SHIP_WIDTH/2 if self.player_num == 'player1' else self.GAME_WIDTH/2 + self.SHIP_WIDTH/2
             game_state[player_pos_key] = max(min_pos, current_pos - self.MOVEMENT_SPEED)
-            
+
         elif input_type == 'right':
             current_pos = game_state[player_pos_key]
             max_pos = self.GAME_WIDTH/2 - self.SHIP_WIDTH/2 if self.player_num == 'player1' else self.GAME_WIDTH - self.SHIP_WIDTH/2
             game_state[player_pos_key] = min(max_pos, current_pos + self.MOVEMENT_SPEED)
-            
+
         elif input_type == 'shoot':
             self.handle_shooting(game_state)
 
@@ -817,13 +843,13 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         player_num = int(self.player_num[-1])
         current_time = time.time() * 1000  # Convert to milliseconds
         last_shot_key = f'lastShot{player_num}'
-        
+
         # Check cooldown
         if current_time - game_state.get(last_shot_key, 0) >= self.get_shooting_cooldown(game_state, player_num):
             player_pos = game_state[f'player{player_num}Pos']
             lasers_key = f'lasers{player_num}'
             effects = game_state[f'activeEffects{player_num}']
-            
+
             # Apply power-ups
             if effects.get('DOUBLE_BULLETS', {}).get('active'):
                 game_state[lasers_key].extend([
@@ -835,7 +861,7 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
                     'x': player_pos,
                     'y': self.GAME_HEIGHT - self.SHIP_HEIGHT - 10
                 })
-            
+
             game_state[last_shot_key] = current_time
 
     def get_shooting_cooldown(self, game_state, player_num):
@@ -851,15 +877,15 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
                     game_state = self.shared_games[self.game_id]
                     current_time = time.time()
                     dt = current_time - game_state['lastUpdate']
-                    
+
                     if game_state['gameStarted'] and not game_state['gameOver']:
                         self.update_game_state(dt)
                         game_state['lastUpdate'] = current_time
                         await self.check_game_over()
                         await self.broadcast_game_state()
-                
+
                 await asyncio.sleep(self.delta_time)
-                
+
         except asyncio.CancelledError:
             pass
         except Exception as e:
@@ -897,15 +923,15 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
     def update_game_state(self, dt):
         """Update all game objects"""
         game_state = self.shared_games[self.game_id]
-        
+
         self.update_lasers(game_state)
-        
+
         slow_motion = any(
             game_state[f'activeEffects{i}'].get('SLOW_MOTION', {}).get('active')
             for i in [1, 2]
         )
         speed_multiplier = 0.5 if slow_motion else 1
-        
+
         self.update_asteroids(game_state, speed_multiplier)
 
         self.update_powerups(game_state)
@@ -913,7 +939,7 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         self.update_debris(game_state)
 
         self.update_explosions(game_state)
-        
+
         self.check_all_collisions(game_state)
 
         game_state['difficulty'] = min(game_state['difficulty'] + 0.1 * dt / 30, 10)
@@ -941,13 +967,13 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
     def update_powerups(self, game_state):
         """Update power-up positions and status"""
         current_time = time.time() * 1000
-        
+
         game_state['powerups'] = [
             {**powerup, 'y': powerup['y'] + 2}
             for powerup in game_state['powerups']
             if powerup['y'] < self.GAME_HEIGHT
         ]
-        
+
         for player in [1, 2]:
             effects_key = f'activeEffects{player}'
             for powerup_type, effect in game_state[effects_key].items():
@@ -975,9 +1001,9 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
 
         self.check_laser_collisions(game_state, 1)
         self.check_laser_collisions(game_state, 2)
-        
+
         self.check_ship_collisions(game_state)
-        
+
         self.check_powerup_collisions(game_state)
 
     def check_laser_collisions(self, game_state, player_num):
@@ -1009,10 +1035,10 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
 
                     self.create_debris(game_state, asteroid, 3 - player_num)
                     break
-                    
+
             if not hit:
                 new_lasers.append(laser)
-                
+
         game_state[lasers_key] = new_lasers
 
     def check_ship_collisions(self, game_state):
@@ -1020,9 +1046,9 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         for player_num in [1, 2]:
             if game_state[f'activeEffects{player_num}'].get('SHIELD', {}).get('active'):
                 continue
-                
+
             ship_pos = game_state[f'player{player_num}Pos']
-            
+
             for asteroid in game_state['asteroids'][:]:
                 if self.check_collision(
                     ship_pos, self.GAME_HEIGHT - self.SHIP_HEIGHT, self.SHIP_WIDTH, self.SHIP_HEIGHT,
@@ -1030,7 +1056,7 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
                 ):
                     game_state[f'health{player_num}'] = max(0, game_state[f'health{player_num}'] - 20)
                     game_state['asteroids'].remove(asteroid)
-                    
+
             for debris in game_state['debris'][:]:
                 if debris['targetPlayer'] == player_num and self.check_collision(
                     ship_pos, self.GAME_HEIGHT - self.SHIP_HEIGHT, self.SHIP_WIDTH, self.SHIP_HEIGHT,
@@ -1042,10 +1068,10 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
     def check_powerup_collisions(self, game_state):
         """Check collisions between ships and power-ups"""
         current_time = time.time() * 1000
-        
+
         for player_num in [1, 2]:
             ship_pos = game_state[f'player{player_num}Pos']
-            
+
             for powerup in game_state['powerups'][:]:
                 if self.check_collision(
                     ship_pos, self.GAME_HEIGHT - self.SHIP_HEIGHT, self.SHIP_WIDTH, self.SHIP_HEIGHT,
@@ -1070,7 +1096,7 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         """Update player score and combo"""
         combo_key = f'combo{player_num}'
         score_key = f'score{player_num}'
-        
+
         game_state[combo_key] += 1
         combo_multiplier = 1 + game_state[combo_key] // 5
         game_state[score_key] += points * combo_multiplier
@@ -1081,7 +1107,7 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         """Spawn a new asteroid"""
         asteroid_type = random.choice(list(self.ASTEROID_TYPES.keys()))
         asteroid_data = self.ASTEROID_TYPES[asteroid_type]
-        
+
         game_state['asteroids'].append({
             'x': random.uniform(0, self.GAME_WIDTH),
             'y': -asteroid_data['size'],
@@ -1114,7 +1140,7 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
             dx = asteroid['x'] - exploding_asteroid['x']
             dy = asteroid['y'] - exploding_asteroid['y']
             distance = math.sqrt(dx * dx + dy * dy)
-            
+
             if distance < explosion_radius:
                 game_state['asteroids'].remove(asteroid)
 
@@ -1139,12 +1165,12 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
     async def check_game_over(self):
         """Check if game should end"""
         game_state = self.shared_games[self.game_id]
-        
+
         if game_state['health1'] <= 0 or game_state['health2'] <= 0:
             game_state['gameOver'] = True
             winner = game_state['player2'] if game_state['health1'] <= 0 else game_state['player1']
             game_state['winner'] = winner
-            
+
             await self.update_match_record(game_state)
             await self.broadcast_game_end(winner)
 
@@ -1155,7 +1181,7 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
             match = Match.objects.get(id=self.game_id)
             winner_username = game_state['winner']
             winner_user = get_user_model().objects.get(username=winner_username)
-            
+
             match.winner = winner_user
             match.score_player1 = game_state['score1']
             match.score_player2 = game_state['score2']

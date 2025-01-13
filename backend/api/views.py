@@ -12,7 +12,7 @@ import jwt
 from django.urls import reverse
 from django.utils import timezone
 from django.conf import settings
-from .utils import generate_jwt, unset_cookie_header, get_free_username, reset_password_for_user, find_user_id_by_reset_token, minuser, maxuser, createRelativeRelation, RelativeRelationshipType
+from .utils import generate_jwt, unset_cookie_header, get_free_username, get_free_game_nickname, reset_password_for_user, find_user_id_by_reset_token, minuser, maxuser, createRelativeRelation, RelativeRelationshipType
 from .serializers import RegisterSerializer, LoginSerializer, RequestResetPasswordSerializer, ResetPasswordSerializer, UserUpdateSerializer
 from .tasks import send_registration_email
 from .models import IntraConnection
@@ -106,11 +106,12 @@ class OAuth2CallbackView(UnprotectedView):
         #     message = f"registration successful!{' your username has already been claimed, we generated a new one for you.' if user.username != username else '' }"
 
         if not user:
+            free_username = get_free_username(username)
             user = User.objects.create_user(
                 email=None,
-                username=get_free_username(username),
+                username=free_username,
                 intra_user=True,
-                online=True
+                tournament_alias=get_free_game_nickname(free_username)
             )
             intra_connection = IntraConnection.objects.create(
                 user=user,
@@ -305,6 +306,7 @@ class UsersMeView(APIView):
         user_data = {
             'id': user.id,
             'username': user.username,
+            'tournament_alias': user.tournament_alias,
             'email': user.intra_connection.email if not user.email else user.email,
             'mfa_enabled': user.mfa_enabled,
             'friends': getFriendList(user.id),
@@ -379,6 +381,7 @@ class UserView(APIView):
         user_data = {
             'id': target_user.id,
             'username': target_user.username,
+            'tournament_alias': target_user.tournament_alias,
             'email': target_user.intra_connection.email if not target_user.email else target_user.email,
             'avatar': target_user.avatar_url,
             'relationship': relationship_n,
