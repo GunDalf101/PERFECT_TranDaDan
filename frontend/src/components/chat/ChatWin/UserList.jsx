@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Search } from "lucide-react";
 import styles from "../styles.module.scss";
+import {useRealTime} from "../../../context/RealTimeContext"
 
 const UserList = ({
   friends,
@@ -11,10 +12,20 @@ const UserList = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredUsers = friends.filter(friend =>
+  const {onlineFriends} = useRealTime()
+
+  
+  const friendsWithOnlineStatus = useMemo(() => {
+    return friends.map(friend => ({
+      ...friend,
+      online: onlineFriends.includes(friend.name)
+    }));
+  }, [friends, onlineFriends]);
+  
+  const filteredUsers = friendsWithOnlineStatus.filter(friend =>
     friend.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
+  
   const handleUserClick = (userId) => {
     setSelectedChat(userId);
   };

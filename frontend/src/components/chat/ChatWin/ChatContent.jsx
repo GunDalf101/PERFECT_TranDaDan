@@ -1,6 +1,8 @@
-import React, { useRef, useEffect, memo, useState } from "react";
+import React, { useRef, useEffect,memo, useMemo, useState } from "react";
 import { MoreVertical, Send } from "lucide-react";
 import styles from "../styles.module.scss";
+import {useRealTime} from "../../../context/RealTimeContext"
+
 
 const ChatContent = memo(
   ({
@@ -25,12 +27,14 @@ const ChatContent = memo(
     const prevMessagesLengthRef = useRef(messages.length);
     const [lastScrollHeight, setLastScrollHeight] = useState(0);
     const loadingRef = useRef(false);
-    const selectedUser = friends.find((friend) => friend.id === selectedChat);
+    // const selectedUser = friends.find((friend) => friend.id === selectedChat);
     const previousMessagesLength = useRef(messages.length);
 
     const [initialLoad, setInitialLoad] = useState(true);
     const prevScrollHeightRef = useRef(0);
     const isLoadingRef = useRef(false);
+
+    const {onlineFriends} = useRealTime()
 
     const isNewMessageReceived = () => {
       const isNewMessage = messages.length > previousMessagesLength.current;
@@ -39,7 +43,16 @@ const ChatContent = memo(
       return isNewMessage && isReceivedMessage;
     };
 
-
+    const selectedUser = useMemo(() => {
+      const user = friends.find((friend) => friend.id === selectedChat);
+      if (user) {
+        return {
+          ...user,
+          online: onlineFriends.includes(user.name)
+        };
+      }
+      return null;
+    }, [friends, selectedChat, onlineFriends]);
 
     const scrollToBottom = (behavior = 'auto') => {
       if (chatBodyRef.current) {
@@ -68,17 +81,19 @@ const ChatContent = memo(
       if (!chatBodyRef.current || isLoadingRef.current || !hasMore || isLoadingMore) return;
 
       const { scrollTop, scrollHeight } = chatBodyRef.current;
-      // console.log(chatBodyRef.current.scrollTop);
+      
       if (scrollHeight + scrollTop < 1000) {
         isLoadingRef.current = true;
        
-        // console.log(scrollHeight + scrollTop);
+        const scrollHeight = chatBodyRef.current.scrollHeight;
         try {
-          console.log("ok");
           await loadMoreMessages();
-          // chatBodyRef.current.scrollHeight = scrollHeight + scrollTop - 100;
+          if (chatBodyRef.current) {
+            console.log(scrollHeight - scrollTop);
+            chatBodyRef.current.scrollTop = -3000;
+          }
         } finally {
-          // isLoadingRef.current = false;
+          isLoadingRef.current = false;
         } 
       }
     };
@@ -86,15 +101,15 @@ const ChatContent = memo(
     useEffect(() => {
       if (!chatBodyRef.current || isLoadingMore) return;
 
-      const messagesAdded = messages.length > prevMessagesLengthRef.current;
+      // const messagesAdded = messages.length > prevMessagesLengthRef.current;
       
-      if (messagesAdded) {
-        scrollToBottom('smooth');
-        setInitialLoad(false);
-        previousMessagesLength.current = messages.length;
-      }
+      // if (messagesAdded && isLoadingRef.current) {
+      //   scrollToBottom('smooth');
+      //   setInitialLoad(false);
+      //   previousMessagesLength.current = messages.length;
+      // }
       
-      if (isNewMessageReceived()) {
+      if (isNewMessageReceived() ) {
         if (isNearBottom()) {
           scrollToLatest();
         }
