@@ -31,6 +31,7 @@ const EditProfile = () => {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
+    tournament_alias: "",
     password: "",
     password_confirmation: "",
   });
@@ -40,7 +41,14 @@ const EditProfile = () => {
       try {
         const mydata = await getMyData();
         setUserData(mydata)
-        console.log(mydata.avatar)
+        setFormData({
+          username: mydata.username,
+          email: mydata.email,
+          tournament_alias: mydata.tournament_alias,
+          password: "",
+          password_confirmation: "",
+        });
+        console.log(mydata.avatar_url)
         setAvatar({data: null, path: mydata.avatar_url})
         setIs2FAEnabled(mydata.mfa_enabled); // Assuming `mydata` contains a property `is2FAEnabled`
       } catch (error) {
@@ -141,9 +149,7 @@ const EditProfile = () => {
           <div className="flex flex-col items-center relative group">
             <div className="relative w-32 h-32">
               <img
-                src={
-                  avatar.data || avatar.path
-                }
+                src={ avatar.data || avatar.path }
                 alt="Profile Avatar"
                 className="w-full h-full rounded-full border-4 border-neonPink object-cover"
               />
@@ -199,7 +205,7 @@ const EditProfile = () => {
               type="text"
               id="tournament-alias"
               name="talias"
-              // value={formData.username}
+              value={formData.tournament_alias}
               onChange={handleInputChange}
               className="p-2 rounded bg-gray-800 text-white border border-gray-600"
             />
