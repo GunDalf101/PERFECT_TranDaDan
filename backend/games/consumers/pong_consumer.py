@@ -421,17 +421,14 @@ class PongConsumer(AsyncWebsocketConsumer):
             return None
 
     def handle_game_state_update(self, game_state):
-        """Update game state based on current conditions"""
         current_time = time.time()
 
-        # Update timestamps and check for timeouts
         if 'last_activity' in game_state:
-            if current_time - game_state['last_activity'] > 30:  # 30 second timeout
+            if current_time - game_state['last_activity'] > 30:
                 game_state['connection_warning'] = True
 
         game_state['last_activity'] = current_time
 
-        # Check win conditions
         if not game_state.get('winner'):
             p1_score = game_state['rounds_won'].get('player1', 0)
             p2_score = game_state['rounds_won'].get('player2', 0)
@@ -451,7 +448,6 @@ class PongConsumer(AsyncWebsocketConsumer):
         return all(field in game_state for field in required_fields)
 
     async def handle_reconnection(self):
-        """Handle player reconnection logic"""
         if not self.validate_game_state():
             await self.send_error("Invalid game state on reconnection")
             return False
