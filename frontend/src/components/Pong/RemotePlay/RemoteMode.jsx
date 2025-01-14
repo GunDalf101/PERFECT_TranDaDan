@@ -888,47 +888,52 @@ const RemoteMode = () => {
     return (
         <>
             <canvas ref={canvasRef} className="webgl" />
-
-            <div className="absolute top-10 left-1/2 transform -translate-x-1/2 flex items-center justify-between w-full max-w-4xl px-6 py-4 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full border-4 border-neon-cyan shadow-glow">
-                <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-cyan-400 neon-glow-cyan">
-                    <img
-                        src={isPlayer1 ? userAvatar : opponentAvatar}
-                        alt={isPlayer1 ? username : opponent}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                            e.target.src = '/default_profile.webp';
-                        }}
-                    />
-                </div>
-
-                <div className="flex flex-col items-center space-y-2">
-                    <div className="text-neon-white text-2xl pixel-font animate-glow">
-                        {username}: {scores[isPlayer1 ? 'player1' : 'player2']} | {opponent}: {scores[isPlayer1 ? 'player2' : 'player1']}
+            
+            <div className="absolute top-10 left-1/2 transform -translate-x-1/2 flex items-center justify-between w-full max-w-4xl px-6 py-4 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full border-4 border-cyan-400 shadow-glow">
+                <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-cyan-400">
+                        <img
+                            src={isPlayer1 ? userAvatar : opponentAvatar}
+                            alt={isPlayer1 ? username : opponent}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                                e.target.src = '/default_profile.webp';
+                            }}
+                        />
                     </div>
-
-                    <div className="text-neon-white text-xl pixel-font">
-                        MATCHES - {username}: {matches[isPlayer1 ? 'player1' : 'player2']} | {opponent}: {matches[isPlayer1 ? 'player2' : 'player1']}
+                    <span className="text-cyan-400 text-xl">{isPlayer1 ? username : opponent}</span>
+                </div>
+                
+                <div className="flex flex-col items-center">
+                    <div className="text-white text-2xl">
+                        {scores[isPlayer1 ? 'player1' : 'player2']} - {scores[isPlayer1 ? 'player2' : 'player1']}
+                    </div>
+                    <div className="text-gray-400">
+                        Round {matches[isPlayer1 ? 'player1' : 'player2'] + matches[isPlayer1 ? 'player2' : 'player1'] + 1}
                     </div>
                 </div>
-
-                <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-rose-400 neon-glow-rose">
-                    <img
-                        src={isPlayer1 ? opponentAvatar : userAvatar}
-                        alt={isPlayer1 ? opponent : username}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                            e.target.src = '/default_profile.webp';
-                        }}
-                    />
+                
+                <div className="flex items-center space-x-4">
+                    <span className="text-rose-400 text-xl">{isPlayer1 ? opponent : username}</span>
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-rose-400">
+                        <img
+                            src={isPlayer1 ? opponentAvatar : userAvatar}
+                            alt={isPlayer1 ? opponent : username}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                                e.target.src = '/default_profile.webp';
+                            }}
+                        />
+                    </div>
                 </div>
             </div>
-
+    
             {errorMessage && (
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-gray-800 to-gray-900 text-neon-white text-lg pixel-font px-6 py-4 rounded-lg border-2 border-neon-red shadow-glow z-50">
                     {errorMessage}
                 </div>
             )}
-
+    
             <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-neon-white text-lg pixel-font bg-gray-800/80 px-6 py-2 rounded-full border-2 border-neon-cyan animate-flicker">
                 {connectionState.status === 'connecting' ? 'Connecting...' :
                  connectionState.status === 'waiting_opponent' ? 'Waiting for opponent...' :
@@ -936,7 +941,7 @@ const RemoteMode = () => {
                  gameStatus === 'completed' ? 'Game ended' :
                  connectionState.hasGameStarted ? 'Game in progress' : 'Waiting to start'}
             </div>
-
+    
             <div className={`fixed bottom-4 right-4 flex items-center gap-2 px-4 py-2 rounded-full text-sm ${
                 connectionState.status === 'connected' ? 'bg-green-500/20' :
                 connectionState.status === 'unstable' ? 'bg-yellow-500/20' :
@@ -954,12 +959,12 @@ const RemoteMode = () => {
                      'Disconnected'}
                 </span>
             </div>
-
+    
             {gameStatus === 'completed' && (
-                <div className="absolute z-50 inset-0 bg-black/90 flex items-center justify-center">
-                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-lg text-center border-2 border-neon-white neon-glow-white">
+                <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
+                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-lg text-center border-2 border-cyan-400">
                         <Trophy className="w-16 h-16 mx-auto mb-4 text-cyan-400 animate-pulse" />
-                        <div className="text-2xl font-bold text-cyan-400 pixel-font animate-glow">
+                        <div className="text-2xl font-bold text-cyan-400 animate-pulse mb-4">
                             {winner}
                         </div>
                         <button
@@ -968,7 +973,7 @@ const RemoteMode = () => {
                                 websocketRef.current && websocketRef.current.close();
                                 websocketRef.current = null;
                             }}
-                            className="mt-4 bg-transparent text-neon-white border-2 border-cyan-400 px-6 py-2 rounded-lg hover:bg-cyan-400/20 transition-all duration-300 pixel-font"
+                            className="bg-transparent text-cyan-400 border-2 border-cyan-400 px-6 py-2 rounded-lg hover:bg-cyan-400/10 transition-colors duration-300"
                         >
                             Back to Lobby
                         </button>
@@ -977,6 +982,7 @@ const RemoteMode = () => {
             )}
         </>
     );
-};
+
+}
 
 export default RemoteMode;

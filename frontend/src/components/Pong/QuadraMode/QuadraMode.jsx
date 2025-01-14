@@ -862,14 +862,12 @@ const QuadraMode = () => {
         <>
             <canvas ref={canvasRef} className="webgl" />
             
-            {/* Retro Navbar for Teams */}
-            <div className="absolute top-10 left-1/2 transform -translate-x-1/2 flex items-center justify-between w-full max-w-5xl px-8 py-6 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full border-4 border-neon-cyan shadow-glow">
-                
-                {/* Red Team Avatars */}
+            <div className="absolute top-10 left-1/2 transform -translate-x-1/2 flex items-center justify-between w-full max-w-5xl px-8 py-6 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full border-4 border-cyan-400 shadow-glow">
+                {/* Red Team */}
                 <div className="flex items-center space-x-4">
                     {teams.red.map((player, index) => (
                         <div key={`red-${index}`} className="flex items-center space-x-2">
-                            <div className="w-12 h-12 rounded-full overflow-hidden border-4 border-rose-400 neon-glow-rose">
+                            <div className="w-12 h-12 rounded-full overflow-hidden border-4 border-rose-400">
                                 {player.image && (
                                     <img 
                                         src={player.image} 
@@ -878,30 +876,27 @@ const QuadraMode = () => {
                                     />
                                 )}
                             </div>
-                            <span className="text-rose-400 text-sm pixel-font">{player.nickname}</span>
+                            <span className="text-rose-400 text-sm">{player.nickname}</span>
                         </div>
                     ))}
                 </div>
                 
-                {/* Score and Rounds Display - Centered Between Teams */}
-                <div className="flex flex-col items-center space-y-3">
-                    {/* Score Display */}
-                    <div className="text-neon-white text-2xl pixel-font animate-glow">
-                        Red Team: {scores.player} | Blue Team: {scores.ai}
+                {/* Score Display */}
+                <div className="flex flex-col items-center">
+                    <div className="text-white text-2xl">
+                        {scores.player} - {scores.ai}
                     </div>
-                    
-                    {/* Rounds Display */}
-                    <div className="text-neon-white text-xl pixel-font">
-                        ROUNDS - Red Team: {matches.player} | Blue Team: {matches.ai}
+                    <div className="text-gray-400">
+                        Round {matches.player + matches.ai + 1}
                     </div>
                 </div>
                 
-                {/* Blue Team Avatars */}
+                {/* Blue Team */}
                 <div className="flex items-center space-x-4">
                     {teams.blue.map((player, index) => (
-                        <div key={`blue-${index}`} className="flex items-center space-x-2 justify-end">
-                            <span className="text-cyan-400 text-sm pixel-font">{player.nickname}</span>
-                            <div className="w-12 h-12 rounded-full overflow-hidden border-4 border-cyan-400 neon-glow-cyan">
+                        <div key={`blue-${index}`} className="flex items-center space-x-2">
+                            <span className="text-cyan-400 text-sm">{player.nickname}</span>
+                            <div className="w-12 h-12 rounded-full overflow-hidden border-4 border-cyan-400">
                                 {player.image && (
                                     <img 
                                         src={player.image} 
@@ -917,33 +912,31 @@ const QuadraMode = () => {
             
             {/* Controls Info */}
             <div className="absolute bottom-4 left-4 text-white text-sm space-y-1">
-                <p className="pixel-font">Red Team Controls:</p>
-                <p className="pixel-font">Player 1: Arrow Keys</p>
-                <p className="pixel-font">Player 2: WASD</p>
+                <p>Red Team Controls:</p>
+                <p>Player 1: Arrow Keys</p>
+                <p>Player 2: WASD</p>
             </div>
             
             <div className="absolute bottom-4 right-4 text-white text-sm space-y-1 text-right">
-                <p className="pixel-font">Blue Team Controls:</p>
-                <p className="pixel-font">Player 1: IJKL</p>
-                <p className="pixel-font">Player 2: Numpad 8456</p>
+                <p>Blue Team Controls:</p>
+                <p>Player 1: IJKL</p>
+                <p>Player 2: Numpad 8456</p>
             </div>
             
-            <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-neon-white text-lg pixel-font animate-flicker">
+            <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-white text-lg">
                 Press ENTER to start/pause game
             </div>
             
-            {/* Game Over Modal */}
             {gameOver && (
-                <div className="absolute inset-0 bg-black/90 flex items-center justify-center">
-                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-lg text-center border-2 border-neon-white neon-glow-white">
+                <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
+                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-lg text-center border-2 border-cyan-400">
                         <Swords className={`w-16 h-16 mx-auto mb-4 ${winner === 'red' ? 'text-rose-400' : 'text-cyan-400'} animate-pulse`} />
-                        <div className={`text-2xl font-bold ${winner === 'red' ? 'text-rose-400' : 'text-cyan-400'} pixel-font animate-glow`}>
-                            {winner.toUpperCase()} TEAM WINS!
+                        <div className={`text-2xl font-bold ${winner === 'red' ? 'text-rose-400' : 'text-cyan-400'} animate-pulse mb-4`}>
+                            {winner.toUpperCase()} Team Wins!
                         </div>
                         <button
                             onClick={() => navigate('/game-lobby/quadra-register')}
-                            className="mt-4 bg-transparent text-neon-white border-2 border-cyan-400 px-6 py-2 rounded-lg
-                                hover:bg-cyan-400/20 transition-all duration-300 pixel-font"
+                            className="bg-transparent text-cyan-400 border-2 border-cyan-400 px-6 py-2 rounded-lg hover:bg-cyan-400/10 transition-colors duration-300"
                         >
                             Back to Lobby
                         </button>
@@ -952,5 +945,8 @@ const QuadraMode = () => {
             )}
         </>
     );
-};
+
+
+}
+
 export default QuadraMode;

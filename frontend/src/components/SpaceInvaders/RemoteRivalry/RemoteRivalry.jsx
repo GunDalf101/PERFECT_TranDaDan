@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
+import { axiosInstance } from '../../../api/axiosInstance';
 
 const GAME_WIDTH = 800;
 const GAME_HEIGHT = 600;
@@ -24,6 +25,8 @@ const RemoteRivalry = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [winner, setWinner] = useState(null);
   const [gameSession, setGameSession] = useState(null);
+  const [userAvatar, setUserAvatar] = useState('/default_profile.webp');
+  const [opponentAvatar, setOpponentAvatar] = useState('/default_profile.webp');
   
   const wsRef = useRef(null);
   const cleanupRef = useRef(false);
@@ -39,6 +42,24 @@ const RemoteRivalry = () => {
     shoot: false
   });
 
+  const fetchUserAvatars = async (username, opponent) => {
+    try {
+      const userResponse = await axiosInstance.get(`api/search/?q=${encodeURIComponent(username)}`);
+      const userData = userResponse.data.results.find(user => user.username === username);
+      if (userData && userData.avatar_url) {
+        setUserAvatar(userData.avatar_url);
+      }
+
+      const opponentResponse = await axiosInstance.get(`api/search/?q=${encodeURIComponent(opponent)}`);
+      const opponentData = opponentResponse.data.results.find(user => user.username === opponent);
+      if (opponentData && opponentData.avatar_url) {
+        setOpponentAvatar(opponentData.avatar_url);
+      }
+    } catch (error) {
+      console.error("Error fetching avatars:", error);
+    }
+  };
+
   useEffect(() => {
     const session = JSON.parse(localStorage.getItem('gameSession'));
     if (!session) {
@@ -46,6 +67,7 @@ const RemoteRivalry = () => {
       return;
     }
     setGameSession(session);
+    fetchUserAvatars(session.username, session.opponent);
   }, [navigate]);
 
   useEffect(() => {
@@ -284,38 +306,60 @@ const RemoteRivalry = () => {
     );
   }
 
+  const { username, opponent, isPlayer1 } = gameSession;
+
   return (
     <div className="relative flex flex-col items-center min-h-screen bg-gray-900 text-white">
       <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-full max-w-4xl flex justify-between items-center px-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
-            P1
+          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-blue-500">
+            <img
+              src={isPlayer1 ? userAvatar : opponentAvatar}
+              alt={isPlayer1 ? username : opponent}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.src = '/default_profile.webp';
+              }}
+            />
           </div>
-          <div className="text-2xl font-bold">
-            <span className="text-blue-500">{gameState.score1}</span>
-            {gameState.combo1 > 0 && (
-              <span className="ml-2 text-yellow-500">x{1 + Math.floor(gameState.combo1/5)}</span>
-            )}
+          <div className="flex flex-col">
+            <span className="text-blue-500 font-medium">{isPlayer1 ? username : opponent}</span>
+            <div className="text-2xl font-bold">
+              <span className="text-blue-500">{gameState.score1}</span>
+              {gameState.combo1 > 0 && (
+                <span className="ml-2 text-yellow-500">x{1 + Math.floor(gameState.combo1/5)}</span>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="text-xl font-bold text-cyan-400">Wave {gameState.wave}</div>
 
         <div className="flex items-center gap-4">
-          <div className="text-2xl font-bold">
-            <span className="text-red-500">{gameState.score2}</span>
-            {gameState.combo2 > 0 && (
-              <span className="ml-2 text-yellow-500">x{1 + Math.floor(gameState.combo2/5)}</span>
-            )}
+          <div className="flex flex-col items-end">
+            <span className="text-red-500 font-medium">{isPlayer1 ? opponent : username}</span>
+            <div className="text-2xl font-bold">
+              <span className="text-red-500">{gameState.score2}</span>
+              {gameState.combo2 > 0 && (
+                <span className="ml-2 text-yellow-500">x{1 + Math.floor(gameState.combo2/5)}</span>
+              )}
+            </div>
           </div>
-          <div className="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center">
-            P2
+          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-red-500">
+            <img
+              src={isPlayer1 ? opponentAvatar : userAvatar}
+              alt={isPlayer1 ? opponent : username}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.src = '/default_profile.webp';
+              }}
+            />
           </div>
         </div>
       </div>
 
       <div
-        className="relative mt-16 bg-gray-800 rounded-lg overflow-hidden"
+        className="relative mt-20 bg-gray-800 rounded-lg overflow-hidden"
         style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
       >
         <div

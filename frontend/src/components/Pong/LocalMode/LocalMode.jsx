@@ -665,63 +665,66 @@ const LocalMode = () => {
     return (
         <>
             <canvas ref={canvasRef} className="webgl" />
-        
-        {/* Retro Navbar for Player Avatars and Scores */}
-        <div className="absolute top-10 left-1/2 transform -translate-x-1/2 flex items-center justify-between w-full max-w-4xl px-6 py-4 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full border-4 border-neon-cyan shadow-glow">
             
-            {/* Player 1 Avatar */}
-            <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-cyan-400 neon-glow-cyan">
-                {player1Image && (
-                    <img 
-                        src={player1Image} 
-                        alt={player1Name}
-                        className="w-full h-full object-cover"
-                    />
-                )}
-            </div>
-            
-            {/* Scores and Rounds - Centralized between Avatars */}
-            <div className="flex flex-col items-center space-y-2">
-                {/* Score Display */}
-                <div className="text-neon-white text-2xl pixel-font animate-glow">
-                    {player1Name}: {scores.player} | {player2Name}: {scores.ai}
+            <div className="absolute top-10 left-1/2 transform -translate-x-1/2 flex items-center justify-between w-full max-w-4xl px-6 py-4 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full border-4 border-cyan-400 shadow-glow">
+                <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-cyan-400">
+                        {player1Image && (
+                            <img 
+                                src={player1Image} 
+                                alt={player1Name}
+                                className="w-full h-full object-cover"
+                            />
+                        )}
+                    </div>
+                    <span className="text-cyan-400 text-xl">{player1Name}</span>
                 </div>
                 
-                {/* Rounds Display */}
-                <div className="text-neon-white text-xl pixel-font">
-                    ROUNDS - {player1Name}: {matches.player} | {player2Name}: {matches.ai}
+                <div className="flex flex-col items-center">
+                    <div className="text-white text-2xl">
+                        {scores.player} - {scores.ai}
+                    </div>
+                    <div className="text-gray-400">
+                        Round {matches.player + matches.ai + 1}
+                    </div>
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                    <span className="text-rose-400 text-xl">{player2Name}</span>
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-rose-400">
+                        {player2Image && (
+                            <img 
+                                src={player2Image} 
+                                alt={player2Name}
+                                className="w-full h-full object-cover"
+                            />
+                        )}
+                    </div>
                 </div>
             </div>
-            
-            {/* Player 2 Avatar */}
-            <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-rose-400 neon-glow-rose">
-                {player2Image && (
-                    <img 
-                        src={player2Image} 
-                        alt={player2Name}
-                        className="w-full h-full object-cover"
-                    />
-                )}
+    
+            <div className="absolute bottom-4 left-4 text-white text-sm space-y-1">
+                <p>{player1Name}: Arrow Keys</p>
             </div>
-        </div>
-        
-        {/* Instructions */}
-        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-neon-white text-lg pixel-font animate-flicker">
-            Press ENTER to start/pause game
-        </div>
             
-            {/* Game Over Screen */}
+            <div className="absolute bottom-4 right-4 text-white text-sm space-y-1 text-right">
+                <p>{player2Name}: WASD</p>
+            </div>
+            
+            <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-white text-lg">
+                Press ENTER to start/pause game
+            </div>
+    
             {gameOver && (
-                <div className="absolute inset-0 bg-black/90 flex items-center justify-center">
-                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-lg text-center border-2 border-neon-white neon-glow-white">
+                <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
+                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-lg text-center border-2 border-cyan-400">
                         <Trophy className={`w-16 h-16 mx-auto mb-4 ${winner === player1Name ? 'text-cyan-400' : 'text-rose-400'} animate-pulse`} />
-                        <div className={`text-2xl font-bold ${winner === player1Name ? 'text-cyan-400' : 'text-rose-400'} pixel-font animate-glow`}>
-                            {winner} WINS!
+                        <div className={`text-2xl font-bold ${winner === player1Name ? 'text-cyan-400' : 'text-rose-400'} animate-pulse mb-4`}>
+                            {winner} Wins!
                         </div>
                         <button
                             onClick={() => navigate('/game-lobby/local-register')}
-                            className="mt-4 bg-transparent text-neon-white border-2 border-cyan-400 px-6 py-2 rounded-lg
-                                hover:bg-cyan-400/20 transition-all duration-300 pixel-font"
+                            className="bg-transparent text-cyan-400 border-2 border-cyan-400 px-6 py-2 rounded-lg hover:bg-cyan-400/10 transition-colors duration-300"
                         >
                             Back to Lobby
                         </button>
