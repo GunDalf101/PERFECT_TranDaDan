@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { useRealTime } from "../../context/RealTimeContext"
 import { first } from "lodash";
+import { axiosInstance } from "../../api/axiosInstance";
+import getUserData from "../../api/authServiceUser";
 
 const ChatApp = () => {
   const { user, isAuthenticated } = useUser();
@@ -108,15 +110,23 @@ const ChatApp = () => {
     try {
       setIsLoading(true);
       // const data = await getFriends();
-
-      const friendsData = friends.map((friend, index) => {
+      // Create a map for quick lookup of friend details by username
+      // const friendDetailsMap = new Map(
+        //   friendDetails.map(detail => [detail.username, detail])
+        // const friendDetails = friendDetailsResponse.friends;
+        // console.log(friendDetailsResponse);
+        // );
+        const friendsData = friends.map( (friend, index) => {
+          // const friendDetailsResponse = await getUserData(friend);
+          console.log(friend);
+          // const friendDetail = friendDetailsMap.get(friend.username) || {};
         const cachedLastMessage = lastMessagesRef.current.get(friend);
         return {
           id: index + 1,
           name: friend,
           online: false,
           lastSeen: new Date().toISOString(),
-          avatar: friends.avatar_url,
+          avatar: "s",
           lastMessage: cachedLastMessage?.content || null,
           lastMessageTime: cachedLastMessage?.timestamp || null,
           unreadCount: 0,
@@ -134,7 +144,7 @@ const ChatApp = () => {
         await loadLastMessagesForFriends(uncachedFriends);
       }
     } catch (error) {
-      console.error("Error loading friends:", error);
+      // console.error("Error loading friends:", error);
       setError("Failed to load friends list. Please refresh the page.");
     } finally {
       setIsLoading(false);
