@@ -123,7 +123,8 @@ class OAuth2CallbackView(UnprotectedView):
                 email=None,
                 username=free_username,
                 intra_user=True,
-                tournament_alias=get_free_game_nickname(free_username)
+                tournament_alias=get_free_game_nickname(free_username),
+                avatar_url=avatar_url
             )
             intra_connection = IntraConnection.objects.create(
                 user=user,
