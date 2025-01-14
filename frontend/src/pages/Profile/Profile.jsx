@@ -4,6 +4,31 @@ import {getMyData} from "../../api/authServiceMe";
 import getMatches from "../../api/gameService"
 import { useNavigate } from 'react-router-dom';
 import Loading from "../../components/Loading/Loading";
+import { Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+
+// Register necessary components
+ChartJS.register(ArcElement, Tooltip, Legend);
+
+
+const data = {
+  labels: [
+    "win",
+    "lose"
+  ],
+  datasets: [{
+    label: 'win lose rate',
+    data: [1, 1],
+    backgroundColor: [
+      'rgb(0 212 255)',
+      'rgb(220 38 38)',
+    ],
+    borderColor: ['rgb(255 0 204)'], // Set border color for each slice
+    borderWidth: 0, // Set border width
+    hoverOffset: 3
+  }]
+};
+
 
 const Profile = () => {
   const [mydata, setMyData] = useState(null);
@@ -164,23 +189,13 @@ const Profile = () => {
 
       {/* Match History and Statistics Section */}
       <div className="flex flex-wrap justify-between w-11/12 gap-4">
-        {/* Statistics Card */}
-        <div className="flex-1 min-w-[300px] h-fit p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
-          <h2 className="text-2xl text-center text-neonBlue mb-4">Game Statistics</h2>
-          <ul className="text-center text-white">
-            <li className="mb-2">
-              <strong>Total Matches:</strong> {statistics.totalMatches}
-            </li>
-            <li className="mb-2">
-              <strong>Wins:</strong> {statistics.wins}
-            </li>
-            <li className="mb-2">
-              <strong>Losses:</strong> {statistics.losses}
-            </li>
-            <li>
-              <strong>Win Rate:</strong> {statistics.winRate}
-            </li>
-          </ul>
+        <div className="flex-1 min-w-[300px] max-w-[500px] h-fit p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
+        <h1 className="text-center text-2xl m-2"><span className="text-red-700">Lose</span> and <span className="text-neonBlue">Win</span> rate.</h1>
+        <Pie className="text-xl" data={data}/>
+        </div>
+        <div className="flex-1 min-w-[300px] max-w-[500px] h-fit p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
+        <h1 className="text-center text-2xl m-2"><span className="text-red-700">Lose</span> and <span className="text-neonBlue">Win</span> rate.</h1>
+        <Pie className="text-xl" data={data}/>
         </div>
       </div>
     </div>

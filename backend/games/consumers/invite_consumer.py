@@ -46,7 +46,7 @@ class InviteConsumer(AsyncJsonWebsocketConsumer):
     async def handle_send_invite(self, content):
         print(content)
         target_username = content.get('target_username')
-        game_type = content.get('game_type', 'standard')
+        game_type = content.get('game_type', 'pong')
         
         if target_username == self.username:
             await self.send_json({
@@ -100,7 +100,7 @@ class InviteConsumer(AsyncJsonWebsocketConsumer):
         match = await sync_to_async(Match.objects.create)(
             player1=self.scope['user'],
             player2=inviter_connection.scope['user'],
-            game_type=content.get('game_type', 'standard'),
+            game_type=content.get('game_type', 'pong'),
             status="ongoing"
         )
         

@@ -24,7 +24,7 @@ class Command(BaseCommand):
                     score_player2=0,
                     winner=None,
                     forfeit=False,
-                    status= 'completed' if getrandbits(1) else 'pending',
+                    status= 'completed',
                 )
                 self.stdout.write(self.style.SUCCESS(f'Created Match: {match.id} with game_type={game_type}'))
 

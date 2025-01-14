@@ -3,6 +3,7 @@ import {qrMFAreq, disableMFAreq, enableMFA} from "../../api/mfaService"
 import {myToast} from "../../lib/utils1"
 import { useState, useEffect } from "react";
 import { changeAvatarReq } from "../../api/avatarService";
+import { useNavigate } from 'react-router-dom';
 
 function formatSerializerErrors(errors) {
   if (typeof errors === "string") return [errors];
@@ -23,6 +24,7 @@ const EditProfile = () => {
     data: null,
     path: null
   });
+  const navigate = useNavigate();
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [qrCode, setQrCode] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
@@ -99,13 +101,8 @@ const EditProfile = () => {
       console.log(formData);
       await editMyData(formData);
       setReload(!reload);
-      myToast(0, "you profile has been updated.")
-      setFormData({
-        username: "",
-        email: "",
-        password: "",
-        password_confirmation: "",
-      });
+      myToast(0, "you profile has been updated.");
+      navigate("/profile");
     } catch (error) {
       let errors = formatSerializerErrors(error.response.data['error']);
       for (let e of errors) myToast(2, e);
@@ -149,7 +146,7 @@ const EditProfile = () => {
           <div className="flex flex-col items-center relative group">
             <div className="relative w-32 h-32">
               <img
-                src={ avatar.data || avatar.path }
+                src={ avatar.data || avatar.path || '/default_profile.webp' }
                 alt="Profile Avatar"
                 className="w-full h-full rounded-full border-4 border-neonPink object-cover"
               />
