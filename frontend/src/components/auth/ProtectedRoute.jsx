@@ -7,20 +7,6 @@ const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useUser();
   const location = useLocation();
 
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      setIsLoading(false);
-    };
-
-    checkAuth();
-  }, []);
-
-  if (isLoading) {
-    return <Loading />;
-  }
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

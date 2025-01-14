@@ -94,7 +94,7 @@ const RemoteMode = () => {
             }
 
             const ws = new WebSocket(
-                `${env.WS_URL}/ws/pong/${gameId}/?username=${username}`
+                `${env.WS_URL}/ws/pong/${gameId}/?token=${localStorage.getItem('access_token')}`
             );
             websocketRef.current = ws;
 
@@ -666,22 +666,21 @@ const RemoteMode = () => {
                 updateScore();
                 resetBall(-1);
             }
-            if ( isPlayer1 ) { 
-                if (scoreUpdate && websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
-                    websocketRef.current.send(JSON.stringify({
-                        type: 'score_update',
-                        scores: {
-                            player1: playerScore,
-                            player2: aiScore
-                        },
-                        scoringPlayer: scoringPlayer,
-                        playerGamesWon: playerGamesWon,
-                        aiGamesWon: aiGamesWon
-                    }));
-                }
-    
-                winCheck();
+
+            if (scoreUpdate && websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
+                websocketRef.current.send(JSON.stringify({
+                    type: 'score_update',
+                    scores: {
+                        player1: playerScore,
+                        player2: aiScore
+                    },
+                    scoringPlayer: scoringPlayer,
+                    playerGamesWon: playerGamesWon,
+                    aiGamesWon: aiGamesWon
+                }));
             }
+
+            winCheck();
         };
 
         const handleMouseMove = (event) => {
@@ -794,8 +793,8 @@ const RemoteMode = () => {
                 if (isPlayer1) {
                     simulatePhysics(deltaTime);
                     checkCollisions();
+                    gameLogic();
                 }
-                gameLogic();
 
             }
             controls.update();

@@ -108,7 +108,7 @@ export const InviteProvider = ({ children }) => {
     }
 
     try {
-      const ws = new WebSocket(`${WEBSOCKET_URL}/?username=${myUsername}`);
+      const ws = new WebSocket(`${WEBSOCKET_URL}/?token=${localStorage.getItem('access_token')}`);
 
       ws.onopen = () => {
         console.log("WebSocket Connected");

@@ -83,7 +83,7 @@ const RemoteRivalry = () => {
     }
 
     const ws = new WebSocket(
-      `${env.WS_URL}/ws/space-rivalry/${gameId}/?username=${username}`
+      `${env.WS_URL}/ws/space-rivalry/${gameId}/?token=${localStorage.getItem('access_token')}`
     );
     wsRef.current = ws;
 
@@ -127,7 +127,7 @@ const RemoteRivalry = () => {
           if (reconnectAttempts.current < maxReconnectAttempts) {
             reconnectAttempts.current++;
             const newWs = new WebSocket(
-              `${env.WS_URL}/ws/space-rivalry/${gameId}/?username=${username}`
+              `${env.WS_URL}/ws/space-rivalry/${gameId}/?token=${localStorage.getItem('access_token')}`
             );
             wsRef.current = newWs;
           } else {
