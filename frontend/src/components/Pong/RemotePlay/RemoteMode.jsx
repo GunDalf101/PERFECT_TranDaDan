@@ -6,6 +6,7 @@ import gsap from 'gsap';
 import { split } from 'three/src/nodes/TSL.js';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
+import { axiosInstance } from '../../../api/axiosInstance';
 
 const RemoteMode = () => {
     const canvasRef = useRef(null);
@@ -26,6 +27,9 @@ const RemoteMode = () => {
     const isReconnecting = useRef(false);
     const [winner, setWinner] = useState(null);
     const navigate = useNavigate();
+    const [userAvatar, setUserAvatar] = useState('/default_profile.webp');
+    const [opponentAvatar, setOpponentAvatar] = useState('/default_profile.webp');
+
     const [connectionState, setConnectionState] = useState({
         status: 'connecting',
         lastPing: Date.now(),
@@ -41,6 +45,29 @@ const RemoteMode = () => {
     }
     const { gameId, username, opponent, isPlayer1 } = gameSession;
     const [gameStatus, setGameStatus] = useState('waiting');
+
+    const fetchUserAvatars = async () => {
+        try {
+            const userResponse = await axiosInstance.get(`api/search/?q=${encodeURIComponent(username)}`);
+            const userData = userResponse.data.results.find(user => user.username === username);
+            if (userData && userData.avatar_url) {
+                setUserAvatar(userData.avatar_url);
+            }
+
+            const opponentResponse = await axiosInstance.get(`api/search/?q=${encodeURIComponent(opponent)}`);
+            const opponentData = opponentResponse.data.results.find(user => user.username === opponent);
+            if (opponentData && opponentData.avatar_url) {
+                setOpponentAvatar(opponentData.avatar_url);
+            }
+        } catch (error) {
+            console.error("Error fetching avatars:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchUserAvatars();
+    }, [username, opponent]);
+
 
     useEffect(() => {
         if (!canvasRef.current) return;
@@ -863,12 +890,14 @@ const RemoteMode = () => {
             <canvas ref={canvasRef} className="webgl" />
 
             <div className="absolute top-10 left-1/2 transform -translate-x-1/2 flex items-center justify-between w-full max-w-4xl px-6 py-4 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full border-4 border-neon-cyan shadow-glow">
-
                 <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-cyan-400 neon-glow-cyan">
                     <img
-                        src="/api/placeholder/64/64"
+                        src={isPlayer1 ? userAvatar : opponentAvatar}
                         alt={isPlayer1 ? username : opponent}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                            e.target.src = '/default_profile.webp';
+                        }}
                     />
                 </div>
 
@@ -884,9 +913,12 @@ const RemoteMode = () => {
 
                 <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-rose-400 neon-glow-rose">
                     <img
-                        src="/api/placeholder/64/64"
+                        src={isPlayer1 ? opponentAvatar : userAvatar}
                         alt={isPlayer1 ? opponent : username}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                            e.target.src = '/default_profile.webp';
+                        }}
                     />
                 </div>
             </div>
@@ -896,6 +928,7 @@ const RemoteMode = () => {
                     {errorMessage}
                 </div>
             )}
+
             <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-neon-white text-lg pixel-font bg-gray-800/80 px-6 py-2 rounded-full border-2 border-neon-cyan animate-flicker">
                 {connectionState.status === 'connecting' ? 'Connecting...' :
                  connectionState.status === 'waiting_opponent' ? 'Waiting for opponent...' :
@@ -931,11 +964,10 @@ const RemoteMode = () => {
                         </div>
                         <button
                             onClick={() => {
-                                navigate('/game-lobby')
-                                    websocketRef.current && websocketRef.current.close()
-                                    websocketRef.current = null
-                                }
-                            }
+                                navigate('/game-lobby');
+                                websocketRef.current && websocketRef.current.close();
+                                websocketRef.current = null;
+                            }}
                             className="mt-4 bg-transparent text-neon-white border-2 border-cyan-400 px-6 py-2 rounded-lg hover:bg-cyan-400/20 transition-all duration-300 pixel-font"
                         >
                             Back to Lobby

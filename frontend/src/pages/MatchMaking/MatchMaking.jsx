@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import './MatchMaking.css';
-import { Link, useNavigate, useSearchParams  } from 'react-router-dom';
-import {getMyData} from '../../api/authServiceMe';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { getMyData } from '../../api/authServiceMe';
+import { axiosInstance } from '../../api/axiosInstance';
 
 const ProfileCard = ({ username, title, picture }) => (
   <div className="card bg-gray-900 p-6 rounded-lg text-center w-full max-w-xs flex flex-col items-center hover-glow">
@@ -32,18 +33,18 @@ const MatchMaking = ({ gameType = "pong" }) => {
   const [socket, setSocket] = useState(null);
   const [isDataReady, setIsDataReady] = useState(false);
   const [username, setUsername] = useState('');
+  const [avatar, setAvatar] = useState(null);
   const [matchFound, setMatchFound] = useState(false);
   const navigate = useNavigate();
 
   const userDataRef = useRef(null);
   const [searchParams] = useSearchParams();
   const receivedGameType = searchParams.get("gameType") || gameType;
-  console.log("Received game type:", searchParams.get("gameType") );
 
   const userData = {
     username: username || 'Loading...',
     title: 'Jedi Master',
-    picture: 'https://randomuser.me',
+    picture: avatar || '/default_profile.webp'
   };
 
   const fetchUserData = async () => {
@@ -53,10 +54,33 @@ const MatchMaking = ({ gameType = "pong" }) => {
         userDataRef.current = data;
         setUsername(data.username);
         setIsDataReady(true);
+        setAvatar(data.avatar_url);
         console.log("Fetched user data:", userDataRef.current);
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
+    }
+  };
+
+  const fetchOpponentData = async (opponentUsername) => {
+    try {
+      const response = await axiosInstance.get(`api/search/?q=${encodeURIComponent(opponentUsername)}`);
+      const opponentData = response.data.results.find(user => user.username === opponentUsername);
+      
+      if (opponentData) {
+        setOpponent({
+          username: opponentData.username,
+          title: 'Opponent',
+          picture: opponentData.avatar_url || '/default_profile.webp'
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching opponent data:", error);
+      setOpponent({
+        username: opponentUsername,
+        title: 'Opponent',
+        picture: '/default_profile.webp'
+      });
     }
   };
 
@@ -80,11 +104,7 @@ const MatchMaking = ({ gameType = "pong" }) => {
 
       if (data.status === "matched") {
         setMatchFound(true);
-        setOpponent({
-          username: data.opponent,
-          title: 'Opponent',
-          picture: 'https://randomuser.me'
-        });
+        fetchOpponentData(data.opponent);
         setIsSearching(false);
 
         console.log("Match found:", data);
@@ -96,19 +116,18 @@ const MatchMaking = ({ gameType = "pong" }) => {
         };
         localStorage.setItem('gameSession', JSON.stringify(gameSession));
 
-        // Navigate to remote-play within game-lobby
         setTimeout(() => {
           if (receivedGameType === "pong") {
             navigate('/game-lobby/remote-play', {
               state: gameSession
             });
           }
+          if (receivedGameType === "space-rivalry") {
+            navigate('/game-lobby/remote-rivalry', {
+              state: gameSession
+            });
+          }
         }, 3000);
-        if (receivedGameType === "space-rivalry") {
-          navigate('/game-lobby/remote-rivalry', {
-            state: gameSession
-          });
-        }
       } else if (data.status === "searching") {
         console.log("Searching for a match...");
       }
