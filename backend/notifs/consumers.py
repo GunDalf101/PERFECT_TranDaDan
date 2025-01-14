@@ -63,6 +63,7 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         self.group_name = f"notifs_user_{self.user.username}"
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.send_notifications()
+        await self.send_friends_list()
         await self.scan_for_online_friends(self.user)
 
     async def disconnect(self, close_code):
@@ -91,6 +92,15 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json({
             'msgtype': 'notification',
             'notifications': notifications
+        })
+
+    async def send_friends_list(self):
+        friends = await self.get_user_friends(self.user)
+        friends = list(map(lambda friend: friend.username, friends))
+        print(friends)
+        await self.send_json({
+            'msgtype': 'friends',
+            'friends': friends
         })
 
     async def send_new_notification(self, event):
@@ -145,7 +155,7 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
             f"notifs_user_{self.user.username}",
             {
                 'type': 'dispatch_relationship_update',
-                'msgtype': 'self_relationship_update',
+                'msgtype': 'relationship_update',
                 'action': action,
                 'username': username,
                 'sender': self.channel_name
@@ -157,22 +167,26 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
                 'type': 'dispatch_relationship_update',
                 'msgtype': 'relationship_update',
                 'action': action,
-                'username': self.user.username
+                'username': self.user.username,
+                # 'sender': self.channel_name
             }
         )
 
     async def dispatch_relationship_update(self, event):
-        if "type" in event:
-            del event['type']
+        # if "type" in event:
+        #     del event['type']
         # else:
         #     #print(f"WTFFF: {event}")
         #     raise Exception
-        if event.get("msgtype") == 'self_relationship_update':
-            if self.channel_name != event.get("sender"):
-                if "sender" in event:
-                    del event['sender']
-                await self.send_json(event)
-        else:
+        # if event.get("msgtype") == 'self_relationship_update':
+        #     if self.channel_name != event.get("sender"):
+        #         if "sender" in event:
+        #             del event['sender']
+        #         await self.send_json(event)
+        # else:
+        if self.channel_name != event.get("sender"):
+            if "sender" in event:
+                del event['sender']
             await self.send_json(event)
 
     @database_sync_to_async

@@ -14,11 +14,35 @@ export const RealTimeProvider = ({ children }) => {
   const [relationshipUpdate, setRelationshipUpdate] = useState(null);
   const [selfRelationshipUpdate, setSelfRelationshipUpdate] = useState(null);
   const [onlineFriends, setOnlineFriends] = useState([]);
+  const [friends, setFriends] = useState([]);
   const [ws, setWs] = useState(null);
   const { isAuthenticated } = useUser();
   const [retryWSConnect, setRetryWSConnect] = useState(false);
   // const [markedNotifications, setMarkedNotifications] = useState(new Set());
   const [markedIds, setMarkedIds] = useState(new Set());
+
+  const updateFriendsFromFSEvent = (data) => {
+    let username = data.username;
+    if (data.action == "friends") {
+      setFriends((prev) => {
+        if (prev.includes(username)) return prev;
+        return prev.concat(username);
+      });
+      setOnlineFriends((prev) => {
+        if (prev.includes(username)) return prev;
+        return prev.concat(username);
+      });
+    } else if (["blocked", "unfriended"].includes(data.action)) {
+      setFriends((prev) => {
+        if (!prev.includes(username)) return prev;
+        return prev.filter(f => f !== username);
+      });
+      setOnlineFriends((prev) => {
+        if (!prev.includes(username)) return prev;
+        return prev.filter(f => f !== username);
+      });
+    }
+  }
 
   useEffect(() => {
     let socket;
@@ -36,10 +60,11 @@ export const RealTimeProvider = ({ children }) => {
           const data = JSON.parse(event.data);
           if (data.msgtype === 'notification') {
             setNotifications(notifications => data.notifications.concat(notifications));
+          } else if (data.msgtype === 'friends') {
+            setFriends(data.friends);
           } else if (data.msgtype === 'relationship_update') {
+            updateFriendsFromFSEvent(data);
             setRelationshipUpdate(data);
-          } else if (data.msgtype === 'self_relationship_update') {
-            setSelfRelationshipUpdate(data);
           } else if (data.msgtype === 'friend_status_change') {
             const { username, is_online } = data;
 
@@ -57,7 +82,7 @@ export const RealTimeProvider = ({ children }) => {
 
         socket.onclose = socket.onerror = (event) => {
           clearRealTimeContext();
-          setRetryWSConnect(!retryWSConnect);
+          // setRetryWSConnect(!retryWSConnect);
           console.log('WebSocket connection closed:', event);
         };
 
@@ -79,7 +104,8 @@ export const RealTimeProvider = ({ children }) => {
         username: username,
         type: 'relationship_update',
       }
-      setSelfRelationshipUpdate(e);
+      updateFriendsFromFSEvent(e);
+      setRelationshipUpdate(e);
       ws.send(JSON.stringify(e));
     }
   };
@@ -108,7 +134,7 @@ export const RealTimeProvider = ({ children }) => {
   };
 
   return (
-    <RealTimeContext.Provider value={{ notifications, removeMarkedNotifications , relationshipUpdate, sendRelationshipUpdate, markAsRead, clearRealTimeContext, onlineFriends, selfRelationshipUpdate }}>
+    <RealTimeContext.Provider value={{ notifications, removeMarkedNotifications , relationshipUpdate, sendRelationshipUpdate, markAsRead, clearRealTimeContext, onlineFriends, selfRelationshipUpdate, friends }}>
       {children}
     </RealTimeContext.Provider>
   );

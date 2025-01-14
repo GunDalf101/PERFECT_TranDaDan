@@ -19,12 +19,14 @@ import {
   X,
   Check,
 } from "lucide-react";
+import { useRealTime } from "../../context/RealTimeContext"
+import { first } from "lodash";
 
 const ChatApp = () => {
   const { user, isAuthenticated } = useUser();
   const { sendMessage, registerMessageHandler, isConnected } = useWebSocket();
   const [messages, setMessages] = useState([]);
-  const [friends, setFriends] = useState([]);
+  const [friendsData, setFriendsData] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
   const [activeSidebar, setActiveSidebar] = useState(null);
   const [newMessage, setNewMessage] = useState("");
@@ -39,6 +41,7 @@ const ChatApp = () => {
   const pageTrackingRef = useRef(new Map());
   const messageCacheRef = useRef(new Map());
   const lastMessagesRef = useRef(new Map());
+  const { friends } = useRealTime()
   const scrollPositionRef = useRef(null);
 
   const currentUsername = user ? JSON.parse(user).username : null;
@@ -76,7 +79,7 @@ const ChatApp = () => {
         timestamp: newMessage.timestamp,
       });
 
-      setFriends((prevFriends) =>
+      setFriendsData((prevFriends) =>
         prevFriends.map((friend) => {
           if (friend.name === friendName) {
             return {
@@ -94,14 +97,18 @@ const ChatApp = () => {
     [selectedChat]
   );
 
+  useEffect ( ()  =>{
+     loadFriendsWithLastMessages();
+  },[friends])
+
   const loadFriendsWithLastMessages = async () => {
     if (!isAuthenticated) return;
 
     try {
       setIsLoading(true);
-      const data = await getFriends();
+      // const data = await getFriends();
 
-      const friendsData = data.friends.map((friend, index) => {
+      const friendsData = friends.map((friend, index) => {
         const cachedLastMessage = lastMessagesRef.current.get(friend);
         return {
           id: index + 1,
@@ -115,7 +122,7 @@ const ChatApp = () => {
         };
       });
 
-      setFriends(friendsData);
+      setFriendsData(friendsData);
 
       // Load last messages only for friends without cached messages
       const uncachedFriends = friendsData.filter(
@@ -156,7 +163,7 @@ const ChatApp = () => {
           timestamp: lastMessage.timestamp,
         });
 
-        setFriends((prev) =>
+        setFriendsData((prev) =>
           prev.map((f) =>
             f.name === friend.name
               ? {
@@ -212,7 +219,7 @@ const ChatApp = () => {
       setIsLoadingMore(true);
       saveScrollPosition();
 
-      const selectedFriend = friends.find((f) => f.id === selectedChat);
+      const selectedFriend = friendsData.find((f) => f.id === selectedChat);
       if (!selectedFriend) return;
 
       const loadedPages =
@@ -287,7 +294,7 @@ const ChatApp = () => {
       setHasMore(true);
 
       try {
-        const selectedFriend = friends.find((f) => f.id === selectedChat);
+        const selectedFriend = friendsData.find((f) => f.id === selectedChat);
         if (!selectedFriend) return;
 
         // Check cache first
@@ -325,7 +332,7 @@ const ChatApp = () => {
         setHasMore(response.next !== null);
 
         // Reset unread count
-        setFriends((prev) =>
+        setFriendsData((prev) =>
           prev.map((friend) =>
             friend.id === selectedChat ? { ...friend, unreadCount: 0 } : friend
           )
@@ -339,7 +346,7 @@ const ChatApp = () => {
     };
 
     loadInitialMessages();
-  }, [selectedChat, friends, generateMessageId, cacheMessages]);
+  }, [selectedChat, friendsData, generateMessageId, cacheMessages]);
 
   useEffect(() => {
     const handleMessage = (data) => {
@@ -368,7 +375,7 @@ const ChatApp = () => {
         updateFriendLastMessage(friendName, newMsg);
 
         // Update cache
-        const chatId = friends.find((f) => f.name === friendName)?.id;
+        const chatId = friendsData.find((f) => f.name === friendName)?.id;
         if (chatId) {
           const cachedMessages = messageCacheRef.current.get(chatId) || [];
           messageCacheRef.current.set(chatId, [newMsg, ...cachedMessages]);
@@ -383,7 +390,7 @@ const ChatApp = () => {
     registerMessageHandler,
     currentUsername,
     updateFriendLastMessage,
-    friends,
+    friendsData,
   ]);
 
   const handleSendMessage = useCallback(
@@ -391,7 +398,7 @@ const ChatApp = () => {
       if (e) e.preventDefault();
       if (!newMessage.trim() || !selectedChat) return;
 
-      const selectedFriend = friends.find((f) => f.id === selectedChat);
+      const selectedFriend = friendsData.find((f) => f.id === selectedChat);
       if (!selectedFriend) return;
 
       const messageData = {
@@ -438,7 +445,7 @@ const ChatApp = () => {
     [
       selectedChat,
       newMessage,
-      friends,
+      friendsData,
       currentUsername,
       generateMessageId,
       isConnected,
@@ -457,21 +464,21 @@ const ChatApp = () => {
       <div className="flex">
         <div className={`${styles.chat_win}`}>
           <UserList
-            friends={friends}
+            friends={friendsData}
             selectedChat={selectedChat}
             setSelectedChat={setSelectedChat}
             isLoading={isLoading}
             currentUsername={currentUsername}
           />
           <ChatContent
-            friends={friends}
+            friends={friendsData}
             messages={messages}
             selectedChat={selectedChat}
             newMessage={newMessage}
             setNewMessage={setNewMessage}
             handleSendMessage={handleSendMessage}
             handleSidebarToggle={handleSidebarToggle}
-            isOnline={friends.find((f) => f.id === selectedChat)?.online}
+            isOnline={friendsData.find((f) => f.id === selectedChat)?.online}
             loadMoreMessages={loadMoreMessages}
             hasMore={hasMore}
             isLoading={isLoading}
@@ -480,7 +487,7 @@ const ChatApp = () => {
         </div>
         {activeSidebar && (
           <Dprofile
-            selectedUser={friends.find((user) => user.id === selectedChat)}
+            selectedUser={friendsData.find((user) => user.id === selectedChat)}
             onClose={() => setActiveSidebar(null)}
           />
         )}
