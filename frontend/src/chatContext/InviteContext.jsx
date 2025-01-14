@@ -1,9 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { Bell, UserPlus, X, Check } from 'lucide-react';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import {getMyData} from '../api/authServiceMe'
+import { useUser } from '../components/auth/UserContext';
 
 const WEBSOCKET_URL = 'ws://localhost:8000/ws/invites';
 const MAX_RECONNECT_ATTEMPTS = 3;
@@ -14,29 +12,93 @@ const InviteContext = createContext(null);
 export const InviteProvider = ({ children }) => {
   const [invites, setInvites] = useState([]);
   const [notification, setNotification] = useState(null);
+  const [isReady, setIsReady] = useState(false);
   const wsRef = useRef(null);
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimerRef = useRef(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const data = await getMyData();
-        if (data) {
-          localStorage.setItem("username", data.username);
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    };
+  const { user } = useUser();
+  const myUsername = user ? JSON.parse(user).username : null;
 
-    fetchUserData();
-  }, []);
+  useEffect(() => {
+    if (myUsername) {
+      setIsReady(true);
+    }
+  }, [myUsername]);
+
+  const handleWebSocketMessage = useCallback((data) => {
+    console.log("Received websocket message:", data.type);
+    
+    switch (data.type) {
+      case 'game_invite':
+        setInvites(prev => [...prev, data]);
+        setNotification({
+          type: 'info',
+          message: `New game invite from ${data.from_username}`
+        });
+        break;
+
+      case 'invite_accepted':
+        const gameSession = {
+          gameId: data.game_id,
+          username: myUsername,
+          opponent: data.opponent,
+          isPlayer1: myUsername === data.player1
+        };
+        
+        localStorage.setItem('gameSession', JSON.stringify(gameSession));
+        
+        setNotification({
+          type: 'success',
+          message: `${data.opponent} accepted your invitation`
+        });
+
+        setTimeout(() => {
+          navigate('/game-lobby/remote-play', {
+            state: gameSession
+          });
+        }, 2000);
+        break;
+
+      case 'invite_declined':
+        setNotification({
+          type: 'error',
+          message: `${data.by_username} declined your invitation`
+        });
+        break;
+
+      case 'invite_error':
+        setNotification({
+          type: 'error',
+          message: data.message || 'An error occurred with the invitation'
+        });
+        break;
+
+      case 'invite_sent':
+        setNotification({
+          type: 'success',
+          message: `Invite sent to ${data.target_username}`
+        });
+        break;
+
+      default:
+        console.warn('Unknown message type:', data.type);
+    }
+  }, [navigate, myUsername]);  // Added myUsername to dependencies
 
   const connectWebSocket = useCallback(() => {
+    if (!myUsername) {
+      console.error("Cannot connect WebSocket: No username found");
+      setNotification({
+        type: 'error',
+        message: 'Connection error: User not authenticated'
+      });
+      return;
+    }
+
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      console.log("Invite WebSocket already connected");
+      console.log("WebSocket already connected");
       return;
     }
 
@@ -45,17 +107,15 @@ export const InviteProvider = ({ children }) => {
     }
 
     try {
-      const username = localStorage.getItem("username");
-      if (!username) {
-        console.error("No username found");
-        return;
-      }
-
-      const ws = new WebSocket(`${WEBSOCKET_URL}/?username=${username}`);
+      const ws = new WebSocket(`${WEBSOCKET_URL}/?username=${myUsername}`);
 
       ws.onopen = () => {
-        console.log("Invite WebSocket Connected");
+        console.log("WebSocket Connected");
         reconnectAttemptsRef.current = 0;
+        setNotification({
+          type: 'success',
+          message: 'Connected to game server'
+        });
       };
 
       ws.onmessage = (event) => {
@@ -64,72 +124,59 @@ export const InviteProvider = ({ children }) => {
           handleWebSocketMessage(data);
         } catch (error) {
           console.error("Error parsing WebSocket message:", error);
+          setNotification({
+            type: 'error',
+            message: 'Error processing server message'
+          });
         }
       };
 
       ws.onclose = (event) => {
-        console.log("Invite WebSocket Disconnected", event.code);
+        console.log("WebSocket Disconnected", event.code);
+        
+        if (!event.wasClean && 
+            reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS && 
+            myUsername) {
+          
+          setNotification({
+            type: 'warning',
+            message: `Connection lost. Reconnecting... (Attempt ${reconnectAttemptsRef.current + 1}/${MAX_RECONNECT_ATTEMPTS})`
+          });
 
-        if (!event.wasClean && reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
           reconnectTimerRef.current = setTimeout(() => {
             reconnectAttemptsRef.current++;
             connectWebSocket();
           }, RECONNECT_DELAY * Math.pow(2, reconnectAttemptsRef.current));
+        } else if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
+          setNotification({
+            type: 'error',
+            message: 'Failed to reconnect. Please refresh the page.'
+          });
         }
       };
 
       ws.onerror = (error) => {
-        console.error("Invite WebSocket error:", error);
+        console.error("WebSocket error:", error);
+        setNotification({
+          type: 'error',
+          message: 'Connection error occurred'
+        });
       };
 
       wsRef.current = ws;
     } catch (error) {
-      console.log("Error creating Invite WebSocket:", error);
+      console.error("Error creating WebSocket:", error);
+      setNotification({
+        type: 'error',
+        message: 'Failed to establish connection'
+      });
     }
-  }, []);
-
-  const handleWebSocketMessage = useCallback((data) => {
-    switch (data.type) {
-      case 'game_invite':
-        setInvites(prev => [...prev, data]);
-        break;
-      case 'invite_accepted':
-        const gameSession = {
-          gameId: data.game_id,
-          username: localStorage.getItem("username"),
-          opponent: data.opponent,
-          isPlayer1: localStorage.getItem("username") === data.player1
-        };
-        localStorage.setItem('gameSession', JSON.stringify(gameSession));
-        setTimeout(() => {
-          navigate('/game-lobby/remote-play', {
-            state: gameSession
-          });
-        }, 3000);
-        break;
-      case 'invite_declined':
-        setNotification({
-          type: 'error',
-          message: `${data.by_username} declined your invitation`
-        });
-        break;
-      case 'invite_error':
-        setNotification({
-          type: 'error',
-          message: data.message
-        });
-        break;
-      case 'invite_sent':
-        setNotification({
-          type: 'success',
-          message: `Invite sent to ${data.target_username}`
-        });
-        break;
-    }
-  }, [navigate]);
+  }, [myUsername, handleWebSocketMessage]);  // Added myUsername and handleWebSocketMessage to dependencies
 
   useEffect(() => {
-    connectWebSocket();
+    if (isReady) {
+      connectWebSocket();
+    }
 
     return () => {
       if (wsRef.current) {
@@ -140,9 +187,17 @@ export const InviteProvider = ({ children }) => {
         clearTimeout(reconnectTimerRef.current);
       }
     };
-  }, [connectWebSocket]);
-
+  }, [isReady, connectWebSocket]);
+  
   const sendInvite = useCallback((targetUsername) => {
+    if (!isReady) {
+      setNotification({
+        type: 'error',
+        message: 'Cannot send invite: Connection not ready'
+      });
+      return false;
+    }
+
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({
         type: 'send_invite',
@@ -151,10 +206,23 @@ export const InviteProvider = ({ children }) => {
       }));
       return true;
     }
+
+    setNotification({
+      type: 'error',
+      message: 'Cannot send invite: No connection to server'
+    });
     return false;
-  }, []);
+  }, [isReady]);
 
   const acceptInvite = useCallback((invite) => {
+    if (!isReady) {
+      setNotification({
+        type: 'error',
+        message: 'Cannot accept invite: Connection not ready'
+      });
+      return false;
+    }
+
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({
         type: 'accept_invite',
@@ -164,10 +232,23 @@ export const InviteProvider = ({ children }) => {
       setInvites(prev => prev.filter(i => i.from_username !== invite.from_username));
       return true;
     }
+
+    setNotification({
+      type: 'error',
+      message: 'Cannot accept invite: No connection to server'
+    });
     return false;
-  }, []);
+  }, [isReady]);
 
   const declineInvite = useCallback((invite) => {
+    if (!isReady) {
+      setNotification({
+        type: 'error',
+        message: 'Cannot decline invite: Connection not ready'
+      });
+      return false;
+    }
+
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({
         type: 'decline_invite',
@@ -176,12 +257,18 @@ export const InviteProvider = ({ children }) => {
       setInvites(prev => prev.filter(i => i.from_username !== invite.from_username));
       return true;
     }
+
+    setNotification({
+      type: 'error',
+      message: 'Cannot decline invite: No connection to server'
+    });
     return false;
-  }, []);
+  }, [isReady]);
 
   const value = {
     invites,
     notification,
+    isReady,
     sendInvite,
     acceptInvite,
     declineInvite,
@@ -206,3 +293,5 @@ export const useInvite = () => {
   }
   return context;
 };
+
+export default InviteContext;
