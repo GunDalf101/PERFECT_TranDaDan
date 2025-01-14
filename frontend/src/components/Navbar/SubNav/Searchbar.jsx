@@ -117,6 +117,7 @@ const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
                         type="text"
                         value={searchTerm}
                         onChange={handleInputChange}
+                        onFocus={() => setShowDropdown(true)}
                         placeholder="Search users..."
                         className="w-full px-6 py-3 text-sm text-teal-200 bg-gray-800 border-4 border-pink-500 focus:outline-none focus:ring focus:ring-pink-500 transition duration-500 ease-in-out transform hover:scale-105 font-pixel"
                         ref={inputRef}
@@ -187,6 +188,7 @@ const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
                             type="text"
                             value={searchTerm}
                             onChange={handleInputChange}
+                            onClick={() => setShowDropdown(true)}
                             placeholder="Search users..."
                             ref={ref}
                             className="w-full px-6 py-4 text-lg text-teal-200 bg-gray-800 border-4 border-pink-500 focus:outline-none focus:ring focus:ring-pink-500 transition duration-500 ease-in-out transform hover:scale-105 font-pixel"

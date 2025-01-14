@@ -1,10 +1,13 @@
 # routing.py
-from django.urls import path
-from . import consumers
+from django.urls import path, re_path
+from .consumers.pong_consumer import PongConsumer
+from .consumers.matchmaking_consumer import MatchmakingConsumer
+from .consumers.space_rivalry_consumer import SpaceRivalryConsumer
+from .consumers.invite_consumer import InviteConsumer
 
 websocket_urlpatterns = [
-    path('ws/game/<int:game_id>/', consumers.PongConsumer.as_asgi()),
-    path('ws/matchmaking/', consumers.MatchmakingConsumer.as_asgi()),
-    path('ws/space-rivalry/<int:game_id>/', consumers.SpaceRivalryConsumer.as_asgi()),
-
+    re_path(r'ws/pong/(?P<game_id>\w+)/$', PongConsumer.as_asgi()),
+    re_path(r'ws/matchmaking/$', MatchmakingConsumer.as_asgi()),
+    re_path(r'ws/space-rivalry/(?P<game_id>\w+)/$', SpaceRivalryConsumer.as_asgi()),
+    re_path(r'ws/invites/$', InviteConsumer.as_asgi()),
 ]

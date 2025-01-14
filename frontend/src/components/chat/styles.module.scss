@@ -395,11 +395,15 @@
   @media screen and (max-height: 768px) {
     transform: translate(-50%, -42%);
   }
+  @media screen and (max-width: 435px) {
+    width: 99%;
+  }
+
 
   @media screen and (max-width: 1024px) {
-    width: 95%;
+    // width: 95%;
     transform: translate(-50%, -48%);
-    bottom: 0%;
+    top: 55%;
     height: 85%;
     // gap: 4px;
 
@@ -407,7 +411,7 @@
 }
 
 .chat_sidebar {
-  width: 18%;
+  width: 15%;
   border-radius: 8px;
 
   border-radius: 5px;
@@ -482,16 +486,26 @@
   flex-direction: column;
   background-color: #1b243bae;
   height: 100%;
-  width: 72%;
+  width: 70%;
   scrollbar-color: rgba(122, 214, 234, 0.832) transparent;
   // box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.925);
   // background-color: rgba(#32343900, 0.8);
   // border-radius: 1px;
   // scrollbar-gutter: stable both-edges;
   // background-color: #7ee0ed;
-  @media screen and (max-width: 920px) {
-    width: 88%; // Take full width on mobile
+  @media screen and (max-width: 1024px) {
+    width:100%; // Take full width on mobile
   }
+  @media screen and (max-width: 400px) {
+    width:100%; // Take full width on mobile
+  }
+
+    #id
+    {
+      @media screen and (max-width: 1024px) {
+       display: none; // Take full width on mobile
+      }
+    }
 }
 
 .chat_profile

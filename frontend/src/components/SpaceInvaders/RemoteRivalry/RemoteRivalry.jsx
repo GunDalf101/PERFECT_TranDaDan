@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
 
-// Game constants
 const GAME_WIDTH = 800;
 const GAME_HEIGHT = 600;
 const SHIP_WIDTH = 40;
@@ -11,7 +10,6 @@ const LASER_WIDTH = 4;
 const LASER_HEIGHT = 15;
 const POWERUP_SIZE = 25;
 
-// Power-up colors
 const POWERUP_COLORS = {
   RAPID_FIRE: 'yellow',
   SHIELD: 'cyan',
@@ -20,56 +18,207 @@ const POWERUP_COLORS = {
 };
 
 const RemoteRivalry = () => {
-  const [socket, setSocket] = useState(null);
+  const navigate = useNavigate();
   const [gameState, setGameState] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [errorMessage, setErrorMessage] = useState('');
+  const [winner, setWinner] = useState(null);
+  const [gameSession, setGameSession] = useState(null);
+  
+  const wsRef = useRef(null);
+  const cleanupRef = useRef(false);
   const reconnectAttempts = useRef(0);
-  const maxReconnectAttempts = 1;
   const reconnectTimeout = useRef(null);
   const reconnectTimeoutId = useRef(null);
   const isReconnecting = useRef(false);
-  const [winner, setWinner] = useState(null);
-  const navigate = useNavigate();
+  const maxReconnectAttempts = 1;
 
-  // Get game session
-  const gameSession = JSON.parse(localStorage.getItem('gameSession'));
-  if (!gameSession) {
-    navigate('/game-lobby');
-    return null;
-  }
-
-  const { gameId, username, opponent, isPlayer1 } = gameSession;
-
-  // Key state for continuous movement
   const [keys, setKeys] = useState({
     left: false,
     right: false,
     shoot: false
   });
 
-  // Handle continuous movement
   useEffect(() => {
-    if (!socket || !gameState || !gameState.gameStarted || gameState.gameOver) return;
+    const session = JSON.parse(localStorage.getItem('gameSession'));
+    if (!session) {
+      navigate('/game-lobby');
+      return;
+    }
+    setGameSession(session);
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!gameSession) return;
+
+    const { gameId, username, opponent, isPlayer1 } = gameSession;
+    
+    if (wsRef.current) {
+      wsRef.current.intentionalClose = true;
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
+    const ws = new WebSocket(
+      `ws://localhost:8000/ws/space-rivalry/${gameId}/?username=${username}`
+    );
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log('Connected to game server');
+      setConnectionStatus('connected');
+      setErrorMessage('');
+      reconnectAttempts.current = 0;
+      isReconnecting.current = false;
+
+      ws.send(JSON.stringify({
+        type: 'init',
+        username,
+        opponent,
+        isPlayer1
+      }));
+    };
+
+    ws.onclose = (event) => {
+      if (cleanupRef.current) return;
+      console.log('WebSocket closed:', {
+        timestamp: new Date().toISOString(),
+        wasClean: event.wasClean,
+        code: event.code,
+        reason: event.reason,
+        intentionalClose: ws.intentionalClose
+      });
+      
+      setConnectionStatus('disconnected');
+
+      if (!cleanupRef.current && !ws.intentionalClose && gameState?.gameOver !== true && !isReconnecting.current) {
+        isReconnecting.current = true;
+        setErrorMessage('Connection lost. Attempting to reconnect...');
+
+        if (reconnectTimeoutId.current) {
+          clearTimeout(reconnectTimeoutId.current);
+        }
+
+        reconnectTimeoutId.current = setTimeout(() => {
+          if (cleanupRef.current) return;
+          if (reconnectAttempts.current < maxReconnectAttempts) {
+            reconnectAttempts.current++;
+            const newWs = new WebSocket(
+              `ws://localhost:8000/ws/space-rivalry/${gameId}/?username=${username}`
+            );
+            wsRef.current = newWs;
+          } else {
+            setErrorMessage('Connection lost. Please return to lobby.');
+          }
+        }, 2000);
+      }
+    };
+
+    ws.onmessage = (event) => {
+      if (cleanupRef.current) return;
+      const data = JSON.parse(event.data);
+
+      switch(data.type) {
+        case 'game_state':
+          setGameState(data.state);
+          break;
+
+        case 'player_disconnected':
+          setErrorMessage(data.message);
+          break;
+
+        case 'player_reconnected':
+          setErrorMessage('');
+          break;
+
+        case 'connection_warning':
+          setErrorMessage(data.message);
+          break;
+
+        case 'game_ended':
+          handleGameEnd(data.state, false);
+          break;
+
+        case 'game_ended_by_forfeit':
+          handleGameEnd(data.state, true);
+          break;
+      }
+    };
+
+    ws.onerror = (error) => {
+      if (cleanupRef.current) return;
+      console.error('WebSocket error:', error);
+    };
+
+    const handleBeforeUnload = (e) => {
+      if (gameState && !gameState.gameOver) {
+        ws.intentionalClose = true;
+        ws.close();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'player_inactive' }));
+      } else if (!document.hidden && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'player_active' }));
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      cleanupRef.current = true;
+      
+      if (reconnectTimeout.current) {
+        clearTimeout(reconnectTimeout.current);
+        reconnectTimeout.current = null;
+      }
+      
+      if (reconnectTimeoutId.current) {
+        clearTimeout(reconnectTimeoutId.current);
+        reconnectTimeoutId.current = null;
+      }
+
+      if (wsRef.current) {
+        wsRef.current.intentionalClose = true;
+        if (wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.close();
+        }
+        wsRef.current = null;
+      }
+
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      
+      reconnectAttempts.current = 0;
+      isReconnecting.current = false;
+      setErrorMessage('');
+      setConnectionStatus('connecting');
+    };
+  }, [gameSession]);
+
+  useEffect(() => {
+    if (!wsRef.current || !gameState || !gameState.gameStarted || gameState.gameOver) return;
 
     const moveInterval = setInterval(() => {
-      if (socket.readyState === WebSocket.OPEN) {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
         if (keys.left) {
-          socket.send(JSON.stringify({ type: 'player_input', input: 'left' }));
+          wsRef.current.send(JSON.stringify({ type: 'player_input', input: 'left' }));
         }
         if (keys.right) {
-          socket.send(JSON.stringify({ type: 'player_input', input: 'right' }));
+          wsRef.current.send(JSON.stringify({ type: 'player_input', input: 'right' }));
         }
         if (keys.shoot) {
-          socket.send(JSON.stringify({ type: 'player_input', input: 'shoot' }));
+          wsRef.current.send(JSON.stringify({ type: 'player_input', input: 'shoot' }));
         }
       }
-    }, 1000/60); // 60 FPS updates
+    }, 1000/60);
 
     return () => clearInterval(moveInterval);
-  }, [socket, gameState, keys]);
+  }, [gameState, keys]);
 
-  // Handle keyboard input
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (!gameState?.gameStarted || gameState?.gameOver) return;
@@ -106,131 +255,15 @@ const RemoteRivalry = () => {
     };
   }, [gameState]);
 
-  // WebSocket connection
-  useEffect(() => {
-    if (socket) {
-      socket.close();
-      setSocket(null);
-    }
-
-    const ws = new WebSocket(
-      `ws://localhost:8000/ws/space-rivalry/${gameId}/?username=${username}`
-    );
-
-    ws.onopen = () => {
-      console.log('Connected to game server');
-      setConnectionStatus('connected');
-      setErrorMessage('');
-      reconnectAttempts.current = 0;
-      isReconnecting.current = false;
-
-      // Send initial player data
-      ws.send(JSON.stringify({
-        type: 'init',
-        username,
-        opponent,
-        isPlayer1
-      }));
-    };
-
-    ws.onclose = (event) => {
-      console.log('WebSocket connection closed', event);
-      setConnectionStatus('disconnected');
-      setSocket(null);
-
-      // Only attempt reconnect if game isn't over and not already reconnecting
-      if (gameState?.gameOver !== true && !isReconnecting.current) {
-        isReconnecting.current = true;
-        setErrorMessage('Connection lost. Attempting to reconnect...');
-
-        if (reconnectTimeoutId.current) {
-          clearTimeout(reconnectTimeoutId.current);
-        }
-
-        reconnectTimeoutId.current = setTimeout(() => {
-          if (reconnectAttempts.current < maxReconnectAttempts) {
-            reconnectAttempts.current++;
-            setSocket(ws);
-          } else {
-            setErrorMessage('Connection lost. Please return to lobby.');
-          }
-        }, 2000);
-      }
-    };
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-
-      switch(data.type) {
-        case 'game_state':
-          setGameState(data.state);
-          break;
-
-        case 'player_disconnected':
-          setErrorMessage(data.message);
-          break;
-
-        case 'player_reconnected':
-          setErrorMessage('');
-          break;
-
-        case 'connection_warning':
-          setErrorMessage(data.message);
-          break;
-
-        case 'game_ended':
-          handleGameEnd(data.state, false);
-          break;
-
-        case 'game_ended_by_forfeit':
-          handleGameEnd(data.state, true);
-          break;
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    setSocket(ws);
-
-    const handleBeforeUnload = (e) => {
-      if (gameState && !gameState.gameOver) {
-        ws.close();
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      if (reconnectTimeout.current) {
-        clearTimeout(reconnectTimeout.current);
-        reconnectTimeout.current = null;
-      }
-      if (reconnectTimeoutId.current) {
-        clearTimeout(reconnectTimeoutId.current);
-        reconnectTimeoutId.current = null;
-      }
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.close();
-      }
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      reconnectAttempts.current = 0;
-      isReconnecting.current = false;
-      setErrorMessage('');
-      setConnectionStatus('connecting');
-    };
-  }, [gameId, username, opponent, isPlayer1]);
-
   const handleGameEnd = (state, isForfeit) => {
     let winnerMessage;
 
     if (isForfeit) {
-      winnerMessage = state.winner === username ?
+      winnerMessage = state.winner === gameSession?.username ?
         'You won by forfeit!' :
         `${state.winner} won by forfeit!`;
     } else {
-      winnerMessage = state.winner === username ?
+      winnerMessage = state.winner === gameSession?.username ?
         'You won!' :
         `${state.winner} won!`;
     }
@@ -243,8 +276,7 @@ const RemoteRivalry = () => {
     }));
   };
 
-  // Loading state
-  if (!gameState) {
+  if (!gameState || !gameSession) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
         <div className="text-2xl">Connecting to game...</div>
@@ -254,7 +286,6 @@ const RemoteRivalry = () => {
 
   return (
     <div className="relative flex flex-col items-center min-h-screen bg-gray-900 text-white">
-      {/* Score Display */}
       <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-full max-w-4xl flex justify-between items-center px-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
@@ -283,18 +314,15 @@ const RemoteRivalry = () => {
         </div>
       </div>
 
-      {/* Game Canvas */}
       <div
         className="relative mt-16 bg-gray-800 rounded-lg overflow-hidden"
         style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
       >
-        {/* Dividing Line */}
         <div
           className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-gray-800"
           style={{ transform: 'translateX(-50%)' }}
         />
 
-        {/* Health Bars and Power-ups */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">
           <div className="w-32 h-2 bg-gray-800 rounded">
             <div
@@ -361,7 +389,6 @@ const RemoteRivalry = () => {
           }}
         />
 
-        {/* Lasers */}
         {gameState.lasers1.map((laser, i) => (
           <div
             key={`laser1-${i}`}
@@ -387,7 +414,6 @@ const RemoteRivalry = () => {
           />
         ))}
 
-        {/* Asteroids */}
         {gameState.asteroids.map((asteroid, i) => (
           <div
             key={`asteroid-${i}`}
@@ -404,7 +430,6 @@ const RemoteRivalry = () => {
           />
         ))}
 
-        {/* Power-ups */}
         {gameState.powerups.map((powerup, i) => (
           <div
             key={`powerup-${i}`}
@@ -419,7 +444,6 @@ const RemoteRivalry = () => {
           />
         ))}
 
-        {/* Explosions */}
         {gameState.explosions.map((explosion, i) => (
           <div
             key={`explosion-${i}`}
@@ -434,7 +458,6 @@ const RemoteRivalry = () => {
           />
         ))}
 
-        {/* Game State Overlays */}
         {!gameState.gameStarted && (
           <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center">
             <div className="text-center">
@@ -469,7 +492,13 @@ const RemoteRivalry = () => {
                 </div>
               </div>
               <button
-                onClick={() => navigate('/game-lobby')}
+                onClick={() => {
+                  if (wsRef.current) {
+                    wsRef.current.intentionalClose = true;
+                    wsRef.current.close();
+                  }
+                  navigate('/game-lobby');
+                }}
                 className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-6 rounded-lg transition-colors"
               >
                 Back to Lobby
@@ -479,7 +508,6 @@ const RemoteRivalry = () => {
         )}
       </div>
 
-      {/* Error Messages */}
       {errorMessage && !gameState.gameOver && (
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
                       bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg">
@@ -487,7 +515,6 @@ const RemoteRivalry = () => {
         </div>
       )}
 
-      {/* Connection Status */}
       <div className="fixed bottom-4 right-4 px-4 py-2 rounded-full text-sm">
         <div className={`w-3 h-3 rounded-full inline-block mr-2 ${
           connectionStatus === 'connected' ? 'bg-green-500' : 'bg-red-500 animate-pulse'

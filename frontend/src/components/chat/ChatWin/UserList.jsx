@@ -12,8 +12,11 @@ const UserList = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const {onlineFriends} = useRealTime()
+  const {onlineFriends, relationshipUpdate} = useRealTime()
 
+  useEffect(() => {
+    console.log(relationshipUpdate);
+  }, [relationshipUpdate]);
   
   const friendsWithOnlineStatus = useMemo(() => {
     return friends.map(friend => ({
