@@ -154,9 +154,9 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
     async def dispatch_relationship_update(self, event):
         if event.get("type"):
             del event['type']
-        else:
-            #print(f"WTFFF: {event}")
-            raise Exception
+        # else:
+        #     #print(f"WTFFF: {event}")
+        #     raise Exception
         await self.send_json(event)
 
     @database_sync_to_async
