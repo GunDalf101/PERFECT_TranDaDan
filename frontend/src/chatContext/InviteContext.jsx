@@ -202,7 +202,7 @@ export const InviteProvider = ({ children }) => {
       wsRef.current.send(JSON.stringify({
         type: 'send_invite',
         target_username: targetUsername,
-        game_type: 'standard'
+        game_type: 'pong'
       }));
       return true;
     }

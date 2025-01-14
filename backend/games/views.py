@@ -82,8 +82,7 @@ class GetUserMatch(APIView):
         matches = Match.objects.filter(
             Q(player1_id=userid) |
             Q(player2_id=userid),
-            Q(status='completed') |
-            Q(forfeit=True)
+            Q(status='completed')
         )
         if not matches.first():
             Response({"no matches"}, status=200)

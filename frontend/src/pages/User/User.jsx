@@ -20,6 +20,10 @@ const r = {
   BLOCK_BOTH: 6
 };
 
+const showUserContent = (relationship) => (
+  !(relationship == r.YOU_BLOCK || relationship == r.HE_BLOCK || relationship == r.BLOCK_BOTH)
+);
+
 const User = () => {
   const navigate = useNavigate();
   const [userdata, setuserdata] = useState(null); // Store user data
@@ -77,10 +81,13 @@ const User = () => {
 
   const handleCancelReq = async () => {
     try {
-        await cancelFriendReq(username);
-        setIsAddHovering(false);
-        myToast(1, "friend request has been canceled")
-        sendRelationshipUpdate("cancel_friend_request", username);
+        // if(username.relationship == r.HE_REQUEST)
+        //   {
+            await cancelFriendReq(username);
+            setIsAddHovering(false);
+            myToast(1, "friend request has been canceled")
+            sendRelationshipUpdate("cancel_friend_request", username);
+          // }
       } catch (error) {
         console.error("Error sending friend request:", error);
       }
@@ -233,6 +240,7 @@ const User = () => {
         </div>
 
         {/* Friends Box */}
+        {showUserContent(userdata.relationship) ?(
         <div className="flex-1 min-w-[500px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink overflow-y-auto">
           <h2 className="text-2xl text-center text-neonPink mb-4">Friends</h2>
           {userdata.friends && userdata.friends.length > 0 ? (
@@ -255,8 +263,10 @@ const User = () => {
             <p className="text-center text-gray-400">No friends to display.</p>
           )}
         </div>
+        ):""}
 
         {/* Match History Card */}
+        {showUserContent(userdata.relationship) ?(
         <div className="flex-1 min-w-[500px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
           <p className="text-3xl text-center text-neonBlue mb-5">PingPong</p>
           <h2 className="text-2xl text-center text-neonPink mb-4">Match History</h2>
@@ -287,7 +297,9 @@ const User = () => {
             )}
           </div>
         </div>
+        ):""}
         {/* Match History Card */}
+        {showUserContent(userdata.relationship) ? (
         <div className="flex-1 min-w-[500px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
           <p className="text-3xl text-center text-red-600 mb-5">SPACExRIVALRY</p>
           <h2 className="text-2xl text-center text-neonPink mb-4">Match History</h2>
@@ -318,9 +330,11 @@ const User = () => {
             )}
           </div>
         </div>
+        ):""}
       </div>
 
       {/* Match History and Statistics Section */}
+      {showUserContent(userdata.relationship) ?(
       <div className="flex flex-wrap justify-between w-11/12 gap-4">
 
         {/* Statistics Card */}
@@ -342,6 +356,7 @@ const User = () => {
           </ul>
         </div>
       </div>
+      ):""}
     </div>
   );
 };
