@@ -4,6 +4,7 @@ import NotLogged from "../components/Navbar/NotLogged";
 import { Outlet } from "react-router-dom";
 import { useUser } from "../components/auth/UserContext";
 import Loading from "../components/Loading/Loading";
+import InviteUI from "../components/InviteUI/InviteUI";
 
 
 
@@ -30,6 +31,7 @@ const MainLayout = () => {
         {isAuthenticated ? <Logged /> : <NotLogged />}
       </header>
       <main>
+        <InviteUI/>
         <Outlet />
       </main>
     </div>

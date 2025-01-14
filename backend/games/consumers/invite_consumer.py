@@ -7,7 +7,6 @@ from ..models import Match
 import time
 
 class InviteConsumer(AsyncJsonWebsocketConsumer):
-    # Store active connections with username as key
     active_connections = {}
     pending_invites = {}
 
@@ -22,12 +21,10 @@ class InviteConsumer(AsyncJsonWebsocketConsumer):
 
         self.scope['user'] = user
         
-        # Store connection for later use
         InviteConsumer.active_connections[self.username] = self
         
         await self.accept()
         
-        # Send any pending invites for this user
         pending = InviteConsumer.pending_invites.get(self.username, [])
         for invite in pending:
             await self.send_json(invite)
@@ -36,7 +33,6 @@ class InviteConsumer(AsyncJsonWebsocketConsumer):
         if self.username in InviteConsumer.active_connections:
             del InviteConsumer.active_connections[self.username]
             
-        # Clean up any pending invites
         if self.username in InviteConsumer.pending_invites:
             del InviteConsumer.pending_invites[self.username]
 
@@ -51,6 +47,7 @@ class InviteConsumer(AsyncJsonWebsocketConsumer):
             await self.handle_decline_invite(content)
 
     async def handle_send_invite(self, content):
+        print(content)
         target_username = content.get('target_username')
         game_type = content.get('game_type', 'standard')
         
@@ -61,7 +58,6 @@ class InviteConsumer(AsyncJsonWebsocketConsumer):
             })
             return
             
-        # Check if target is online
         target_connection = InviteConsumer.active_connections.get(target_username)
         
         invite_data = {
@@ -72,10 +68,8 @@ class InviteConsumer(AsyncJsonWebsocketConsumer):
         }
         
         if target_connection:
-            # Send invite directly if user is online
             await target_connection.send_json(invite_data)
         else:
-            # Store invite for when user connects
             if target_username not in InviteConsumer.pending_invites:
                 InviteConsumer.pending_invites[target_username] = []
             InviteConsumer.pending_invites[target_username].append(invite_data)
@@ -106,7 +100,6 @@ class InviteConsumer(AsyncJsonWebsocketConsumer):
                 'message': 'Cannot invite yourself'
             })
             return
-        # Create a new match
         match = await sync_to_async(Match.objects.create)(
             player1=self.scope['user'],
             player2=inviter_connection.scope['user'],
@@ -114,7 +107,6 @@ class InviteConsumer(AsyncJsonWebsocketConsumer):
             status="ongoing"
         )
         
-        # Notify both players
         match_data = {
             'type': 'invite_accepted',
             'game_id': match.id,
