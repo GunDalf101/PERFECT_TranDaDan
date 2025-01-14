@@ -34,10 +34,10 @@ export const InviteProvider = ({ children }) => {
     switch (data.type) {
       case 'game_invite':
         setInvites(prev => [...prev, data]);
-        setNotification({
-          type: 'info',
-          message: `New game invite from ${data.from_username}`
-        });
+        // setNotification({
+        //   type: 'info',
+        //   message: `New game invite from ${data.from_username}`
+        // });
         break;
 
       case 'invite_accepted':
