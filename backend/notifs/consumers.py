@@ -63,6 +63,7 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         self.group_name = f"notifs_user_{self.user.username}"
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.send_notifications()
+        await self.send_friends_list()
         await self.scan_for_online_friends(self.user)
 
     async def disconnect(self, close_code):
@@ -91,6 +92,15 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json({
             'msgtype': 'notification',
             'notifications': notifications
+        })
+
+    async def send_friends_list(self):
+        friends = await self.get_user_friends(self.user)
+        friends = list(map(lambda friend: friend.username, friends))
+        print(friends)
+        await self.send_json({
+            'msgtype': 'friends',
+            'friends': friends
         })
 
     async def send_new_notification(self, event):

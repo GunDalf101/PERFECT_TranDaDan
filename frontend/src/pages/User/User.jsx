@@ -31,8 +31,12 @@ const User = () => {
     pong: [],
     space: []
   });
-  const { sendRelationshipUpdate, relationshipUpdate, onlineFriends } = useRealTime();
+  const { sendRelationshipUpdate, relationshipUpdate, onlineFriends, friends } = useRealTime();
   const { username } = useParams();
+
+  useEffect(() => {
+    console.log(friends);
+  }, [friends]);
 
   useEffect(() => {
     setReload(!reload);
