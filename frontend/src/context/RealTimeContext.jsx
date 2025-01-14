@@ -38,8 +38,8 @@ export const RealTimeProvider = ({ children }) => {
             setNotifications(notifications => data.notifications.concat(notifications));
           } else if (data.msgtype === 'relationship_update') {
             setRelationshipUpdate(data);
-          } else if (data.msgtype === 'self_relationship_update') {
-            setSelfRelationshipUpdate(data);
+          // } else if (data.msgtype === 'self_relationship_update') {
+          //   setSelfRelationshipUpdate(data);
           } else if (data.msgtype === 'friend_status_change') {
             const { username, is_online } = data;
 
@@ -79,7 +79,7 @@ export const RealTimeProvider = ({ children }) => {
         username: username,
         type: 'relationship_update',
       }
-      setSelfRelationshipUpdate(e);
+      setRelationshipUpdate(e);
       ws.send(JSON.stringify(e));
     }
   };
