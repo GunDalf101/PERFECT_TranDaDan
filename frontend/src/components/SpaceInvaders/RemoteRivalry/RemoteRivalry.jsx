@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
 import { axiosInstance } from '../../../api/axiosInstance';
+import { env } from '../../../config/env';
 
 const GAME_WIDTH = 800;
 const GAME_HEIGHT = 600;
@@ -82,7 +83,7 @@ const RemoteRivalry = () => {
     }
 
     const ws = new WebSocket(
-      `ws://localhost:8000/ws/space-rivalry/${gameId}/?username=${username}`
+      `${env.WS_URL}/ws/space-rivalry/${gameId}/?username=${username}`
     );
     wsRef.current = ws;
 
@@ -126,7 +127,7 @@ const RemoteRivalry = () => {
           if (reconnectAttempts.current < maxReconnectAttempts) {
             reconnectAttempts.current++;
             const newWs = new WebSocket(
-              `ws://localhost:8000/ws/space-rivalry/${gameId}/?username=${username}`
+              `${env.WS_URL}/ws/space-rivalry/${gameId}/?username=${username}`
             );
             wsRef.current = newWs;
           } else {

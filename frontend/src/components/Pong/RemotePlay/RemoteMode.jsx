@@ -7,6 +7,7 @@ import { split } from 'three/src/nodes/TSL.js';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
 import { axiosInstance } from '../../../api/axiosInstance';
+import { env } from '../../../config/env';
 
 const RemoteMode = () => {
     const canvasRef = useRef(null);
@@ -93,7 +94,7 @@ const RemoteMode = () => {
             }
 
             const ws = new WebSocket(
-                `ws://localhost:8000/ws/pong/${gameId}/?username=${username}`
+                `${env.WS_URL}/ws/pong/${gameId}/?username=${username}`
             );
             websocketRef.current = ws;
 
@@ -665,21 +666,22 @@ const RemoteMode = () => {
                 updateScore();
                 resetBall(-1);
             }
-
-            if (scoreUpdate && websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
-                websocketRef.current.send(JSON.stringify({
-                    type: 'score_update',
-                    scores: {
-                        player1: playerScore,
-                        player2: aiScore
-                    },
-                    scoringPlayer: scoringPlayer,
-                    playerGamesWon: playerGamesWon,
-                    aiGamesWon: aiGamesWon
-                }));
+            if ( isPlayer1 ) { 
+                if (scoreUpdate && websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
+                    websocketRef.current.send(JSON.stringify({
+                        type: 'score_update',
+                        scores: {
+                            player1: playerScore,
+                            player2: aiScore
+                        },
+                        scoringPlayer: scoringPlayer,
+                        playerGamesWon: playerGamesWon,
+                        aiGamesWon: aiGamesWon
+                    }));
+                }
+    
+                winCheck();
             }
-
-            winCheck();
         };
 
         const handleMouseMove = (event) => {
@@ -792,8 +794,8 @@ const RemoteMode = () => {
                 if (isPlayer1) {
                     simulatePhysics(deltaTime);
                     checkCollisions();
-                    gameLogic();
                 }
+                gameLogic();
 
             }
             controls.update();

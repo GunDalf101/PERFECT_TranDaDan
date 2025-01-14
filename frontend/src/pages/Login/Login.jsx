@@ -8,6 +8,7 @@ import {getMyData} from "../../api/authServiceMe";
 import RequestResetPassword from "../../api/authServiceRequestRp";
 import MFAVerificationForm from "./MFAVerificationForm";
 import authVerifyMFA from "../../api/authVerifyMFA"
+import { env } from "../../config/env";
 
 import { useUser } from '../../components/auth/UserContext'
 
@@ -159,7 +160,7 @@ const Login = () => {
 	};
 
     const handle42Login = () => {
-        window.location.href = `http://localhost:8000/api/oauth2/42/`;
+        window.location.href = `${env.API_URL}/api/oauth2/42/`;
     };
 
 	const handleMFAVerify = async (Mfadata) => {
