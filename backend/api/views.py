@@ -33,6 +33,7 @@ import base64
 import uuid
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
+import os
 
 User = get_user_model()
 
@@ -47,7 +48,7 @@ class OAuth2StartView(UnprotectedView):
 
     def get(self, request, *args, **kwargs):
         state = ''.join(random.choices(string.ascii_letters + string.digits, k=30))
-        authorization_url = f'{env.str("42_AUTHORIZE_URL")}?client_id={env.str("CLIENT_ID")}&redirect_uri={request.build_absolute_uri(reverse("oauth2-callback"))}&response_type=code&state={state}'
+        authorization_url = f'{os.getenv("42_AUTHORIZE_URL")}?client_id={os.getenv("CLIENT_ID")}&redirect_uri={os.getenv("BACKEND_URL")}{reverse("oauth2-callback")}&response_type=code&state={state}'
         response = HttpResponseRedirect(authorization_url)
         response.set_cookie('oauth2_state', jwt.encode({"state": state}, settings.SECRET_KEY, algorithm='HS256'))
         return response
@@ -65,13 +66,13 @@ class OAuth2CallbackView(UnprotectedView):
 
         data = {
             'grant_type': 'authorization_code',
-            'client_id': env.str("CLIENT_ID"),
-            'client_secret': env.str("CLIENT_SECRET"),
-            'redirect_uri': request.build_absolute_uri(reverse('oauth2-callback')),
+            'client_id': os.getenv("CLIENT_ID"),
+            'client_secret': os.getenv("CLIENT_SECRET"),
+            'redirect_uri': f"{os.getenv('BACKEND_URL')}{reverse('oauth2-callback')}",
             'code': code,
         }
 
-        response = requests.post(env.str("42_TOKEN_URL"), data=data)
+        response = requests.post(os.getenv("42_TOKEN_URL"), data=data)
         if response.status_code != status.HTTP_200_OK:
             return Response({"message": "Failed to get access token"}, status=status.HTTP_400_BAD_REQUEST, headers=unset_cookie_header("oauth2_state"))
 
@@ -79,7 +80,7 @@ class OAuth2CallbackView(UnprotectedView):
         if not access_token:
             return Response({"message": "No access token found"}, status=status.HTTP_400_BAD_REQUEST, headers=unset_cookie_header("oauth2_state"))
 
-        user_info_url = env.str("42_API_ME_URL")
+        user_info_url = os.getenv("42_API_ME_URL")
         headers = {'Authorization': f'Bearer {access_token}'}
         user_info_response = requests.get(user_info_url, headers=headers)
 
@@ -140,7 +141,7 @@ class OAuth2CallbackView(UnprotectedView):
         #     "user_id": user.id,
         #     "mfa_required": user.mfa_enabled
         # }, status=status.HTTP_200_OK, headers=unset_cookie_header("oauth2_state"))
-        return HttpResponseRedirect(f'{env.str("FRONT_END_REDIRECT_URL")}?accessToken={str(access_token)}&mfa_required={user.mfa_enabled}')
+        return HttpResponseRedirect(f'{os.getenv("FRONT_END_REDIRECT_URL")}?accessToken={str(access_token)}&mfa_required={user.mfa_enabled}')
 
 
 class MFATOTPView(APIView):
@@ -225,7 +226,7 @@ class RegisterView(UnprotectedView):
         if serializer.is_valid():
             user = serializer.save()
             token = user.email_token
-            confirmation_link = request.build_absolute_uri(reverse("verify-email", kwargs={"token": token}))
+            confirmation_link = f"{os.getenv('BACKEND_URL')}{reverse('verify-email', kwargs={'token': token})}"
             print(confirmation_link)
             send_registration_email(confirmation_link, user.email, schedule=timezone.now())
             return Response({
@@ -268,10 +269,10 @@ class RequestResetPasswordView(UnprotectedView):
             if user:
                 if not user.email_verified:
                     token = user.email_token
-                    confirmation_link = request.build_absolute_uri(reverse("verify-email", kwargs={"token": token}))
+                    confirmation_link = f"{os.getenv('FRONT_END_VERIFY_ACC_URL')}/{token}"
                     send_registration_email(confirmation_link, user.email, schedule=timezone.now())
                 token = get_random_string(32)
-                reset_password_for_user(user.id, user.email, f"{env.str('RESET_PASS_FRONTEND_URL')}/{token}", token)
+                reset_password_for_user(user.id, user.email, f"{os.getenv('RESET_PASS_FRONTEND_URL')}/{token}", token)
             return Response({
                 "message": "if a user exists with a verified email that you specified, you will receive a reset password token in your inbox.",
             }, status=status.HTTP_200_OK)
@@ -335,7 +336,7 @@ class UsersMeView(APIView):
                 user.email_verified = False
                 user.save()
                 token = user.email_token
-                confirmation_link = request.build_absolute_uri(reverse("verify-email", kwargs={"token": token}))
+                confirmation_link = f"{os.getenv('BACKEND_URL')}{reverse('verify-email', kwargs={'token': token})}"
                 send_registration_email(confirmation_link, user.email, schedule=timezone.now())
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -643,7 +644,7 @@ class UsersMeAvatarView(APIView):
             file_path = default_storage.save(filename, ContentFile(image_data))
             file_url = default_storage.url(file_path)
             if settings.DEBUG:
-                file_url = request.build_absolute_uri(default_storage.url(file_path))
+                file_url = f"{os.getenv('BACKEND_URL')}{default_storage.url(file_path)}"
             request.user.avatar_url = file_url
             request.user.save()
             return Response({'url': file_url}, status=status.HTTP_200_OK)

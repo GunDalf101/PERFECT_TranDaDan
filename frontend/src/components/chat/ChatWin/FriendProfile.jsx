@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import styles from "../styles.module.scss";
 import ChatContent from "./ChatContent";
 import UserList from "./UserList";
+import { useInvite } from "../../../chatContext/InviteContext";
 import {
     ChevronDown,
     Paperclip,
@@ -15,6 +16,8 @@ import {
 const FriendProfile = ({
     selectedUser,
 }) => {
+
+    const { invites, notification, sendInvite, acceptInvite, declineInvite, setNotification } = useInvite();
 
 
     return (
@@ -45,7 +48,9 @@ const FriendProfile = ({
                         </div>
                     </button>
 
-                    <button className="bg-purple-400 bg-opacity-20 rounded-lg hover:bg-purple-400 hover:bg-opacity-50 transition-all duration-200">
+                    <button 
+                    onClick={() => { sendInvite(selectedUser.name) }}
+                    className="bg-purple-400 bg-opacity-20 rounded-lg hover:bg-purple-400 hover:bg-opacity-50 transition-all duration-200">
                         <div className="flex items-center p-3 justify-start">
                             <div className="flex items-center">
                                 <div className="bg-purple-500 bg-opacity-20 p-2 rounded-full ">

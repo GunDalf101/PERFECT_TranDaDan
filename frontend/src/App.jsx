@@ -21,6 +21,7 @@ import LocalRegister from "./pages/LocalRegister/LocalRegister";
 import TournamentMode from "./components/Pong/TournamentMode/TournamentMode";
 import RemoteRivalry from "./components/SpaceInvaders/RemoteRivalry/RemoteRivalry.jsx";
 import SpaceRivalry from "./components/SpaceInvaders/SpaceRivalry/SpaceRivalry.jsx";
+import InviteUI from "./components/InviteUI/InviteUI.jsx";
 
 import User from "./pages/User/User";
 import EditProfile from "./pages/EditProfile/EditProfile";
@@ -31,6 +32,7 @@ import { RealTimeProvider } from './context/RealTimeContext.jsx';
 import { WebSocketProvider } from "./chatContext/WebSocketContext";
 import ResetPasswordForm from "./pages/ResetPassword/ResetPasswordForm"
 import EmailVerificationPage from "./pages/EmailVerificationPage.jsx";
+import { InviteProvider } from "./chatContext/InviteContext.jsx";
 import { Space } from "lucide-react";
 
 function App() {
@@ -38,12 +40,21 @@ function App() {
     <BrowserRouter>
       <UserProvider>
         <WebSocketProvider>
+          <InviteProvider>
 
           <RealTimeProvider>
             <ToastContainer position="top-right" autoClose={3000} />
             <Routes>
               <Route path="/" element={<MainLayout />}>
                 <Route index element={<Homepage />} />
+                <Route
+                path="/chat"
+                element={
+                  <ProtectedRoute>
+                    <ChatApp />
+                  </ProtectedRoute>
+                }
+              />
                 <Route
                   path="/profile"
                   element={
@@ -78,14 +89,6 @@ function App() {
 
               </Route>
               <Route
-                path="/chat"
-                element={
-                  <ProtectedRoute>
-                    <ChatApp />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
                 path="/register"
                 element={
                   <PublicRoute>
@@ -119,6 +122,7 @@ function App() {
               {/*           <Route path="*" element={<Link to="/"/>}></Route> */}
             </Routes>
           </RealTimeProvider>
+          </InviteProvider>
         </WebSocketProvider>
       </UserProvider>
     </BrowserRouter>
