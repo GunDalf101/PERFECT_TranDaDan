@@ -112,10 +112,10 @@ export const InviteProvider = ({ children }) => {
       ws.onopen = () => {
         console.log("WebSocket Connected");
         reconnectAttemptsRef.current = 0;
-        setNotification({
-          type: 'success',
-          message: 'Connected to game server'
-        });
+        // setNotification({
+        //   type: 'success',
+        //   message: 'Connected to game server'
+        // });
       };
 
       ws.onmessage = (event) => {
