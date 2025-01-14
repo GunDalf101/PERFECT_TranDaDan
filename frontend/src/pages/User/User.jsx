@@ -48,12 +48,12 @@ const User = () => {
     const fetchUserData = async () => {
       try {
         const mydata = await getMyData()
+        if(mydata.id == data.id)
+            navigate("/profile");
         const data = await getUserData(username);
         setuserdata(data);
         const matches = await getMatches(data.id)
         setUserMatches(matches)
-        if(mydata.id == data.id)
-            navigate("/profile");
       } catch (error) {
         console.error("Error fetching user data:", error);
         setError(true);
