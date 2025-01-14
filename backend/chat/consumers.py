@@ -52,15 +52,7 @@ class DirectMessageConsumer(AsyncWebsocketConsumer):
         # await self.scan_and_notify_friends_of_status(self.user)
 
     async def disconnect(self, close_code):
-        if hasattr(self, "cache_key"):
-            current_count = cache.decr(self.cache_key, 1)
-            print(f"a11>> {current_count}")
-            # If the user's counter is zero, notify friends that the user is offline
-            if cache.get(self.cache_key, 0) == 0:
-                await self.notify_friends_of_status_change(self.user, False)
-
         if hasattr(self, "user_group_name"):
-            # Cleanup when the connection is closed
             if self.user_group_name:
                 await self.channel_layer.group_discard(self.user_group_name, self.channel_name)
 

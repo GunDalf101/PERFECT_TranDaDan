@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useUser } from '../components/auth/UserContext';
 import { useCallback } from 'react';
+import { every } from 'lodash';
 
 const RealTimeContext = createContext();
 
@@ -15,6 +16,7 @@ export const RealTimeProvider = ({ children }) => {
   const [onlineFriends, setOnlineFriends] = useState([]);
   const [ws, setWs] = useState(null);
   const { isAuthenticated } = useUser();
+  const [retryWSConnect, setRetryWSConnect] = useState(false);
   // const [markedNotifications, setMarkedNotifications] = useState(new Set());
   const [markedIds, setMarkedIds] = useState(new Set());
 
@@ -36,6 +38,8 @@ export const RealTimeProvider = ({ children }) => {
             setNotifications(notifications => data.notifications.concat(notifications));
           } else if (data.msgtype === 'relationship_update') {
             setRelationshipUpdate(data);
+          } else if (data.msgtype === 'self_relationship_update') {
+            setSelfRelationshipUpdate(data);
           } else if (data.msgtype === 'friend_status_change') {
             const { username, is_online } = data;
 
@@ -51,8 +55,9 @@ export const RealTimeProvider = ({ children }) => {
           }
         };
 
-        socket.onclose = (event) => {
+        socket.onclose = socket.onerror = (event) => {
           clearRealTimeContext();
+          setRetryWSConnect(!retryWSConnect);
           console.log('WebSocket connection closed:', event);
         };
 
@@ -65,15 +70,17 @@ export const RealTimeProvider = ({ children }) => {
           clearRealTimeContext();
       }
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, retryWSConnect]);
 
   const sendRelationshipUpdate = (action, username) => {
     if (ws) {
-      ws.send(JSON.stringify({
+      let e = {
         action: action,
         username: username,
         type: 'relationship_update',
-      }));
+      }
+      setSelfRelationshipUpdate(e);
+      ws.send(JSON.stringify(e));
     }
   };
 
@@ -101,7 +108,7 @@ export const RealTimeProvider = ({ children }) => {
   };
 
   return (
-    <RealTimeContext.Provider value={{ notifications, removeMarkedNotifications , relationshipUpdate, sendRelationshipUpdate, markAsRead, clearRealTimeContext, onlineFriends, selfRelationshipUpdate, setSelfRelationshipUpdate }}>
+    <RealTimeContext.Provider value={{ notifications, removeMarkedNotifications , relationshipUpdate, sendRelationshipUpdate, markAsRead, clearRealTimeContext, onlineFriends, selfRelationshipUpdate }}>
       {children}
     </RealTimeContext.Provider>
   );
