@@ -31,7 +31,7 @@ const User = () => {
     pong: [],
     space: []
   });
-  const { sendRelationshipUpdate, relationshipUpdate, onlineFriends } = useRealTime();
+  const { sendRelationshipUpdate, relationshipUpdate, onlineFriends, setSelfRelationshipUpdate } = useRealTime();
   const { username } = useParams();
 
   useEffect(() => {
@@ -89,6 +89,7 @@ const User = () => {
         setIsAddHovering(false);
         myToast(2, "I'm sorry mi amori")
         sendRelationshipUpdate("unfriended", username);
+        setSelfRelationshipUpdate(`{"action": "unfriended", "username": ${username}}`);
       } catch (error) {
         console.error("Error sending friend request:", error);
       }
@@ -100,6 +101,7 @@ const User = () => {
       await acceptFriendReq(username)
       myToast(1, "friend request has been accepted.")
       sendRelationshipUpdate("friends", username);
+      setSelfRelationshipUpdate(`{"action": "friends", "username": ${username}}`);
     } catch (error) {
       console.error("Error accepting friend request:", error);
     }
@@ -118,7 +120,8 @@ const User = () => {
         {
           await blockUser(username);
           myToast(2, "blocked.")
-        sendRelationshipUpdate("blocked", username);
+          sendRelationshipUpdate("blocked", username);
+          setSelfRelationshipUpdate(`{"action": "blocked", "username": ${username}}`);
       }
     } catch (error) {
       console.error("Error sending friend request:", error);

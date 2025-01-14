@@ -11,6 +11,7 @@ export const useRealTime = () => {
 export const RealTimeProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [relationshipUpdate, setRelationshipUpdate] = useState(null);
+  const [selfRelationshipUpdate, setSelfRelationshipUpdate] = useState(null);
   const [onlineFriends, setOnlineFriends] = useState([]);
   const [ws, setWs] = useState(null);
   const { isAuthenticated } = useUser();
@@ -100,7 +101,7 @@ export const RealTimeProvider = ({ children }) => {
   };
 
   return (
-    <RealTimeContext.Provider value={{ notifications, removeMarkedNotifications , relationshipUpdate, sendRelationshipUpdate, markAsRead, clearRealTimeContext, onlineFriends }}>
+    <RealTimeContext.Provider value={{ notifications, removeMarkedNotifications , relationshipUpdate, sendRelationshipUpdate, markAsRead, clearRealTimeContext, onlineFriends, selfRelationshipUpdate, setSelfRelationshipUpdate }}>
       {children}
     </RealTimeContext.Provider>
   );
