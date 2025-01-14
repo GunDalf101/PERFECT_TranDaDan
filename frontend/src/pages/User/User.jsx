@@ -31,12 +31,12 @@ const User = () => {
     pong: [],
     space: []
   });
-  const { sendRelationshipUpdate, relationshipUpdate, onlineFriends } = useRealTime();
+  const { sendRelationshipUpdate, relationshipUpdate, onlineFriends, selfRelationshipUpdate } = useRealTime();
   const { username } = useParams();
 
   useEffect(() => {
     setReload(!reload);
-  }, [relationshipUpdate, username, onlineFriends]);
+  }, [relationshipUpdate, username, onlineFriends, selfRelationshipUpdate]);
 
   // Fetch user data and friend request status
   useEffect(() => {
@@ -118,7 +118,7 @@ const User = () => {
         {
           await blockUser(username);
           myToast(2, "blocked.")
-        sendRelationshipUpdate("blocked", username);
+          sendRelationshipUpdate("blocked", username);
       }
     } catch (error) {
       console.error("Error sending friend request:", error);

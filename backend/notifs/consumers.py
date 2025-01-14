@@ -67,7 +67,7 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
 
     async def disconnect(self, close_code):
         #print("WTdisconnectdisconnectsdisconnectFfFFFFF")
-        if UserConnectionManager.decrement_connection(self.user.username) < 1:
+        if self.user and UserConnectionManager.decrement_connection(self.user.username) < 1:
             #print(f"first disco: {self.user.username}")
             await self.notify_friends_of_my_status_change(self.user, False)
         else:
@@ -142,6 +142,16 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
                 }
             )
         await self.channel_layer.group_send(
+            f"notifs_user_{self.user.username}",
+            {
+                'type': 'dispatch_relationship_update',
+                'msgtype': 'self_relationship_update',
+                'action': action,
+                'username': username,
+                'sender': self.channel_name
+            }
+        )
+        await self.channel_layer.group_send(
             f"notifs_user_{username}",
             {
                 'type': 'dispatch_relationship_update',
@@ -152,12 +162,18 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         )
 
     async def dispatch_relationship_update(self, event):
-        if event.get("type"):
+        if "type" in event:
             del event['type']
+        # else:
+        #     #print(f"WTFFF: {event}")
+        #     raise Exception
+        if event.get("msgtype") == 'self_relationship_update':
+            if self.channel_name != event.get("sender"):
+                if "sender" in event:
+                    del event['sender']
+                await self.send_json(event)
         else:
-            #print(f"WTFFF: {event}")
-            raise Exception
-        await self.send_json(event)
+            await self.send_json(event)
 
     @database_sync_to_async
     def get_user_by_username(self, username):
