@@ -80,7 +80,10 @@ class DirectMessageConsumer(AsyncWebsocketConsumer):
 
         # Check if the user is friends with the target user
         if not await self.is_friend(self.user, target_user):
-            await self.send_error("Not friends")
+            await self.send(text_data=json.dumps({
+                'error': "not friends",
+                'username': username
+            }))
             return
 
         # Get or create the conversation
