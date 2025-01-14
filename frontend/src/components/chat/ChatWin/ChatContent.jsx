@@ -119,17 +119,19 @@ const ChatContent = memo(
 
       const messagesAdded = messages.length > prevMessagesLengthRef.current;
 
-      if (messagesAdded ) {
-        scrollToBottom('smooth');
-        setInitialLoad(false);
-        previousMessagesLength.current = messages.length;
-      }
-
-      // if (isNewMessageReceived()) {
-      //   if (isNearBottom()) {
-      //     scrollToLatest();
-      //   }
+      // if (messagesAdded ) {
+      //   scrollToBottom('smooth');
+      //   setInitialLoad(false);
+      //   previousMessagesLength.current = messages.length;
       // }
+
+      if (isNewMessageReceived()) {
+        // if (isNearBottom()) {
+          scrollToBottom('smooth');
+          setInitialLoad(false);
+          // scrollToLatest();
+        // }
+      }
 
       prevMessagesLengthRef.current = messages.length;
     }, [messages, isLoadingMore]);
@@ -283,7 +285,7 @@ const ChatContent = memo(
               </div>
             </div>
             <div className="relative inline-block left-7 top-2 " ref={dropdownRef}>
-              <div className="flex  lg:hidden">
+              <div className="flex  min-[1030px]:hidden">
                 <button
                   onClick={() => setIsOpen(!isOpen)}
                   className="text-blue-300 hover:text-blue-600 focus:outline-none p-2"
