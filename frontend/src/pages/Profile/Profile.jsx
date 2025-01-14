@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import {getMyData} from "../../api/authServiceMe";
 import getMatches from "../../api/gameService"
 import { useNavigate } from 'react-router-dom';
+import Loading from "../../components/Loading/Loading";
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
@@ -44,7 +45,7 @@ const Profile = () => {
         const data = await getMyData();
         setMyData(data);
         const matches = await getMatches(data.id);
-        console.log(matches)
+        // console.log(matches)
         setMymatches(matches)
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -61,7 +62,7 @@ const Profile = () => {
     winRate: "70%",
   };
 
-  if (!mydata) return <div>Loading...</div>;
+  if (!mydata) return <Loading />
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-cover bg-center bg-[url('/retro_1.jpeg')] from-darkBackground via-purpleGlow to-neonBlue text-white font-retro">
@@ -76,7 +77,7 @@ const Profile = () => {
               alt="Profile"
               className="w-36 h-36 rounded-full border-4 border-white shadow-[0_0_20px_5px] shadow-neonPink mb-4"
             />
-            <h2 className="text-3xl text-center text-neonPink">username</h2>
+            {/* <h2 className="text-3xl text-center text-neonPink">username</h2> */}
             <p
               className="text-center text-3xl text-gray-200 mt-4"
               style={{ textShadow: "1px 1px 5px rgb(0, 0, 0)" }}

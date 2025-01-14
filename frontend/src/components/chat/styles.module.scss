@@ -393,15 +393,18 @@
   height: var(--chat-height);
 
   @media screen and (max-height: 768px) {
+
     transform: translate(-50%, -42%);
   }
   @media screen and (max-width: 435px) {
     width: 99%;
+    height: 100%;
   }
 
 
   @media screen and (max-width: 1024px) {
     // width: 95%;
+    
     transform: translate(-50%, -48%);
     top: 55%;
     height: 85%;

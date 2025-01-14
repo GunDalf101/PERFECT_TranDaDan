@@ -1,8 +1,13 @@
 import React, { useEffect } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import styles from "../styles.module.scss";
 import ChatContent from "./ChatContent";
 import UserList from "./UserList";
 import { useInvite } from "../../../chatContext/InviteContext";
+import { useRealTime } from "../../../context/RealTimeContext";
+import { blockUser } from "../../../api/blockService";
+import { myToast } from "../../../lib/utils1";
+
 import {
     ChevronDown,
     Paperclip,
@@ -12,20 +17,33 @@ import {
     X,
     Check,
 } from "lucide-react";
+// import { useRealTime } from "../../../context/RealTimeContext";
 
 const FriendProfile = ({
     selectedUser,
 }) => {
 
-    const { invites, notification, sendInvite, acceptInvite, declineInvite, setNotification } = useInvite();
-
-
+    const navigate = useNavigate();
+    const {sendInvite} = useInvite();
+    
+    const { sendRelationshipUpdate} = useRealTime();
+    const handleBlockUser = async () => {
+        try {
+            await blockUser(selectedUser.name);
+            myToast(2, `${selectedUser.name} has been blocked`);
+            sendRelationshipUpdate("blocked", selectedUser.name);
+        } catch (error) {
+            console.error("Error blocking user:", error);
+            myToast(0, "Failed to block user. Please try again.");
+        }
+    };
+    
     return (
         // <div className={`${styles.chat_profile}`}>
         <div className={`${styles.chat_profile}`}>
             <div className="flex flex-col items-center mb-4 border border-blue-300 rounded-lg p-4 bg-[#1b243bae]">
                 <img
-                    src={selectedUser.avatar_url || "/default_profile.webp"}
+                    src={selectedUser.avatar || "/default_profile.webp"}
                     alt="Profile"
                     className="rounded-full mb-2 size-[70%]"
                 />
@@ -35,7 +53,7 @@ const FriendProfile = ({
 
             <div className="border rounded-lg border-blue-300 p-4 bg-[#1b243bae]">
                 <div className="grid gap-2 grid-cols-1">
-                    <button className="bg-green-400 bg-opacity-20 rounded-lg hover:bg-green-400 hover:bg-opacity-50 transition-all duration-200">
+                    <button onClick={() => {navigate(`/user/${selectedUser.name}`)}} className="bg-green-400 bg-opacity-20 rounded-lg hover:bg-green-400 hover:bg-opacity-50 transition-all duration-200">
                         <div className="flex items-center p-3 justify-start">
                             <div className="flex items-center">
                                 <div className="bg-green-500 bg-opacity-20 p-2 rounded-full">
@@ -63,7 +81,7 @@ const FriendProfile = ({
                         </div>
                     </button>
 
-                    <button className="bg-red-400 bg-opacity-20 rounded-lg hover:bg-red-400 hover:bg-opacity-50 transition-all duration-200">
+                    <button onClick={handleBlockUser} className="bg-red-400 bg-opacity-20 rounded-lg hover:bg-red-400 hover:bg-opacity-50 transition-all duration-200">
                         <div className="flex items-center p-3 justify-start">
                             <div className="flex items-center">
                                 <div className="bg-red-400 bg-opacity-20 p-2 rounded-full">

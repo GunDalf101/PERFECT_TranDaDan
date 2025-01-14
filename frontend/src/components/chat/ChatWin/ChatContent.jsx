@@ -3,7 +3,10 @@ import { MoreVertical, Send, User, Gamepad2, X, Blocks } from "lucide-react";
 import styles from "../styles.module.scss";
 import { useRealTime } from "../../../context/RealTimeContext"
 import FriendProfile from "./FriendProfile";
-
+import { useNavigate } from "react-router-dom";
+import { useInvite } from "../../../chatContext/InviteContext";
+import { blockUser } from "../../../api/blockService";
+import { myToast } from "../../../lib/utils1";
 
 const ChatContent = memo(
   ({
@@ -19,6 +22,8 @@ const ChatContent = memo(
     // isLoading,
     isLoadingMore,
   }) => {
+    const {sendInvite} = useInvite();
+    const navigate = useNavigate();
     const chatBodyRef = useRef(null);
     const observerRef = useRef(null);
     const loadingTimerRef = useRef(null);
@@ -35,7 +40,19 @@ const ChatContent = memo(
     const prevScrollHeightRef = useRef(0);
     const isLoadingRef = useRef(false);
 
-    const { onlineFriends } = useRealTime()
+    const { onlineFriends,sendRelationshipUpdate } = useRealTime()
+
+
+    const handleBlockUser = async () => {
+        try {
+            await blockUser(selectedUser.name);
+            myToast(2, `${selectedUser.name} has been blocked`);
+            sendRelationshipUpdate("blocked", selectedUser.name);
+        } catch (error) {
+            console.error("Error blocking user:", error);
+            myToast(0, "Failed to block user. Please try again.");
+        }
+    };
 
     const isNewMessageReceived = () => {
       const isNewMessage = messages.length > previousMessagesLength.current;
@@ -272,7 +289,7 @@ const ChatContent = memo(
           <div className="h-16 border-b px-6 flex justify-between">
             <div className="flex gap-2 items-center">
               <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center">
-                <img src={selectedUser.avatar_url || "/default_profile.webp"} alt="" />
+                <img src={selectedUser.avatar || "/default_profile.webp"} alt="" />
               </div>
               <div>
                 <h2 className="font-semibold">{selectedUser.name}</h2>
@@ -302,7 +319,7 @@ const ChatContent = memo(
                     <button
                       className="w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                       onClick={() => {
-                        console.log('Profile clicked');
+                        navigate(`/user/${selectedUser.name}`);
                         setIsOpen(false);
                       }}
                     >
@@ -313,7 +330,7 @@ const ChatContent = memo(
                     <button
                       className="w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                       onClick={() => {
-                        console.log('Settings clicked');
+                        sendInvite(selectedUser.name);
                         setIsOpen(false);
                       }}
                     >
@@ -324,7 +341,7 @@ const ChatContent = memo(
                     <button
                       className="w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                       onClick={() => {
-                        console.log('Logout clicked');
+                        handleBlockUser();
                         setIsOpen(false);
                       }}
                     >
@@ -342,8 +359,8 @@ const ChatContent = memo(
               <div key={message.id} className="mb-4">
                 <div className={`flex items-start space-x-2 ${message.sender === selectedUser.name ? "justify-start" : "justify-end"}`}>
                   {message.sender === selectedUser.name && (
-                    <div className="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center">
-                      <span className="text-blue-400 text-sm">{selectedUser.name[0]}</span>
+                    <div className="w-10 h-10 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                      <img src={selectedUser.avatar || "/default_profile.webp"} alt="" />
                     </div>
                   )}
                   <div className={`relative max-w-[70%] ${message.sender === selectedUser.name ? "mr-auto" : "ml-auto"}`}>

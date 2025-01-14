@@ -65,10 +65,15 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
     #     user.save()
 
     async def connect(self):
+
+        self.user = self.scope.get('user', None)
+
+        if self.user is None:
+            await self.close()
+            return
+
         self.game_id = self.scope['url_route']['kwargs']['game_id']
-        query_string = self.scope['query_string'].decode()
-        params = dict(param.split('=') for param in query_string.split('&'))
-        self.username = params.get('username')
+        self.username = self.user.username
 
         # await self.update_user_ingame(self.username, True)
         PlayersManager.add_player(self.username)

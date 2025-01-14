@@ -2,8 +2,9 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '../components/auth/UserContext';
 import PropTypes from 'prop-types';
+import { env } from '../config/env';
 
-const WEBSOCKET_URL = 'ws://localhost:8000/ws/chat';
+const WEBSOCKET_URL = `${env.WS_URL}/ws/chat`;
 const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_DELAY = 3000;
 
@@ -71,7 +72,7 @@ export const WebSocketProvider = ({ children }) => {
 
       wsRef.current = ws;
     } catch (error) {
-      console.error("Error creating WebSocket:", error);
+      // console.error("Error creating WebSocket:", error);
       setIsConnected(false);
     }
   }, []);

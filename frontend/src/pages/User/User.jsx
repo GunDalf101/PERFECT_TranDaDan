@@ -9,6 +9,7 @@ import getMatches from "../../api/gameService";
 import { useRealTime } from "../../context/RealTimeContext";
 import {myToast} from "../../lib/utils1"
 import { useNavigate } from 'react-router-dom';
+import Loading from "../../components/Loading/Loading";
 
 const r = {
   NONE: 0,
@@ -138,7 +139,7 @@ const User = () => {
   };
 
   if (error) return <NotFound />;
-  if (!userdata) return <div>Loading...</div>; // Show loading state while fetching data
+  if (!userdata) return <Loading />;
 
   const statistics = {
     totalMatches: 10,
