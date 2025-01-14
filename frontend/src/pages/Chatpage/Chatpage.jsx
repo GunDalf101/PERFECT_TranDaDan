@@ -25,6 +25,7 @@ import { axiosInstance } from "../../api/axiosInstance";
 import getUserData from "../../api/authServiceUser";
 
 const ChatApp = () => {
+  const [friendAvatars, setFriendAvatars] = useState(new Map());
   const { user, isAuthenticated } = useUser();
   const { sendMessage, registerMessageHandler, isConnected } = useWebSocket();
   const [messages, setMessages] = useState([]);
@@ -99,34 +100,51 @@ const ChatApp = () => {
     [selectedChat]
   );
 
-  useEffect ( ()  =>{
-     loadFriendsWithLastMessages();
-     console.log("sadasd",friends);
-  },[friends])
+  useEffect(() => {
+    loadFriendsWithLastMessages();
+  }, [friends])
 
   const loadFriendsWithLastMessages = async () => {
     if (!isAuthenticated) return;
 
     try {
       setIsLoading(true);
-      // const data = await getFriends();
-      // Create a map for quick lookup of friend details by username
-      // const friendDetailsMap = new Map(
-        //   friendDetails.map(detail => [detail.username, detail])
-        // const friendDetails = friendDetailsResponse.friends;
-        // console.log(friendDetailsResponse);
-        // );
-        const friendsData = friends.map( (friend, index) => {
-          // const friendDetailsResponse = await getUserData(friend);
-          console.log(friend);
-          // const friendDetail = friendDetailsMap.get(friend.username) || {};
+
+      const avatarPromises = new Map();
+
+      // Fetch user data for each friend
+      for (const friend of friends) {
+        avatarPromises.set(
+          friend,
+          getUserData(friend).catch(error => {
+            console.error(`Error fetching avatar for ${friend}:`, error);
+            return null;
+          })
+        );
+      }
+
+      // Wait for all avatar requests to complete
+      const avatarResults = await Promise.allSettled(Array.from(avatarPromises.values()));
+      console.log(avatarPromises);
+      const newAvatarMap = new Map();
+
+      friends.forEach((friend, index) => {
+        const avatarResult = avatarResults[index];
+        const avatarUrl = avatarResult.status === 'fulfilled' && avatarResult.value
+          ? avatarResult.value.avatar_url
+          : 'default-avatar-url'; // Replace with your default avatar URL
+        newAvatarMap.set(friend, avatarUrl);
+      });
+
+      setFriendAvatars(newAvatarMap);
+      const friendsData = friends.map((friend, index) => {
         const cachedLastMessage = lastMessagesRef.current.get(friend);
         return {
           id: index + 1,
           name: friend,
           online: false,
           lastSeen: new Date().toISOString(),
-          avatar: "s",
+          avatar: newAvatarMap.get(friend),
           lastMessage: cachedLastMessage?.content || null,
           lastMessageTime: cachedLastMessage?.timestamp || null,
           unreadCount: 0,
@@ -178,10 +196,10 @@ const ChatApp = () => {
           prev.map((f) =>
             f.name === friend.name
               ? {
-                  ...f,
-                  lastMessage: lastMessage.content,
-                  lastMessageTime: lastMessage.timestamp,
-                }
+                ...f,
+                lastMessage: lastMessage.content,
+                lastMessageTime: lastMessage.timestamp,
+              }
               : f
           )
         );
@@ -471,7 +489,7 @@ const ChatApp = () => {
 
   return (
     <div className={`flex flex-col ${styles.nwbody}`}>
-      
+
       <div className="flex">
         <div className={`${styles.chat_win}`}>
           <UserList

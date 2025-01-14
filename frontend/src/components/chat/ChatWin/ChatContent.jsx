@@ -289,7 +289,7 @@ const ChatContent = memo(
           <div className="h-16 border-b px-6 flex justify-between">
             <div className="flex gap-2 items-center">
               <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center">
-                <img src={selectedUser.avatar_url || "/default_profile.webp"} alt="" />
+                <img src={selectedUser.avatar || "/default_profile.webp"} alt="" />
               </div>
               <div>
                 <h2 className="font-semibold">{selectedUser.name}</h2>
@@ -359,8 +359,8 @@ const ChatContent = memo(
               <div key={message.id} className="mb-4">
                 <div className={`flex items-start space-x-2 ${message.sender === selectedUser.name ? "justify-start" : "justify-end"}`}>
                   {message.sender === selectedUser.name && (
-                    <div className="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center">
-                      <span className="text-blue-400 text-sm">{selectedUser.name[0]}</span>
+                    <div className="w-10 h-10 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                      <img src={selectedUser.avatar || "/default_profile.webp"} alt="" />
                     </div>
                   )}
                   <div className={`relative max-w-[70%] ${message.sender === selectedUser.name ? "mr-auto" : "ml-auto"}`}>

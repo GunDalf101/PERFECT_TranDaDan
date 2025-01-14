@@ -31,7 +31,7 @@ const UserList = ({
   );
 
   const handleUserClick = (userId) => {
-    console.log(friends);
+    // console.log(friends);
     setSelectedChat(userId);
   };
 
@@ -40,7 +40,7 @@ const UserList = ({
     setHasSearched(true);
   };
 
-  
+
   const formatTime = (timestamp) => {
     if (!timestamp) return "";
 

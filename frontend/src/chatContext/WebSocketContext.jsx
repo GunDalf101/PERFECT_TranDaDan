@@ -72,7 +72,7 @@ export const WebSocketProvider = ({ children }) => {
 
       wsRef.current = ws;
     } catch (error) {
-      console.error("Error creating WebSocket:", error);
+      // console.error("Error creating WebSocket:", error);
       setIsConnected(false);
     }
   }, []);

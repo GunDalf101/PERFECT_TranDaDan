@@ -28,7 +28,7 @@ const UserProvider = ({ children }) => {
         setUser(userJSON);
         setIsAuthenticated(true);
       } catch (error) {
-        console.error('Error validating token:', error);
+        // console.error('Error validating token:', error);
         setIsAuthenticated(false);
         setUser(null);
         localStorage.removeItem('access_token');

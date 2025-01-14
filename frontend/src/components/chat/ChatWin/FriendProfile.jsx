@@ -43,7 +43,7 @@ const FriendProfile = ({
         <div className={`${styles.chat_profile}`}>
             <div className="flex flex-col items-center mb-4 border border-blue-300 rounded-lg p-4 bg-[#1b243bae]">
                 <img
-                    src={selectedUser.avatar_url || "/default_profile.webp"}
+                    src={selectedUser.avatar || "/default_profile.webp"}
                     alt="Profile"
                     className="rounded-full mb-2 size-[70%]"
                 />
