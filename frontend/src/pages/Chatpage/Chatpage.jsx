@@ -99,6 +99,7 @@ const ChatApp = () => {
 
   useEffect ( ()  =>{
      loadFriendsWithLastMessages();
+     console.log("sadasd",friends);
   },[friends])
 
   const loadFriendsWithLastMessages = async () => {
@@ -115,7 +116,7 @@ const ChatApp = () => {
           name: friend,
           online: false,
           lastSeen: new Date().toISOString(),
-          avatar: `/api/users/${friend}/avatar`,
+          avatar: friends.avatar_url,
           lastMessage: cachedLastMessage?.content || null,
           lastMessageTime: cachedLastMessage?.timestamp || null,
           unreadCount: 0,

@@ -14,15 +14,16 @@ const UserList = ({
 
   const {onlineFriends, relationshipUpdate} = useRealTime()
 
-  useEffect(() => {
-    console.log(relationshipUpdate);
-  }, [relationshipUpdate]);
+  // useEffect(() => {
+  //   console.log(relationshipUpdate);
+  // }, [relationshipUpdate]);
   
   const friendsWithOnlineStatus = useMemo(() => {
     return friends.map(friend => ({
       ...friend,
       online: onlineFriends.includes(friend.name)
     }));
+    
   }, [friends, onlineFriends]);
   
   const filteredUsers = friendsWithOnlineStatus.filter(friend =>
@@ -30,6 +31,7 @@ const UserList = ({
   );
   
   const handleUserClick = (userId) => {
+    console.log(friends);
     setSelectedChat(userId);
   };
 
@@ -107,7 +109,7 @@ const UserList = ({
                     `}
                   >
                     <img
-                      src={user.avatar_url || "/default_profile.webp"}
+                      src={user.avatar || "/default_profile.webp"}
                       className={`w-full h-full object-cover rounded-full`}
                       alt={`${user.name}'s avatar`}
                     />
