@@ -17,7 +17,7 @@ class Command(BaseCommand):
 
             if confirmation.lower() == 'yes':
                 deleted_count, _ = User.objects.all().delete()
-                self.stdout.write(self.style.SUCCESS(f'Successfully deleted {deleted_count} users.'))
+                self.stdout.write(self.style.SUCCESS(f'Successfully deleted {deleted_count} records.'))
             else:
                 self.stdout.write(self.style.WARNING('Action cancelled. No users were deleted.'))
             first_user = User.objects.create_user(email='first@example.com', username='first', tournament_alias='first', password='first', email_verified=True)
@@ -73,45 +73,7 @@ class Command(BaseCommand):
     def add_notifications_for_user(self, user):
         # Add some example notifications for the first user
         notifications = [
-            {"content": "You have a new friend request from second@example.com.", "url": "/friend-requests"},
             {"content": "Your profile has been updated successfully.", "url": "/profile"},
-            {"content": "A new message from third@example.com.", "url": "/messages"},
-            {"content": "A new message from third@example.com.", "url": "/messages"},
-
-            {"content": "A new message from third@example.com.", "url": "/messages"},
-            {"content": "A new message from third@example.com.", "url": "/messages"},
-            {"content": "A new message from third@example.com.", "url": "/messages"},
-            {"content": "A new message from third@example.com.", "url": "/messages"},
-            {"content": "A new message from third@example.com.", "url": "/messages"},
-            {"content": "A new message from third@example.com.", "url": "/messages"},
-            {"content": "A new message from third@example.com.", "url": "/messages"},
-            {"content": "A new message from third@example.com.", "url": "/messages"},
-            {"content": "A new message from third@example.com.", "url": "/messages"},
-            {"content": "A new message from third@example.com.", "url": "/messages"},
-            {"content": "A new message from third@example.com.", "url": "/messages"},
-            {"content": "A new message from third@example.com.", "url": "/messages"},
-            {"content": "A new message from third@example.com.", "url": "/messages"},
-            {"content": "A new message from third@example.com.", "url": "/messages"},
-            {"content": "A new message from third@example.com.", "url": "/messages"},
-            {"content": "A new message from third@example.com.", "url": "/messages"},
-            {"content": "Just an alert notification, no link.", "url": None},
-            {"content": "Just an alert notification, no link.", "url": None},
-            {"content": "Just an alert notification, no link.", "url": None},
-            {"content": "Just an alert notification, no link.", "url": None},
-            {"content": "Just an alert notification, no link.", "url": None},
-            {"content": "Just an alert notification, no link.", "url": None},
-            {"content": "Just an alert notification, no link.", "url": None},
-            {"content": "Just an alert notification, no link.", "url": None},
-            {"content": "Just an alert notification, no link.", "url": None},
-            {"content": "Just an alert notification, no link.", "url": None},
-            {"content": "Just an alert notification, no link.", "url": None},
-            {"content": "Just an alert notification, no link.", "url": None},
-            {"content": "Just an alert notification, no link.", "url": None},
-            {"content": "Just an alert notification, no link.", "url": None},
-            {"content": "Just an alert notification, no link.", "url": None},
-            {"content": "Just an alert notification, no link.", "url": None},
-            {"content": "Just an alert notification, no link.", "url": None},
-            {"content": "Just an alert notification, no link.", "url": None},
             {"content": "Just an alert notification, no link.", "url": None},
         ]
 
