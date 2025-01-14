@@ -226,7 +226,7 @@ class RegisterView(UnprotectedView):
         if serializer.is_valid():
             user = serializer.save()
             token = user.email_token
-            confirmation_link = f"{os.getenv('BACKEND_URL')}{reverse('verify-email', kwargs={'token': token})}"
+            confirmation_link = f"{os.getenv('FRONT_END_VERIFY_ACC_URL')}/{token}"
             print(confirmation_link)
             send_registration_email(confirmation_link, user.email, schedule=timezone.now())
             return Response({
@@ -336,7 +336,7 @@ class UsersMeView(APIView):
                 user.email_verified = False
                 user.save()
                 token = user.email_token
-                confirmation_link = f"{os.getenv('BACKEND_URL')}{reverse('verify-email', kwargs={'token': token})}"
+                confirmation_link = f"{os.getenv('FRONT_END_VERIFY_ACC_URL')}/{token}"
                 send_registration_email(confirmation_link, user.email, schedule=timezone.now())
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
