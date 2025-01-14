@@ -70,7 +70,10 @@ class DirectMessageConsumer(AsyncWebsocketConsumer):
             await self.send_error("Missing required fields")
             return
         if username == self.user.username:
-            await self.send_error("Missing required fields")
+            await self.send(text_data=json.dumps({
+                'error': "not friends",
+                'username': username
+            }))
             return
         try:
             target_user = await database_sync_to_async(User.objects.get)(username=username)
@@ -80,7 +83,10 @@ class DirectMessageConsumer(AsyncWebsocketConsumer):
 
         # Check if the user is friends with the target user
         if not await self.is_friend(self.user, target_user):
-            await self.send_error("Not friends")
+            await self.send(text_data=json.dumps({
+                'error': "not friends",
+                'username': username
+            }))
             return
 
         # Get or create the conversation
