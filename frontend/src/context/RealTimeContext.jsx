@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useUser } from '../components/auth/UserContext';
 import { useCallback } from 'react';
-import { every } from 'lodash';
+import { env } from '../config/env';
 
 const RealTimeContext = createContext();
 
@@ -50,7 +50,7 @@ export const RealTimeProvider = ({ children }) => {
       const accessToken = localStorage.getItem("access_token");
 
       if (accessToken) {
-        socket = new WebSocket(`ws://localhost:8000/ws/notifs/?token=${accessToken}`);
+        socket = new WebSocket(`${env.WS_URL}/ws/notifs/?token=${accessToken}`);
 
         socket.onopen = () => {
           console.log('WebSocket connection established');

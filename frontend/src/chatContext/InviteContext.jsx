@@ -2,8 +2,9 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { useUser } from '../components/auth/UserContext';
+import { env } from '../config/env';
 
-const WEBSOCKET_URL = 'ws://localhost:8000/ws/invites';
+const WEBSOCKET_URL = `${env.WS_URL}/ws/invites`;
 const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_DELAY = 3000;
 
@@ -89,11 +90,11 @@ export const InviteProvider = ({ children }) => {
 
   const connectWebSocket = useCallback(() => {
     if (!myUsername) {
-      console.error("Cannot connect WebSocket: No username found");
-      setNotification({
-        type: 'error',
-        message: 'Connection error: User not authenticated'
-      });
+      // console.error("Cannot connect WebSocket: No username found");
+      // setNotification({
+      //   type: 'error',
+      //   message: 'Connection error: User not authenticated'
+      // });
       return;
     }
 
@@ -107,7 +108,7 @@ export const InviteProvider = ({ children }) => {
     }
 
     try {
-      const ws = new WebSocket(`${WEBSOCKET_URL}/?username=${myUsername}`);
+      const ws = new WebSocket(`${WEBSOCKET_URL}/?token=${localStorage.getItem('access_token')}`);
 
       ws.onopen = () => {
         console.log("WebSocket Connected");

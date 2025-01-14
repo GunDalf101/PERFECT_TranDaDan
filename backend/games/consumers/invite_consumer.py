@@ -11,15 +11,12 @@ class InviteConsumer(AsyncJsonWebsocketConsumer):
     pending_invites = {}
 
     async def connect(self):
-        self.username = self.scope['query_string'].decode().split('=')[1]
-        
-        try:
-            user = await sync_to_async(get_user_model().objects.get)(username=self.username)
-        except get_user_model().DoesNotExist:
+        user = self.user = self.scope.get('user', None)
+        self.username = user.username
+
+        if self.user is None:
             await self.close()
             return
-
-        self.scope['user'] = user
         
         InviteConsumer.active_connections[self.username] = self
         

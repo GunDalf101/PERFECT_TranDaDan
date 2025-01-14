@@ -4,6 +4,7 @@ import './MatchMaking.css';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getMyData } from '../../api/authServiceMe';
 import { axiosInstance } from '../../api/axiosInstance';
+import { env } from '../../config/env';
 
 const ProfileCard = ({ username, title, picture }) => (
   <div className="card bg-gray-900 p-6 rounded-lg text-center w-full max-w-xs flex flex-col items-center hover-glow">
@@ -91,7 +92,7 @@ const MatchMaking = ({ gameType = "pong" }) => {
   useEffect(() => {
     if (!isDataReady || !username) return;
 
-    const ws = new WebSocket(`ws://localhost:8000/ws/matchmaking/?username=${username}`);
+    const ws = new WebSocket(`${env.WS_URL}/ws/matchmaking/?token=${localStorage.getItem('access_token')}`);
 
     ws.onopen = () => {
       console.log("WebSocket connected");

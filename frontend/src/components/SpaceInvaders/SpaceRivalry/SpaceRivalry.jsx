@@ -11,7 +11,6 @@ const DEBRIS_SIZE = 20;
 const POWERUP_SIZE = 25;
 const MOVEMENT_SPEED = 5;
 
-// Power-up types
 const POWERUPS = {
   RAPID_FIRE: { type: 'RAPID_FIRE', duration: 5000, color: 'yellow' },
   SHIELD: { type: 'SHIELD', duration: 8000, color: 'cyan' },
@@ -19,7 +18,6 @@ const POWERUPS = {
   SLOW_MOTION: { type: 'SLOW_MOTION', duration: 4000, color: 'lime' }
 };
 
-// Asteroid types
 const ASTEROID_TYPES = {
   NORMAL: { speed: 2, size: ASTEROID_SIZE, health: 1, points: 100 },
   FAST: { speed: 4, size: ASTEROID_SIZE * 0.7, health: 1, points: 150 },
@@ -28,7 +26,6 @@ const ASTEROID_TYPES = {
 };
 
 const SpaceRivalry = () => {
-  // Game state
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [score1, setScore1] = useState(0);
@@ -36,11 +33,9 @@ const SpaceRivalry = () => {
   const [health1, setHealth1] = useState(100);
   const [health2, setHealth2] = useState(100);
   
-  // Player positions
   const [player1Pos, setPlayer1Pos] = useState(GAME_WIDTH / 4);
   const [player2Pos, setPlayer2Pos] = useState(3 * GAME_WIDTH / 4);
   
-  // Key states for smooth movement
   const [keys, setKeys] = useState({
     a: false,
     d: false,
@@ -48,7 +43,6 @@ const SpaceRivalry = () => {
     ArrowRight: false
   });
   
-  // Game objects
   const [lasers1, setLasers1] = useState([]);
   const [lasers2, setLasers2] = useState([]);
   const [asteroids, setAsteroids] = useState([]);
@@ -56,11 +50,9 @@ const SpaceRivalry = () => {
   const [powerups, setPowerups] = useState([]);
   const [explosions, setExplosions] = useState([]);
   
-  // Cooldown states
   const [canShoot1, setCanShoot1] = useState(true);
   const [canShoot2, setCanShoot2] = useState(true);
 
-  // Game mechanics
   const [activeEffects1, setActiveEffects1] = useState({});
   const [activeEffects2, setActiveEffects2] = useState({});
   const [combo1, setCombo1] = useState(0);
@@ -68,7 +60,6 @@ const SpaceRivalry = () => {
   const [difficulty, setDifficulty] = useState(1);
   const [wave, setWave] = useState(1);
 
-  // Shooting function
   const shoot = useCallback((playerId) => {
     const playerPos = playerId === 1 ? player1Pos : player2Pos;
     const setLasers = playerId === 1 ? setLasers1 : setLasers2;
@@ -86,7 +77,6 @@ const SpaceRivalry = () => {
 
     setLasers(prev => [...prev, ...bullets]);
 
-    // Rapid fire affects cooldown
     const cooldownTime = effects.RAPID_FIRE?.active ? 250 : 500;
     if (playerId === 1) {
       setCanShoot1(false);
@@ -97,7 +87,6 @@ const SpaceRivalry = () => {
     }
   }, [player1Pos, player2Pos, activeEffects1, activeEffects2]);
 
-  // Handle key down
   const handleKeyDown = useCallback((event) => {
     if (!gameStarted || gameOver) return;
 
@@ -105,7 +94,6 @@ const SpaceRivalry = () => {
       setKeys(prev => ({ ...prev, [event.key]: true }));
     }
 
-    // Shooting controls
     if (event.key === 'w' && canShoot1) {
       shoot(1);
     }
@@ -114,18 +102,15 @@ const SpaceRivalry = () => {
     }
   }, [gameStarted, gameOver, canShoot1, canShoot2, shoot]);
 
-  // Handle key up
   const handleKeyUp = useCallback((event) => {
     if (['a', 'd', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
       setKeys(prev => ({ ...prev, [event.key]: false }));
     }
   }, []);
 
-  // Collision handling
   const createExplosion = useCallback((x, y) => {
     setExplosions(prev => [...prev, { x, y, created: Date.now() }]);
     
-    // Damage nearby asteroids
     setAsteroids(prev => prev.filter(asteroid => {
       const distance = Math.sqrt(
         Math.pow(asteroid.x - x, 2) + Math.pow(asteroid.y - y, 2)
@@ -147,7 +132,6 @@ const SpaceRivalry = () => {
       }
     });
 
-    // Clear effect after duration
     setTimeout(() => {
       setActiveEffects(prev => ({
         ...prev,
@@ -156,7 +140,6 @@ const SpaceRivalry = () => {
     }, POWERUPS[powerup.type].duration);
   }, [activeEffects1, activeEffects2]);
 
-  // Spawn asteroid
   const spawnAsteroid = useCallback(() => {
     const types = Object.keys(ASTEROID_TYPES);
     const type = types[Math.floor(Math.random() * types.length)];
@@ -168,7 +151,6 @@ const SpaceRivalry = () => {
     };
   }, []);
 
-  // Split asteroid
   const splitAsteroid = useCallback((asteroid) => {
     if (asteroid.type === 'SPLIT') {
       return [
@@ -189,9 +171,7 @@ const SpaceRivalry = () => {
     return [];
   }, []);
 
-  // Check collisions
   const checkCollisions = useCallback(() => {
-    // Check laser hits on asteroids
     const checkLaserAsteroidCollisions = (lasers, isPlayer1) => {
       setAsteroids(prevAsteroids => {
         let newAsteroids = [...prevAsteroids];
@@ -201,14 +181,12 @@ const SpaceRivalry = () => {
                        Math.abs(laser.y - asteroid.y) < asteroid.size/2;
             
             if (hit) {
-              // Handle different asteroid types
               if (asteroid.type === 'SPLIT') {
                 newAsteroids.push(...splitAsteroid(asteroid));
               } else if (asteroid.type === 'EXPLODING') {
                 createExplosion(asteroid.x, asteroid.y);
               }
 
-              // Maybe spawn power-up
               if (Math.random() < 0.2) {
                 const powerupTypes = Object.keys(POWERUPS);
                 const type = powerupTypes[Math.floor(Math.random() * powerupTypes.length)];
@@ -220,7 +198,6 @@ const SpaceRivalry = () => {
                 }]);
               }
 
-              // Update combo and score
               if (isPlayer1) {
                 setCombo1(prev => prev + 1);
                 setScore1(prev => prev + asteroid.points * (1 + Math.floor(combo1 / 5)));
@@ -229,7 +206,6 @@ const SpaceRivalry = () => {
                 setScore2(prev => prev + asteroid.points * (1 + Math.floor(combo2 / 5)));
               }
 
-              // Create debris
               setDebris(prev => [...prev, {
                 x: asteroid.x,
                 y: asteroid.y,
@@ -246,7 +222,6 @@ const SpaceRivalry = () => {
     checkLaserAsteroidCollisions(lasers1, true);
     checkLaserAsteroidCollisions(lasers2, false);
 
-    // Check power-up collection
     setPowerups(prev => prev.filter(powerup => {
       const hitPlayer1 = Math.abs(powerup.x - player1Pos) < (SHIP_WIDTH + POWERUP_SIZE)/2 &&
                         Math.abs(powerup.y - (GAME_HEIGHT - SHIP_HEIGHT/2)) < (SHIP_HEIGHT + POWERUP_SIZE)/2;
@@ -264,7 +239,6 @@ const SpaceRivalry = () => {
       return powerup.y < GAME_HEIGHT;
     }));
 
-    // Check ship collisions
     debris.forEach(d => {
       if (d.targetPlayer === 1 &&
           Math.abs(d.x - player1Pos) < (SHIP_WIDTH + DEBRIS_SIZE)/2 &&
@@ -306,17 +280,14 @@ const SpaceRivalry = () => {
     createExplosion, splitAsteroid, collectPowerup
   ]);
 
-  // Effect for difficulty increase and combo decay
   useEffect(() => {
     if (!gameStarted || gameOver) return;
 
-    // Increase difficulty over time
     const difficultyTimer = setInterval(() => {
       setDifficulty(prev => Math.min(prev + 0.1, 3));
       setWave(prev => prev + 1);
     }, 30000);
 
-    // Clear combos if no hits for a while
     const comboTimer = setInterval(() => {
       setCombo1(prev => prev > 0 ? prev - 1 : 0);
       setCombo2(prev => prev > 0 ? prev - 1 : 0);
@@ -328,12 +299,10 @@ const SpaceRivalry = () => {
     };
   }, [gameStarted, gameOver]);
 
-  // Movement update loop
   useEffect(() => {
     if (!gameStarted || gameOver) return;
 
     const moveInterval = setInterval(() => {
-      // Player 1 movement
       if (keys.a && player1Pos > SHIP_WIDTH/2) {
         setPlayer1Pos(prev => Math.max(SHIP_WIDTH/2, prev - MOVEMENT_SPEED));
       }
@@ -341,7 +310,6 @@ const SpaceRivalry = () => {
         setPlayer1Pos(prev => Math.min(GAME_WIDTH/2 - SHIP_WIDTH/2, prev + MOVEMENT_SPEED));
       }
 
-      // Player 2 movement
       if (keys.ArrowLeft && player2Pos > GAME_WIDTH/2 + SHIP_WIDTH/2) {
         setPlayer2Pos(prev => Math.max(GAME_WIDTH/2 + SHIP_WIDTH/2, prev - MOVEMENT_SPEED));
       }
@@ -607,7 +575,6 @@ const SpaceRivalry = () => {
               />
             ))}
 
-            {/* Explosions */}
             {explosions.map((explosion, i) => (
               <div
                 key={`explosion-${i}`}

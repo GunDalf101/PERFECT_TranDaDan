@@ -14,15 +14,12 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
     #     return user.ingame
 
     async def connect(self):
-        username = self.scope['query_string'].decode().split('=')[1]
+        user = self.user = self.scope.get('user', None)
 
-        try:
-            user = await sync_to_async(get_user_model().objects.get)(username=username)
-        except get_user_model().DoesNotExist: 
+        if self.user is None:
             await self.close()
             return
 
-        self.scope['user'] = user
         for queue in self.matchmaking_queues.values():
             for player in queue:
                 if player.scope['user'] == user:

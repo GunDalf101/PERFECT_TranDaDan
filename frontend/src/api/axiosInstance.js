@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { env } from '../config/env';
 
 const axiosInstance = axios.create({
-    baseURL: 'http://localhost:8000/',
+    baseURL: `${env.API_URL}`,
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
@@ -9,7 +10,7 @@ const axiosInstance = axios.create({
 });
 
 const unauthAxiosInstance = axios.create({ 
-  baseURL: 'http://localhost:8000/',
+  baseURL: `${env.API_URL}`,
   withCredentials: true,
   headers: {
       'Content-Type': 'application/json',

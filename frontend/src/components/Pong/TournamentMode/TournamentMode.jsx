@@ -13,11 +13,9 @@ const TournamentMode = () => {
     const location = useLocation();
     const { currentMatch, players } = location.state;
     useEffect(() => {
-        // Redirect back to tournament if no state is present
         if (!location.state?.currentMatch || !location.state?.players) {
             const tournamentStarted = localStorage.getItem('tournamentStarted');
             if (tournamentStarted === 'true') {
-                // Restore state from localStorage
                 const players = JSON.parse(localStorage.getItem('tournamentPlayers'));
                 const currentMatch = parseInt(localStorage.getItem('currentMatch'));
                 const round1Matches = JSON.parse(localStorage.getItem('round1Matches'));
@@ -686,9 +684,7 @@ const TournamentMode = () => {
         <>
             <canvas ref={canvasRef} className="webgl" />
             
-            {/* Tournament Match Info */}
             <div className="absolute top-10 left-1/2 transform -translate-x-1/2 flex items-center justify-between w-full max-w-4xl px-6 py-4 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full border-4 border-cyan-400 shadow-glow">
-                {/* Player 1 */}
                 <div className="flex items-center space-x-4">
                     <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-cyan-400">
                         {player1.image && (
