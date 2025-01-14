@@ -1,14 +1,12 @@
 import React, { useEffect } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import GUI from 'lil-gui'
 import gsap from 'gsap'
 import { GLTFLoader } from 'three/examples/jsm/Addons.js'
 import { Link } from 'react-router-dom'
 
 
 const GameChoice = () => {
-
     useEffect(() => {
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();

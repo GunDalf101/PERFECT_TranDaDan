@@ -8,6 +8,7 @@ import getFriends from "../../api/axiosGetFriends";
 import getAllMessage from "../../api/axiosGetallMessage";
 import styles from "../../components/chat/styles.module.scss";
 import { useWebSocket } from "../../chatContext/WebSocketContext";
+import InviteSystem from "../../components/InviteSystem/InviteSystem";
 import {
   ChevronDown,
   Send,
@@ -453,6 +454,7 @@ const ChatApp = () => {
   return (
     <div className={`flex flex-col ${styles.nwbody}`}>
       <Logged />
+      {currentUsername && <InviteSystem username={currentUsername} />}
       <div className="flex">
         <div className={`${styles.chat_win}`}>
           <UserList

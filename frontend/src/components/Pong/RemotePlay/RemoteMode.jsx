@@ -47,7 +47,7 @@ const RemoteMode = () => {
 
         let playerScore = 0;
         let aiScore = 0;
-        const maxScore = 2;
+        const maxScore = 11;
         let playerGamesWon = 0;
         let aiGamesWon = 0;
         let maxGames = 3;
@@ -66,7 +66,7 @@ const RemoteMode = () => {
             }
 
             const ws = new WebSocket(
-                `ws://localhost:8000/ws/game/${gameId}/?username=${username}`
+                `ws://localhost:8000/ws/pong/${gameId}/?username=${username}`
             );
             websocketRef.current = ws;
 
@@ -703,7 +703,6 @@ const RemoteMode = () => {
 
             if (inGame) {
                 if (paddleRef.current?.mesh) {
-                    console.log("WEEE IN");
                     const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
                     if (isPlayer1) {
                         camera.position.set(
@@ -931,7 +930,12 @@ const RemoteMode = () => {
                             {winner}
                         </div>
                         <button
-                            onClick={() => navigate('/game-lobby')}
+                            onClick={() => {
+                                navigate('/game-lobby')
+                                    websocketRef.current && websocketRef.current.close()
+                                    websocketRef.current = null
+                                }
+                            }
                             className="mt-4 bg-transparent text-neon-white border-2 border-cyan-400 px-6 py-2 rounded-lg hover:bg-cyan-400/20 transition-all duration-300 pixel-font"
                         >
                             Back to Lobby
