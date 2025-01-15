@@ -39,11 +39,13 @@ import AnauthNotFound from "./pages/NotFound/AnauthNotFound.jsx";
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{
+      v7_startTransition: true,
+      v7_relativeSplatPath: true,
+    }}>
       <UserProvider>
         <WebSocketProvider>
           <InviteProvider>
-
           <RealTimeProvider>
             <ToastContainer position="top-right" autoClose={3000} />
             <Routes>
