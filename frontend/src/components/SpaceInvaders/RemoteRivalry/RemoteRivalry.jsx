@@ -407,8 +407,6 @@ const RemoteRivalry = () => {
             )}
           </div>
         </div>
-
-        {/* Ships */}
         <div
           className={`absolute rounded transition-transform duration-50 ${
             gameState.activeEffects1?.SHIELD?.active ? 'ring-4 ring-cyan-400' : ''
