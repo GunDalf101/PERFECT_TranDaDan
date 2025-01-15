@@ -3,6 +3,7 @@ import {qrMFAreq, disableMFAreq, enableMFA} from "../../api/mfaService"
 import {myToast} from "../../lib/utils1"
 import { useState, useEffect } from "react";
 import { changeAvatarReq } from "../../api/avatarService";
+import {useUser} from "../../components/auth/UserContext"
 import { useNavigate } from 'react-router-dom';
 
 function formatSerializerErrors(errors) {
@@ -19,6 +20,9 @@ function formatSerializerErrors(errors) {
 }
 
 const EditProfile = () => {
+
+  const { updateAvatar, user, login } = useUser();
+  const parsedUser = user ? JSON.parse(user) : null;
 
   const [avatar, setAvatar] = useState({
     data: null,
@@ -38,10 +42,17 @@ const EditProfile = () => {
     password_confirmation: "",
   });
   useEffect(() => {
+    if (parsedUser?.avatar_url) {
+      // setAvatar({data: null, path: parsedUser.avatar_url});
+      updateAvatar(parsedUser.avatar_url);
+    }
+  }, [ avatar]);
+
+  useEffect(() => {
 
     const fetchUserData = async () => {
       try {
-        const mydata = await getMyData();
+        const mydata = JSON.parse(user);
         setUserData(mydata)
         setFormData({
           username: mydata.username,
@@ -50,8 +61,9 @@ const EditProfile = () => {
           password: "",
           password_confirmation: "",
         });
-        console.log(mydata.avatar_url)
-        setAvatar({data: null, path: mydata.avatar_url})
+        setAvatar({data: null, path: mydata.avatar_url});
+        updateAvatar(mydata.avatar_url);
+        
         setIs2FAEnabled(mydata.mfa_enabled); // Assuming `mydata` contains a property `is2FAEnabled`
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -67,45 +79,99 @@ const EditProfile = () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        setAvatar((prev) => ({...prev, data: reader.result}))
-      };
-      reader.readAsDataURL(file);
+      const newAvatarUrl = reader.result;
+      setAvatar((prev) => ({...prev, data: newAvatarUrl}));
+      // updateAvatar(newAvatarUrl); // Add this line to update the avatar in context
+    };
+    reader.readAsDataURL(file);
     }
   };
 
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+
+    // Update global context for real-time changes
+    if (name !== 'password' && name !== 'password_confirmation') {
+      const updatedUser = {
+        ...parsedUser,
+        [name]: value
+      };
+      login(JSON.stringify(updatedUser));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     if (formData.password && formData.password !== formData.password_confirmation) {
       myToast(2, "Passwords do not match.");
       return;
     }
+
     try {
-      // await updateProfileData(formData); // Replace with actual API call
-      if(avatar.data)
+      if (avatar.data && avatar.data !== parsedUser?.avatar_url) {
         await changeAvatarReq(avatar.data);
-      let keys = ["username", "email"];
-      console.log(formData);
+      }
+
+      // Prepare form data for profile update
+      let updatedFormData = { ...formData };
+      const keys = ["username", "email", "tournament_alias"];
+      
       keys.forEach((key) => {
-        if (formData[key] == "" || formData[key] === userData[key]) {
-          delete formData[key];
+        if (updatedFormData[key] === "" || updatedFormData[key] === userData[key]) {
+          delete updatedFormData[key];
         }
       });
-      if(formData["password"] == "")
-        delete formData["password"], delete formData["password_confirmation"]
-      console.log(formData);
-      await editMyData(formData);
+
+      if (updatedFormData.password === "") {
+        delete updatedFormData.password;
+        delete updatedFormData.password_confirmation;
+      }
+
+      // Update profile data if there are changes
+      if (Object.keys(updatedFormData).length > 0) {
+        console.log(updatedFormData);
+        await editMyData(updatedFormData);
+      }
+
+      // Fetch latest user data
+      const newUserData = await getMyData();
+      
+      // Update global context
+      const updatedUser = {
+        ...newUserData,
+        avatar_url: avatar.data || newUserData.avatar_url
+      };
+      
+      // login(JSON.stringify(updatedUser));
+      updateAvatar(updatedUser.avatar_url);
+      
+      setUserData(newUserData);
       setReload(!reload);
-      myToast(0, "you profile has been updated.");
-      navigate("/profile");
+      myToast(0, "you profile has been updated.")
+      setFormData({
+        username: "",
+        email: "",
+        password: "",
+        password_confirmation: "",
+      });
     } catch (error) {
-      let errors = formatSerializerErrors(error.response.data['error']);
-      for (let e of errors) myToast(2, e);
+      console.error("Update error:", error);
+      const errorMessage = error?.response?.data?.error || "An unexpected error occurred.";
+      myToast(2, typeof errorMessage === 'string' ? errorMessage : "Failed to update profile");
+      
+      // Revert to server data on error
+      const currentData = await getMyData();
+      login(JSON.stringify(currentData));
+      setFormData({
+        username: currentData.username,
+        email: currentData.email,
+        tournament_alias: currentData.tournament_alias,
+        password: "",
+        password_confirmation: "",
+      });
     }
   };
   const toggle2FA = async () => {
@@ -217,6 +283,7 @@ const EditProfile = () => {
               id="password"
               name="password"
               value={formData.password}
+              autoComplete="password"
               onChange={handleInputChange}
               className="p-2 rounded bg-gray-800 text-white border border-gray-600"
               placeholder="Enter new password"
@@ -232,6 +299,7 @@ const EditProfile = () => {
               id="password_confirmation"
               name="password_confirmation"
               value={formData.password_confirmation}
+              autoComplete="password_confirmation"
               onChange={handleInputChange}
               className="p-2 rounded bg-gray-800 text-white border border-gray-600"
               placeholder="Confirm new password"
