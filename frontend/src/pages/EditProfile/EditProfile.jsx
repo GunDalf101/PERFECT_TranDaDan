@@ -4,6 +4,7 @@ import {myToast} from "../../lib/utils1"
 import { useState, useEffect } from "react";
 import { changeAvatarReq } from "../../api/avatarService";
 import { useNavigate } from 'react-router-dom';
+import { useUser } from "../../components/auth/UserContext";
 
 function formatSerializerErrors(errors) {
   if (typeof errors === "string") return [errors];
@@ -25,11 +26,11 @@ const EditProfile = () => {
     path: null
   });
   const navigate = useNavigate();
+  const {updateAvatar} = useUser();
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [qrCode, setQrCode] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [userData, setUserData] = useState();
-  const [reload, setReload] = useState(false)
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -50,7 +51,7 @@ const EditProfile = () => {
           password: "",
           password_confirmation: "",
         });
-        setAvatar({data: null, path: mydata.avatar_url})
+        setAvatar({data: null, path: mydata.avatar_url});
         setIs2FAEnabled(mydata.mfa_enabled);
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -58,7 +59,7 @@ const EditProfile = () => {
     };
 
     fetchUserData();
-  }, [reload]);
+  }, []);
 
 
   const handleAvatarChange = (e) => {
@@ -66,7 +67,7 @@ const EditProfile = () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        setAvatar((prev) => ({...prev, data: reader.result}))
+        setAvatar((prev) => ({...prev, data: reader.result}));
       };
       reader.readAsDataURL(file);
     }
@@ -85,8 +86,6 @@ const EditProfile = () => {
       return;
     }
     try {
-      if(avatar.data)
-        await changeAvatarReq(avatar.data);
       let keys = ["username", "email", "tournament_alias"];
       keys.forEach((key) => {
         if (formData[key] == "" || formData[key] === userData[key]) {
@@ -95,13 +94,16 @@ const EditProfile = () => {
       });
       if(formData["password"] == "")
         delete formData["password"], delete formData["password_confirmation"]
-      if(Object.keys(formData).length == 0)
-      {
-        myToast(1, "nothing has been updated !");
-        return;
-      }
-      await editMyData(formData);
-      setReload(!reload);
+      if(Object.keys(formData).length == 0 && avatar.data == null)
+        {
+          myToast(1, "nothing has been updated !");
+          return;
+        }
+        console.log(avatar.data)
+      if(avatar.data != null)
+        await editMyData(formData);
+      const new_avatar = await changeAvatarReq(avatar.data);
+      updateAvatar(new_avatar.url);
       myToast(0, "you profile has been updated.");
       navigate("/profile");
     } catch (error) {

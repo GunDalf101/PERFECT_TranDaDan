@@ -130,11 +130,13 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
 
                     game_state['winner'] = game_state[winning_player]
                     game_state['gameOver'] = True
-                    game_state['disconnect_forfeit'] = True
+                    game_state['forfeit'] = True
 
                     winner_score = max(game_state['score1'], game_state['score2'])
                     game_state['score1'] = winner_score if winning_player == 'player1' else 0
                     game_state['score2'] = winner_score if winning_player == 'player2' else 0
+
+                    await self.update_match_record(game_state)
 
                     await self.channel_layer.group_send(
                         self.room_group_name,
@@ -261,16 +263,14 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
 
     def handle_shooting(self, game_state):
         player_num = int(self.player_num[-1])
-        current_time = time.time() * 1000  # Convert to milliseconds
+        current_time = time.time() * 1000
         last_shot_key = f'lastShot{player_num}'
 
-        # Check cooldown
         if current_time - game_state.get(last_shot_key, 0) >= self.get_shooting_cooldown(game_state, player_num):
             player_pos = game_state[f'player{player_num}Pos']
             lasers_key = f'lasers{player_num}'
             effects = game_state[f'activeEffects{player_num}']
 
-            # Apply power-ups
             if effects.get('DOUBLE_BULLETS', {}).get('active'):
                 game_state[lasers_key].extend([
                     {'x': player_pos - 10, 'y': self.GAME_HEIGHT - self.SHIP_HEIGHT - 10},
@@ -317,8 +317,8 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
             'player2': None,
             'player1Pos': self.GAME_WIDTH / 4,
             'player2Pos': 3 * self.GAME_WIDTH / 4,
-            'health1': 100,
-            'health2': 100,
+            'health1': 75,
+            'health2': 75,
             'score1': 0,
             'score2': 0,
             'lasers1': [],
@@ -334,7 +334,8 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
             'wave': 1,
             'difficulty': 1,
             'lastUpdate': time.time(),
-            'winner': None
+            'winner': None,
+            'forfeit': False
         }
 
     def update_game_state(self, dt):
@@ -582,6 +583,8 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
             match.winner = winner_user
             match.score_player1 = game_state['score1']
             match.score_player2 = game_state['score2']
+            match.forfeit = game_state['forfeit']
+            match.ended_at = timezone.now()
 
             match.status = "completed"
             match.save()

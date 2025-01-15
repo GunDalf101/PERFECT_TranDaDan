@@ -19,6 +19,6 @@ export SSL_CERT_FILE=$(python3 -m certifi)
 python3 manage.py makemigrations
 python3 manage.py migrate
 
-echo "!!!!! Run in another terminal: 'export SSL_CERT_FILE=$(python3 -m certifi); python manage.py process_tasks' to receive emails. !!!!!"
+echo "!!!!! Run in another terminal: 'export SSL_CERT_FILE=\$(python3 -m certifi); python manage.py process_tasks' to receive emails. !!!!!"
 export DJANGO_SETTINGS_MODULE=transcendence.settings
 python manage.py runserver localhost:8000
