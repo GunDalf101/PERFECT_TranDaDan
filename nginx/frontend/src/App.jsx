@@ -45,11 +45,14 @@ function App() {
     }}>
       <UserProvider>
         <WebSocketProvider>
-          <InviteProvider>
           <RealTimeProvider>
             <ToastContainer position="top-right" autoClose={3000} />
             <Routes>
-              <Route path="/" element={<MainLayout />}>
+              <Route path="/" element={
+                  <InviteProvider>
+                    <MainLayout />
+                  </InviteProvider>
+                }>
                 <Route index element={<Homepage />} />
                 <Route
                 path="/chat"
@@ -136,7 +139,6 @@ function App() {
               <Route path="*" element={<AnauthNotFound />} />
             </Routes>
           </RealTimeProvider>
-          </InviteProvider>
         </WebSocketProvider>
       </UserProvider>
     </BrowserRouter>

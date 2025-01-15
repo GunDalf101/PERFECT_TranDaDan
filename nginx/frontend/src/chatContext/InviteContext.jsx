@@ -19,18 +19,16 @@ export const InviteProvider = ({ children }) => {
   const reconnectTimerRef = useRef(null);
   const navigate = useNavigate();
 
-  const { user } = useUser();
+  const { user, isAuthenticated } = useUser();
   const myUsername = user ? JSON.parse(user).username : null;
 
   useEffect(() => {
-    if (myUsername) {
+    if (isAuthenticated) {
       setIsReady(true);
     }
-  }, [myUsername]);
+  }, [isAuthenticated]);
 
   const handleWebSocketMessage = useCallback((data) => {
-    console.log("Received websocket message:", data.type);
-
     switch (data.type) {
       case 'game_invite':
         setInvites(prev => [...prev, data]);

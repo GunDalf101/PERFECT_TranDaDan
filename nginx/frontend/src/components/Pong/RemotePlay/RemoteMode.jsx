@@ -250,6 +250,8 @@ const RemoteMode = () => {
             updatePaddlePositions(state);
             if (state.player1 !== username) {
                 updateBallPosition(state);
+                setScores({ player1: state.scores.player1, player2: state.scores.player2 });
+                setMatches({ player1: state.rounds_won.player1, player2: state.rounds_won.player2 });
             }
         };
         const updatePaddlePositions = (state) => {
