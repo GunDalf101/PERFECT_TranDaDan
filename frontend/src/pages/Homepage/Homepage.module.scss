@@ -1,0 +1,105 @@
+
+.transitionEffect {
+    z-index: 5;
+    height: 100px;
+  }
+  
+  .mountainDivider {
+    height: 100px;
+    background: linear-gradient(to top, #000000, transparent);
+    clip-path: polygon(
+      0px 100px, 
+      129px 72px, 
+      198px 45px, 
+      274px 49px, 
+      339px 23px, 
+      354px 30px, 
+      365px 25px, 
+      462px 53px, 
+      485px 50px, 
+      529px 72px, 
+      590px 50px, 
+      672px 65px, 
+      737px 53px, 
+      779px 58px, 
+      868px 50px, 
+      885px 55px, 
+      952px 41px, 
+      1052px 60px, 
+      1079px 58px, 
+      1164px 72px, 
+      1263px 55px, 
+      1383px 42px, 
+      1421px 35px, 
+      1455px 30px, 
+      1491px 25px, 
+      1538px 18px, 
+      1573px 5px, 
+      1608px 0px, 
+      1670px 23px, 
+      1732px 49px, 
+      1786px 65px, 
+      1872px 58px, 
+      1924px 82px, 
+      2000px 100px
+    );
+  }
+  
+  .boombox {
+    position: relative;
+    z-index: 3;
+    max-width: 100%;
+    height: auto;
+    max-height: clamp(50px, 40vw, 400px);
+    transform: rotate(350deg);
+    top: clamp(-130px, -14vw, -50px);
+    margin-left: 7%;
+    cursor: pointer;
+
+    @media (max-width: 768px) {
+      top: clamp(-130px, -14vw, -50px);
+      margin: 3%;
+    }
+  
+    @media (max-width: 500px) {
+      top: clamp(-50px, -4vw, -30px);
+      margin: 3%;
+    }
+  }
+  
+  .scrollTriangle {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-top: 20px solid white;
+    cursor: pointer;
+    animation: bounce 2s infinite;
+  
+    @media (max-width: 600px) {
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-top: 15px solid white;
+    }
+  }
+  
+  @keyframes bounce {
+    0%, 100% {
+      transform: translate(-50%, 0);
+    }
+    50% {
+      transform: translate(-50%, 10px);
+    }
+  }
+
+  
+@media (max-height: 600px) {
+    .transitionEffect {
+      height: 50px !important;
+      top: 550px !important;
+    }
+  }

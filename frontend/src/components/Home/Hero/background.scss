@@ -1,0 +1,276 @@
+:root {
+  --black: #000000;
+  --purple: #9400d3;
+  --overlay-color: rgba(14, 20, 22, 0.5);
+  --grid-line-color: rgba(148, 0, 211, 0.9);
+  --blur-amount: 2px;
+  --grid-size: 40px;
+  --perspective: 100svh;
+  --animation-duration: 5s;
+  --dynamic-angle: 73deg;
+  --line-height: 500%;
+}
+
+@media (min-height: 1100px) {
+  :root {
+    --dynamic-angle: 74deg;
+    --animation-duration: 10s;
+  }
+}
+
+.background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100svh;
+  z-index: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .top-half {
+    flex: 1;
+    width: 100%;
+    height: 108svh;
+    z-index: -3;
+    overflow: hidden;
+    background: linear-gradient(
+      rgb(10, 25, 47),
+      rgb(10, 25, 47) 30%,
+      rgb(20, 34, 71) 45%,
+      rgb(37, 48, 80),
+      rgb(0, 8, 26) 85%,
+      rgb(0, 4, 15)
+    );
+  }
+
+  .bottom-half {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--overlay-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+  }
+
+  .grid {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: -1;
+    perspective: var(--perspective);
+    background: linear-gradient(to bottom, var(--purple), var(--black));
+
+    .grid-lines {
+      width: 100%;
+      height: var(--line-height);
+      background-image: linear-gradient(
+          to left,
+          rgba(255, 255, 255, 1) 2px,
+          transparent 0
+        ),
+        linear-gradient(to left, var(--grid-line-color) 3px, transparent 0),
+        linear-gradient(to top, rgba(255, 255, 255, 1) 2px, transparent 0),
+        linear-gradient(to top, var(--grid-line-color) 3px, transparent 0);
+      background-size: var(--grid-size) var(--grid-size);
+      background-repeat: repeat;
+      transform-origin: top center;
+      animation: play var(--animation-duration) linear infinite,
+        fadeInOut var(--animation-duration) ease-in-out infinite;
+      box-shadow: 0 0 20px var(--purple), 0 0 40px var(--purple),
+        0 0 60px var(--purple);
+      filter: blur(var(--blur-amount));
+    }
+  }
+}
+
+.mountains {
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+
+  .mountain {
+    background-color: black;
+    z-index: -1;
+    filter: blur(1px);
+
+    &.first {
+      top: 45%;
+      left: -4%;
+      width: 48svh;
+      height: 48svh;
+      transform: rotate(30deg);
+    }
+
+    &.second {
+      top: 37%;
+      left: 8%;
+      width: 36svh;
+      height: 36svh;
+      transform: rotate(45deg);
+    }
+
+    &.third {
+      top: 45%;
+      left: 17%;
+      width: 34svh;
+      height: 34svh;
+      transform: rotate(45deg);
+    }
+
+    &.fourth {
+      top: 35%;
+      left: 22%;
+      width: 0;
+      height: 0;
+      background-color: transparent;
+      border-left: 42svh solid transparent;
+      border-right: 42svh solid transparent;
+      border-bottom: 37svh solid black;
+      transform: rotate(-2deg);
+    }
+
+    &.fifth {
+      top: 27.5%;
+      left: 49%;
+      width: 0;
+      height: 0;
+      background-color: transparent;
+      border-left: 22svh solid transparent;
+      border-right: 22svh solid transparent;
+      border-bottom: 36svh solid black;
+    }
+
+    &.sixth {
+      top: 32.5%;
+      left: 53%;
+      width: 0;
+      height: 0;
+      background-color: transparent;
+      border-left: 22svh solid transparent;
+      border-right: 22svh solid transparent;
+      border-bottom: 36svh solid black;
+    }
+
+    &.seventh {
+      top: 39%;
+      left: 54%;
+      width: 0;
+      height: 0;
+      background-color: transparent;
+      border-left: 45svh solid transparent;
+      border-right: 45svh solid transparent;
+      border-bottom: 34svh solid black;
+      transform: rotate(5deg);
+    }
+
+    &.eighth {
+      top: 30%;
+      left: 73%;
+      width: 0;
+      height: 0;
+      background-color: transparent;
+      border-left: 27svh solid transparent;
+      border-right: 27svh solid transparent;
+      border-bottom: 35svh solid black;
+    }
+
+    &.ninth {
+      top: 35%;
+      left: 83%;
+      width: 43svh;
+      height: 43svh;
+      transform: rotate(45deg);
+    }
+  }
+}
+
+.sun-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  top: 35%;
+
+  .sun {
+    width: 45svh;
+    height: 45svh;
+    z-index: -2;
+    margin: 3svh;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      rgb(200, 200, 200) 0%,
+      rgb(180, 180, 180) 30%,
+      rgb(140, 140, 140) 50%,
+      rgb(100, 100, 100) 70%,
+      transparent 85%
+    );
+    box-shadow: 0px 0px 10px 2px rgba(200, 200, 200, 0.6),
+      inset -4px -4px 10px rgba(80, 80, 80, 0.6),
+      inset 4px 4px 10px rgba(255, 255, 255, 0.4);
+    filter: blur(0.8px) drop-shadow(8px 8px 15px rgba(0, 0, 50, 0.5));
+  }
+}
+
+.star {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes fadeInOut {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes play {
+  0% {
+    transform: rotateX(var(--dynamic-angle)) translateY(-50%);
+  }
+  100% {
+    transform: rotateX(var(--dynamic-angle)) translateY(0);
+  }
+}
+@media (max-height: 600px) {
+
+  .background {
+    height: 600px !important;
+  }
+  .mountains {
+    display: none;
+  }
+
+  .sun-wrapper {
+    display: none;
+  }
+}

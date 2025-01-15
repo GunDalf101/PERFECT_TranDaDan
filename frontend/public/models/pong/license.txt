@@ -1,0 +1,11 @@
+Model Information:
+* title:	Table Tennis Rackets (Ping Pong)
+* source:	https://sketchfab.com/3d-models/table-tennis-rackets-ping-pong-ad3b85ec56d042af88e4e57db648eacb
+* author:	AndrewHunt95 (https://sketchfab.com/AndrewHunt95)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Table Tennis Rackets (Ping Pong)" (https://sketchfab.com/3d-models/table-tennis-rackets-ping-pong-ad3b85ec56d042af88e4e57db648eacb) by AndrewHunt95 (https://sketchfab.com/AndrewHunt95) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
