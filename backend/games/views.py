@@ -104,7 +104,7 @@ class GetUserMatch(APIView):
                     'score': "Forfeit" if _match.forfeit else f"{_match.score_player1}-{_match.score_player2}",
                     'result': 'win' if _match.winner_id == userid else 'lose'
                 })
-        return Response({'pong': pong_matches,'space': space_matches}, status=200)
+        return Response({'pong': pong_matches[::-1],'space': space_matches[::-1]}, status=200)
 
 class CancelMatch(APIView):
 
