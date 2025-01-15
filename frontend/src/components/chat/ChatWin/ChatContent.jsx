@@ -19,7 +19,6 @@ const ChatContent = memo(
     handleSidebarToggle,
     loadMoreMessages,
     hasMore,
-    // isLoading,
     isLoadingMore,
   }) => {
     const {sendInvite} = useInvite();
@@ -118,11 +117,11 @@ const ChatContent = memo(
       if (scrollHeight + scrollTop < 1000) {
         isLoadingRef.current = true;
 
-        const scrollHeight = chatBodyRef.current.scrollHeight;
+        // const scrollHeight = chatBodyRef.current.scrollHeight;
         try {
           await loadMoreMessages();
           if (chatBodyRef.current) {
-            console.log(scrollHeight - scrollTop);
+            // console.log(scrollHeight - scrollTop);
             chatBodyRef.current.scrollTop = -3000;
           }
         } finally {
@@ -289,7 +288,7 @@ const ChatContent = memo(
           <div className="h-16 border-b px-6 flex justify-between">
             <div className="flex gap-2 items-center">
               <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center">
-                <img src={selectedUser.avatar || "/default_profile.webp"} alt="" />
+                <img src={selectedUser.avatar || "/default_profile.webp"} alt=""  className="w-full h-full object-cover rounded-full" />
               </div>
               <div>
                 <h2 className="font-semibold">{selectedUser.name}</h2>
