@@ -1,3 +1,3 @@
 # TranDaDan-Docker-Edition-
 
-todo: add https.
+todo: add https and wss
