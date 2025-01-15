@@ -209,7 +209,7 @@ class DirectMessageConsumer(AsyncWebsocketConsumer):
         friends = UserRelationship.objects.filter(
             models.Q(first_user=user) | models.Q(second_user=user),
             type=RelationshipType.FRIENDS.value
-        )
+        ).order_by('-updated_at')
         friends_list = [rel.first_user if rel.second_user == user else rel.second_user for rel in friends]
         return friends_list
 

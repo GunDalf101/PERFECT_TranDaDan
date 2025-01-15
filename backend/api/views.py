@@ -348,7 +348,7 @@ def getFriendList(user_id):
         Q(first_user_id=user_id) |
         Q(second_user_id=user_id),
         type=RelativeRelationshipType.FRIENDS.value
-    )
+    ).order_by('-updated_at')
 
     for relation in relations:
         friend = relation.second_user if user_id == relation.first_user_id else relation.first_user
@@ -605,7 +605,7 @@ class FriendsView(APIView):
             Q(first_user=request.user) |
             Q(second_user=request.user),
             Q(type=RelationshipType.FRIENDS.value)
-        )
+        ).order_by('-updated_at')
 
         friends_usernames = [
             rel.second_user.username if rel.first_user == request.user else rel.first_user.username

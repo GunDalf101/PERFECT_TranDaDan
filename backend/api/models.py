@@ -84,6 +84,7 @@ class UserRelationship(models.Model):
     second_user = models.ForeignKey(User, related_name='user_second', on_delete=models.CASCADE)
 
     type = models.IntegerField(unique=False)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ('first_user', 'second_user')

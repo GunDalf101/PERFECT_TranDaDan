@@ -1,0 +1,13 @@
+venv/
+.venv/
+v
+**/.env
+.DS_Store
+# Ignore Python cache directories and files
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyc
+node_modules/
+backend/media/*

@@ -6,6 +6,7 @@ from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from ..models import Match
 from ..utils import PlayersManager
+from django.utils import timezone
 
 
 User = get_user_model()
@@ -352,7 +353,7 @@ class PongConsumer(AsyncWebsocketConsumer):
             match.final_score = f"{data['finalScore']['player1']}-{data['finalScore']['player2']}"
             match.score_player1 = self.shared_games[self.game_id]['rounds_won']['player1']
             match.score_player2 = self.shared_games[self.game_id]['rounds_won']['player2']
-            match.forfeit = data.get('forfeit', False)
+            match.forfeit = data['forfeit']
             match.ended_at = timezone.now()
             match.status = "completed"
             match.save()
@@ -405,7 +406,6 @@ class PongConsumer(AsyncWebsocketConsumer):
         }))
 
     async def send_error(self, message):
-        """Send error message to client"""
         await self.send(text_data=json.dumps({
             'type': 'error',
             'message': message,
@@ -414,7 +414,6 @@ class PongConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_user_by_username(self, username):
-        """Get user object from username"""
         User = get_user_model()
         try:
             return User.objects.get(username=username)
@@ -439,7 +438,6 @@ class PongConsumer(AsyncWebsocketConsumer):
                 game_state['game_complete'] = True
 
     def validate_game_state(self):
-        """Validate current game state"""
         if self.game_id not in self.shared_games:
             return False
 

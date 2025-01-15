@@ -8,6 +8,7 @@ from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from ..models import Match
 from ..utils import PlayersManager
+from django.utils import timezone
 
 class SpaceRivalryConsumer(AsyncWebsocketConsumer):
     shared_games = {}

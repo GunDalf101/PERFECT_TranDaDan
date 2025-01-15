@@ -22,6 +22,7 @@ djangorestframework-simplejwt==5.3.1
 hyperlink==21.0.0
 idna==3.10
 incremental==24.7.2
+keyboard==0.13.5
 msgpack==1.1.0
 numpy==2.0.2
 psycopg2-binary==2.9.9
@@ -29,6 +30,7 @@ pyasn1==0.6.1
 pyasn1-modules==0.4.1
 pycparser==2.22
 PyJWT==2.10.1
+pynput==1.7.7
 pyOpenSSL==24.3.0
 pyotp==2.9.0
 PyQRCode==1.2.1
@@ -45,4 +47,5 @@ twisted==24.11.0
 txaio==23.1.1
 typing-extensions==4.12.2
 urllib3==2.2.3
+websockets==14.1
 zope.interface==7.2
