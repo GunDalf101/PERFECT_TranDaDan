@@ -5,7 +5,6 @@ from ..models import Match
 from ..utils import PlayersManager
 
 class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
-    # Store queues as a dictionary with game_type as key
     matchmaking_queues = {}
     player_to_user = {}
 
@@ -91,7 +90,6 @@ class MatchmakingConsumer(AsyncJsonWebsocketConsumer):
                 })
 
     def create_match(self, player1, player2, game_type):
-        """Create a match between two players for a specific game type"""
         if not player1.scope.get('user') or not player2.scope.get('user'):
             raise ValueError("User data missing")
 

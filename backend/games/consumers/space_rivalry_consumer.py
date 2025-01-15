@@ -234,7 +234,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         }))
 
     async def handle_unstable_connection(self):
-        """Handle very brief connections that might indicate technical issues"""
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -244,7 +243,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         )
 
     def handle_player_input(self, input_type):
-        """Handle player movement and shooting"""
         game_state = self.shared_games[self.game_id]
         player_pos_key = f'player{self.player_num[-1]}Pos'
 
@@ -262,7 +260,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
             self.handle_shooting(game_state)
 
     def handle_shooting(self, game_state):
-        """Handle player shooting with cooldown and power-ups"""
         player_num = int(self.player_num[-1])
         current_time = time.time() * 1000  # Convert to milliseconds
         last_shot_key = f'lastShot{player_num}'
@@ -288,12 +285,10 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
             game_state[last_shot_key] = current_time
 
     def get_shooting_cooldown(self, game_state, player_num):
-        """Get shooting cooldown based on power-ups"""
         effects = game_state[f'activeEffects{player_num}']
         return 250 if effects.get('RAPID_FIRE', {}).get('active') else 500
 
     async def game_loop(self):
-        """Main game loop"""
         try:
             while True:
                 if self.game_id in self.shared_games:
@@ -315,7 +310,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
             print(f"Error in game loop: {e}")
 
     def initialize_game_state(self):
-        """Set up initial game state"""
         self.shared_games[self.game_id] = {
             'gameStarted': False,
             'gameOver': False,
@@ -344,7 +338,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         }
 
     def update_game_state(self, dt):
-        """Update all game objects"""
         game_state = self.shared_games[self.game_id]
 
         self.update_lasers(game_state)
@@ -371,7 +364,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
             self.spawn_asteroid(game_state)
 
     def update_lasers(self, game_state):
-        """Update laser positions"""
         for player in [1, 2]:
             game_state[f'lasers{player}'] = [
                 {**laser, 'y': laser['y'] - 10}
@@ -380,7 +372,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
             ]
 
     def update_asteroids(self, game_state, speed_multiplier):
-        """Update asteroid positions"""
         game_state['asteroids'] = [
             {**asteroid, 'y': asteroid['y'] + asteroid['speed'] * speed_multiplier}
             for asteroid in game_state['asteroids']
@@ -388,7 +379,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         ]
 
     def update_powerups(self, game_state):
-        """Update power-up positions and status"""
         current_time = time.time() * 1000
 
         game_state['powerups'] = [
@@ -404,7 +394,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
                     game_state[effects_key][powerup_type] = {'active': False}
 
     def update_debris(self, game_state):
-        """Update debris positions"""
         game_state['debris'] = [
             {**debris, 'y': debris['y'] + 3}
             for debris in game_state['debris']
@@ -412,7 +401,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         ]
 
     def update_explosions(self, game_state):
-        """Update explosion effects"""
         current_time = time.time() * 1000
         game_state['explosions'] = [
             explosion for explosion in game_state['explosions']
@@ -420,7 +408,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         ]
 
     def check_all_collisions(self, game_state):
-        """Check all possible collisions in the game"""
 
         self.check_laser_collisions(game_state, 1)
         self.check_laser_collisions(game_state, 2)
@@ -430,7 +417,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         self.check_powerup_collisions(game_state)
 
     def check_laser_collisions(self, game_state, player_num):
-        """Check collisions between lasers and asteroids"""
         lasers_key = f'lasers{player_num}'
         new_lasers = []
         current_time = time.time() * 1000
@@ -465,7 +451,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         game_state[lasers_key] = new_lasers
 
     def check_ship_collisions(self, game_state):
-        """Check collisions between ships and hazards (asteroids/debris)"""
         for player_num in [1, 2]:
             if game_state[f'activeEffects{player_num}'].get('SHIELD', {}).get('active'):
                 continue
@@ -489,7 +474,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
                     game_state['debris'].remove(debris)
 
     def check_powerup_collisions(self, game_state):
-        """Check collisions between ships and power-ups"""
         current_time = time.time() * 1000
 
         for player_num in [1, 2]:
@@ -509,14 +493,12 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
                     game_state['powerups'].remove(powerup)
 
     def check_collision(self, x1, y1, w1, h1, x2, y2, w2, h2):
-        """Check if two rectangles overlap"""
         return (
             abs(x1 - x2) * 2 < (w1 + w2) and
             abs(y1 - y2) * 2 < (h1 + h2)
         )
 
     def update_score(self, game_state, player_num, points):
-        """Update player score and combo"""
         combo_key = f'combo{player_num}'
         score_key = f'score{player_num}'
 
@@ -527,7 +509,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         game_state[f'lastHit{player_num}'] = time.time() * 1000
 
     def spawn_asteroid(self, game_state):
-        """Spawn a new asteroid"""
         asteroid_type = random.choice(list(self.ASTEROID_TYPES.keys()))
         asteroid_data = self.ASTEROID_TYPES[asteroid_type]
 
@@ -539,7 +520,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         })
 
     def split_asteroid(self, game_state, asteroid):
-        """Split an asteroid into smaller ones"""
         for offset in [-20, 20]:
             game_state['asteroids'].append({
                 'x': asteroid['x'] + offset,
@@ -549,7 +529,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
             })
 
     def create_explosion(self, game_state, asteroid):
-        """Create an explosion effect"""
         game_state['explosions'].append({
             'x': asteroid['x'],
             'y': asteroid['y'],
@@ -557,7 +536,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         })
 
     def damage_nearby_asteroids(self, game_state, exploding_asteroid):
-        """Damage asteroids near an explosion"""
         explosion_radius = 100
         for asteroid in game_state['asteroids'][:]:
             dx = asteroid['x'] - exploding_asteroid['x']
@@ -568,7 +546,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
                 game_state['asteroids'].remove(asteroid)
 
     def spawn_powerup(self, game_state, asteroid):
-        """Spawn a power-up at asteroid's location"""
         powerup_type = random.choice(list(self.POWERUPS.keys()))
         game_state['powerups'].append({
             'x': asteroid['x'],
@@ -578,7 +555,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         })
 
     def create_debris(self, game_state, asteroid, target_player):
-        """Create debris from destroyed asteroid"""
         game_state['debris'].append({
             'x': asteroid['x'],
             'y': asteroid['y'],
@@ -586,7 +562,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         })
 
     async def check_game_over(self):
-        """Check if game should end"""
         game_state = self.shared_games[self.game_id]
 
         if game_state['health1'] <= 0 or game_state['health2'] <= 0:
@@ -599,7 +574,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def update_match_record(self, game_state):
-        """Update match record in database"""
         try:
             match = Match.objects.get(id=self.game_id)
             winner_username = game_state['winner']
@@ -615,7 +589,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
             print(f"Error updating match record: {e}")
 
     async def broadcast_game_end(self, winner):
-        """Broadcast game end to all players"""
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -626,7 +599,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         )
 
     async def broadcast_game_state(self):
-        """Send current game state to all players"""
         if self.game_id in self.shared_games:
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -637,28 +609,24 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
             )
 
     async def game_state_update(self, event):
-        """Send game state update to client"""
         await self.send(text_data=json.dumps({
             'type': 'game_state',
             'state': event['state']
         }))
 
     async def player_disconnected(self, event):
-        """Handle player disconnection"""
         await self.send(text_data=json.dumps({
             'type': 'player_disconnected',
             'message': event['message']
         }))
 
     async def player_reconnected(self, event):
-        """Handle player reconnection"""
         await self.send(text_data=json.dumps({
             'type': 'player_reconnected',
             'message': event['message']
         }))
 
     async def game_ended(self, event):
-        """Handle game end"""
         await self.send(text_data=json.dumps({
             'type': 'game_ended',
             'winner': event['winner'],
@@ -666,7 +634,6 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         }))
 
     async def send_error(self, message):
-        """Send error message to client"""
         await self.send(text_data=json.dumps({
             'type': 'error',
             'message': message
