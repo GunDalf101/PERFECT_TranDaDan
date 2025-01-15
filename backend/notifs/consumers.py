@@ -97,7 +97,6 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
     async def send_friends_list(self):
         friends = await self.get_user_friends(self.user)
         friends = list(map(lambda friend: friend.username, friends))
-        print(friends)
         await self.send_json({
             'msgtype': 'friends',
             'friends': friends
@@ -253,8 +252,6 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
             return False
 
     async def friend_status_change(self, event):
-        #print(f"recevied smtg [{self.user.username}]: {event}")
-        """Handle notifications when a friend's status changes."""
         await self.send(text_data=json.dumps({
             'msgtype': 'friend_status_change',
             'username': event['username'],

@@ -192,8 +192,6 @@ class SecurityMFATOTP(APIView):
                 "error": "MFA is already enabled for this user."
             }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         secret_totp = current_user.mfa_totp_secret
-        print("--------------------")
-        print(secret_totp)
         if not data.get("code") or not isinstance(data.get("code"), str) or not data.get("code").isnumeric() or not pyotp.totp.TOTP(secret_totp).verify(data.get("code")):
             return Response({
                 "error": "Invalid code."
@@ -228,7 +226,6 @@ class RegisterView(UnprotectedView):
             user = serializer.save()
             token = user.email_token
             confirmation_link = f"{os.getenv('FRONT_END_VERIFY_ACC_URL')}/{token}"
-            print(confirmation_link)
             send_registration_email(confirmation_link, user.email, schedule=timezone.now())
             return Response({
                 "message": "User registered successfully, please verify your email.",
@@ -429,7 +426,6 @@ class SendFriendRequest(APIView):
 class DeleteFriendRequest(APIView):
     def delete(self, request):
         username = request.data.get('username')
-        print(username)
         if not username or not isinstance(username, str):
             return Response({"detail": "Username is required."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -615,15 +611,10 @@ class FriendsView(APIView):
 
 class UserSearchView(APIView):
     def get(self, request):
-        print(f"request.GET: {request.GET}")
         query = request.GET.get('q', '').strip()
-        print(f"query: {query}")
         if not query:
             return Response({'results': []}, status=status.HTTP_200_OK)
         users = User.objects.filter(Q(username__icontains=query)).distinct()[:10]
-
-        print(f"users: {users}")
-
         serializer = UserSearchSerializer(users, many=True)
         return Response({'results': serializer.data}, status=status.HTTP_200_OK)
 
