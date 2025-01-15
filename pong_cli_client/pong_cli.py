@@ -8,12 +8,17 @@ import curses
 import time
 from typing import Optional, Dict
 from dataclasses import dataclass
+import ssl
 
 GAME_WIDTH = 800
 GAME_HEIGHT = 400
 PADDLE_WIDTH = 15
 PADDLE_HEIGHT = 80
 BALL_SIZE = 10
+
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
 
 @dataclass
 class GameSession:
@@ -127,7 +132,8 @@ class PongCLI:
         try:
             response = requests.post(
                 f"{self.api_url}/api/login",
-                json={"email": email, "password": password}
+                json={"email": email, "password": password},
+                verify=False
             )
             response.raise_for_status()
             data = response.json()
@@ -138,7 +144,8 @@ class PongCLI:
                 mfa_response = requests.post(
                     f"{self.api_url}/api/login/mfa/totp",
                     json={"code": mfa_code},
-                    headers={"Token": f"{data['access_token']}"}
+                    headers={"Token": f"{data['access_token']}"},
+                    verify=False
                 )
                 mfa_response.raise_for_status()
                 self.access_token = mfa_response.json()['access_token']
@@ -162,7 +169,7 @@ class PongCLI:
 
         try:
             ws_url = f"{self.ws_url}/ws/matchmaking/?token={self.access_token}"
-            async with websockets.connect(ws_url) as websocket:
+            async with websockets.connect(ws_url, ssl=ssl_context) as websocket:
                 self.matchmaking_ws = websocket
 
                 await websocket.send(json.dumps({
@@ -261,7 +268,7 @@ class PongCLI:
 
         try:
             ws_url = f"{self.ws_url}/ws/classic-pong/{self.game_session.game_id}/?token={self.access_token}"
-            async with websockets.connect(ws_url) as websocket:
+            async with websockets.connect(ws_url, ssl=ssl_context) as websocket:
                 self.game_ws = websocket
 
                 await websocket.send(json.dumps({
@@ -351,12 +358,12 @@ class PongCLI:
                 await self.game_ws.close()
 
 if __name__ == "__main__":
-    api_url = "http://localhost:8000"
-    ws_url = "ws://localhost:8000"
+    api_url = "https://localhost"
+    ws_url = "wss://localhost"
 
     if len(sys.argv) > 1:
         api_url = sys.argv[1]
-        ws_url = sys.argv[1].replace('http', 'ws')
+        ws_url = sys.argv[1].replace('https', 'wss')
 
     client = PongCLI(api_url, ws_url)
     asyncio.run(client.run())
