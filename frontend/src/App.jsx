@@ -35,7 +35,7 @@ import ResetPasswordForm from "./pages/ResetPassword/ResetPasswordForm"
 import EmailVerificationPage from "./pages/EmailVerificationPage.jsx";
 import { InviteProvider } from "./chatContext/InviteContext.jsx";
 import { Space } from "lucide-react";
-import NotFound from "./pages/NotFound/NotFound.jsx";
+import AnauthNotFound from "./pages/NotFound/AnauthNotFound.jsx";
 
 function App() {
   return (
@@ -131,7 +131,7 @@ function App() {
               <ResetPasswordForm />
               } />
               {/*           <Route path="*" element={<Link to="/"/>}></Route> */}
-              <Route path="*" element={<NotFound />} />
+              <Route path="*" element={<AnauthNotFound />} />
             </Routes>
           </RealTimeProvider>
           </InviteProvider>
