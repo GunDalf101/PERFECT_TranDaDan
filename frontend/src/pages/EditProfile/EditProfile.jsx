@@ -4,6 +4,7 @@ import {myToast} from "../../lib/utils1"
 import { useState, useEffect } from "react";
 import { changeAvatarReq } from "../../api/avatarService";
 import { useNavigate } from 'react-router-dom';
+import { useUser } from "../../components/auth/UserContext";
 
 function formatSerializerErrors(errors) {
   if (typeof errors === "string") return [errors];
@@ -25,11 +26,11 @@ const EditProfile = () => {
     path: null
   });
   const navigate = useNavigate();
+  const {updateAvatar} = useUser();
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [qrCode, setQrCode] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [userData, setUserData] = useState();
-  const [reload, setReload] = useState(false)
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -50,16 +51,15 @@ const EditProfile = () => {
           password: "",
           password_confirmation: "",
         });
-        console.log(mydata.avatar_url)
-        setAvatar({data: null, path: mydata.avatar_url})
-        setIs2FAEnabled(mydata.mfa_enabled); // Assuming `mydata` contains a property `is2FAEnabled`
+        setAvatar({data: null, path: mydata.avatar_url});
+        setIs2FAEnabled(mydata.mfa_enabled);
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
     };
 
     fetchUserData();
-  }, [reload]); // Empty dependency array to run only on component mount
+  }, []);
 
 
   const handleAvatarChange = (e) => {
@@ -67,7 +67,7 @@ const EditProfile = () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        setAvatar((prev) => ({...prev, data: reader.result}))
+        setAvatar((prev) => ({...prev, data: reader.result}));
       };
       reader.readAsDataURL(file);
     }
@@ -86,11 +86,7 @@ const EditProfile = () => {
       return;
     }
     try {
-      // await updateProfileData(formData); // Replace with actual API call
-      if(avatar.data)
-        await changeAvatarReq(avatar.data);
-      let keys = ["username", "email"];
-      console.log(formData);
+      let keys = ["username", "email", "tournament_alias"];
       keys.forEach((key) => {
         if (formData[key] == "" || formData[key] === userData[key]) {
           delete formData[key];
@@ -98,9 +94,16 @@ const EditProfile = () => {
       });
       if(formData["password"] == "")
         delete formData["password"], delete formData["password_confirmation"]
-      console.log(formData);
-      await editMyData(formData);
-      setReload(!reload);
+      if(Object.keys(formData).length == 0 && avatar.data == null)
+        {
+          myToast(1, "nothing has been updated !");
+          return;
+        }
+        console.log(avatar.data)
+      if(avatar.data != null)
+        await editMyData(formData);
+      const new_avatar = await changeAvatarReq(avatar.data);
+      updateAvatar(new_avatar.url);
       myToast(0, "you profile has been updated.");
       navigate("/profile");
     } catch (error) {
@@ -111,16 +114,15 @@ const EditProfile = () => {
   const toggle2FA = async () => {
     try {
       if (is2FAEnabled) {
-        await disableMFAreq(); // Replace with your API logic
+        await disableMFAreq();
         setIs2FAEnabled(false);
         myToast(2, "MFA has been disabled.")
       } else {
-        // Logic to enable 2FA
-        const qrImage = await qrMFAreq(); // Replace with your API logic to get the QR code
+        const qrImage = await qrMFAreq();
         setQrCode(qrImage);
       }
     } catch (error) {
-      console.error("Error toggling 2FA:", error);
+      myToast(2, "can't toggle MFA.")
     }
   };
 
@@ -132,7 +134,6 @@ const EditProfile = () => {
         myToast(0, "MFA has been enabled.")
         setQrCode(null)
     } catch (error) {
-      console.error("Error verifying 2FA code:", error);
       myToast(2, "invalid code.")
     }
   };
@@ -195,13 +196,13 @@ const EditProfile = () => {
           </div>
 
           <div className="flex flex-col">
-            <label htmlFor="talias" className="text-neonBlue">
+            <label htmlFor="tournament_alias" className="text-neonBlue">
             Tournament Alias
             </label>
             <input
               type="text"
-              id="tournament-alias"
-              name="talias"
+              id="tournament_alias"
+              name="tournament_alias"
               value={formData.tournament_alias}
               onChange={handleInputChange}
               className="p-2 rounded bg-gray-800 text-white border border-gray-600"

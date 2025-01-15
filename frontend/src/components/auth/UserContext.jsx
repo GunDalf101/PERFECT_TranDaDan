@@ -12,6 +12,22 @@ const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  const [avatarUrl, setAvatarUrl] = useState("/default_profile.webp");
+
+  useEffect(() => {
+    if (user) {
+      const parsedUser = typeof user === 'string' ? JSON.parse(user) : user;
+      const avatar = parsedUser?.avatar_url || "/default_profile.webp";
+      setAvatarUrl(avatar);
+    }
+  }, [user]);
+
+  // const updateUser = (newUser) => {
+  //   setUser(newUser);
+  // };
+
+ 
+
   useEffect(() => {
     const checkAuthStatus = async () => {
       const accessToken = localStorage.getItem('access_token');
@@ -39,6 +55,17 @@ const UserProvider = ({ children }) => {
   }, []);
 
 
+  const updateAvatar = (newAvatarUrl) => {
+    setAvatarUrl(newAvatarUrl);
+    if (user) {
+      const parsedUser = typeof user === 'string' ? JSON.parse(user) : user;
+      const updatedUser = {
+        ...parsedUser,
+        avatar_url: newAvatarUrl
+      };
+      setUser(JSON.stringify(updatedUser));
+    }
+  };
 
   const login = (userData) => {
     setUser(userData);
@@ -54,6 +81,7 @@ const UserProvider = ({ children }) => {
   const contextValue = {
     user,
     login,
+    updateAvatar,
     logout,
     isAuthenticated
   };

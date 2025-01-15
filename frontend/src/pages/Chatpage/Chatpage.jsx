@@ -112,7 +112,6 @@ const ChatApp = () => {
 
       const avatarPromises = new Map();
 
-      // Fetch user data for each friend
       for (const friend of friends) {
         avatarPromises.set(
           friend,
@@ -123,16 +122,14 @@ const ChatApp = () => {
         );
       }
 
-      // Wait for all avatar requests to complete
       const avatarResults = await Promise.allSettled(Array.from(avatarPromises.values()));
-      console.log(avatarPromises);
       const newAvatarMap = new Map();
 
       friends.forEach((friend, index) => {
         const avatarResult = avatarResults[index];
         const avatarUrl = avatarResult.status === 'fulfilled' && avatarResult.value
           ? avatarResult.value.avatar_url
-          : 'default-avatar-url'; // Replace with your default avatar URL
+          : 'default-avatar-url';
         newAvatarMap.set(friend, avatarUrl);
       });
 
@@ -153,7 +150,6 @@ const ChatApp = () => {
 
       setFriendsData(friendsData);
 
-      // Load last messages only for friends without cached messages
       const uncachedFriends = friendsData.filter(
         (friend) => !lastMessagesRef.current.has(friend.name)
       );
@@ -162,7 +158,6 @@ const ChatApp = () => {
         await loadLastMessagesForFriends(uncachedFriends);
       }
     } catch (error) {
-      // console.error("Error loading friends:", error);
       setError("Failed to load friends list. Please refresh the page.");
     } finally {
       setIsLoading(false);
@@ -177,7 +172,6 @@ const ChatApp = () => {
 
       try {
         const response = await getAllMessage(`${friend.name}?page=1`);
-        // Handle empty messages case
         if (!response.results || response.results.length === 0) {
           lastMessagesRef.current.set(friend.name, {
             content: null,
@@ -215,7 +209,6 @@ const ChatApp = () => {
     if (selectedChat) {
       const chatBody = document.querySelector(".chat-body");
       if (chatBody) {
-        // Check if we're at the bottom (with small threshold for rounding)
         const isAtBottom =
           Math.abs(
             chatBody.scrollHeight - chatBody.scrollTop - chatBody.clientHeight
@@ -227,16 +220,13 @@ const ChatApp = () => {
     }
   }, [selectedChat]);
 
-  // Modify restoreScrollPosition
   const restoreScrollPosition = useCallback(() => {
     const chatBody = document.querySelector(".chat-body");
     if (!chatBody) return;
 
     if (wasAtBottomRef.current) {
-      // If we were at bottom, scroll to new bottom
       chatBody.scrollTop = chatBody.scrollHeight;
     } else if (scrollPositionRef.current !== null) {
-      // Otherwise restore previous position
       chatBody.scrollTop = scrollPositionRef.current;
     }
   }, []);
@@ -326,7 +316,6 @@ const ChatApp = () => {
         const selectedFriend = friendsData.find((f) => f.id === selectedChat);
         if (!selectedFriend) return;
 
-        // Check cache first
         const cachedMessages = messageCacheRef.current.get(selectedChat);
         if (cachedMessages?.length) {
           setMessages(cachedMessages);
@@ -335,11 +324,11 @@ const ChatApp = () => {
 
         const response = await getAllMessage(`${selectedFriend.name}?page=1`);
 
-        // Handle empty messages case
+
         if (!response.results || response.results.length === 0) {
           setMessages([]);
           setHasMore(false);
-          // Initialize cache with empty array to prevent future unnecessary requests
+
           messageCacheRef.current.set(selectedChat, []);
           pageTrackingRef.current.set(selectedChat, new Set([1]));
           return;
@@ -360,7 +349,6 @@ const ChatApp = () => {
         setMessages(sortedMessages);
         setHasMore(response.next !== null);
 
-        // Reset unread count
         setFriendsData((prev) =>
           prev.map((friend) =>
             friend.id === selectedChat ? { ...friend, unreadCount: 0 } : friend
@@ -403,7 +391,6 @@ const ChatApp = () => {
           data.sender === currentUsername ? data.receiver : data.sender;
         updateFriendLastMessage(friendName, newMsg);
 
-        // Update cache
         const chatId = friendsData.find((f) => f.name === friendName)?.id;
         if (chatId) {
           const cachedMessages = messageCacheRef.current.get(chatId) || [];
@@ -449,7 +436,6 @@ const ChatApp = () => {
 
       updateFriendLastMessage(selectedFriend.name, tempMessage);
 
-      // Update cache
       const cachedMessages = messageCacheRef.current.get(selectedChat) || [];
       messageCacheRef.current.set(selectedChat, [
         tempMessage,

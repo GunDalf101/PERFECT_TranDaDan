@@ -30,17 +30,3 @@ class Match(models.Model):
 
     def __str__(self):
         return f"{self.player1.username} vs {self.player2.username}"
-    
-class MatchmakingQueue(models.Model):
-    id = models.AutoField(primary_key=True)
-    game_type = models.CharField(max_length=15, default='pong')
-    player = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        null=True,
-        related_name='matchmaking_queue',
-    )
-    joined_at = models.DateTimeField(auto_now_add=True)
-    
-    def __str__(self):
-        return f"{self.user} in matchmaking queue"
