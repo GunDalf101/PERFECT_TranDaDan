@@ -358,14 +358,13 @@ const TournamentMode = () => {
                         inGame = false;
                         const winner = playerGamesWon > aiGamesWon ? player1 : player2;
                         
-                        // Return to tournament with match result
                         navigate('/game-lobby/tournament', {
                             state: {
                                 matchWinner: winner,
                                 matchIndex: location.state.currentMatch[0],
                                 tournamentState: location.state.tournamentState
                             },
-                            replace: true // Use replace to avoid navigation history issues
+                            replace: true
                         });
                     }
                     

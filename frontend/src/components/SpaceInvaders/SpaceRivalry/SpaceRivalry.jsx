@@ -387,7 +387,6 @@ const SpaceRivalry = () => {
 
   return (
     <div className="flex flex-col items-center">
-      {/* Score Display */}
       <div className="w-full max-w-4xl mb-4 flex justify-between px-4">
         <div className="text-2xl font-bold text-blue-500">
           Player 1: {score1}
@@ -436,24 +435,19 @@ const SpaceRivalry = () => {
         </div>
       ) : (
         <div className="relative" style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}>
-          {/* Game canvas */}
           <div className="absolute inset-0 bg-gray-900">
-            {/* Dividing line */}
             <div 
               className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-gray-600"
               style={{ transform: 'translateX(-50%)' }}
             />
             
-            {/* Health and power-up status bars */}
             <div className="absolute top-4 left-4 flex flex-col gap-2">
-              {/* Health bar */}
               <div className="w-32 h-2 bg-gray-700 rounded">
                 <div 
                   className="h-full bg-blue-500 rounded transition-all duration-200"
                   style={{ width: `${health1}%` }}
                 />
               </div>
-              {/* Power-up indicators */}
               <div className="flex gap-1">
                 {Object.entries(activeEffects1).map(([type, effect]) => 
                   effect.active && (
@@ -468,14 +462,12 @@ const SpaceRivalry = () => {
             </div>
 
             <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
-              {/* Health bar */}
               <div className="w-32 h-2 bg-gray-700 rounded">
                 <div 
                   className="h-full bg-red-500 rounded transition-all duration-200"
                   style={{ width: `${health2}%` }}
                 />
               </div>
-              {/* Power-up indicators */}
               <div className="flex gap-1">
                 {Object.entries(activeEffects2).map(([type, effect]) => 
                   effect.active && (
@@ -489,7 +481,6 @@ const SpaceRivalry = () => {
               </div>
             </div>
 
-            {/* Player ships */}
             <div
               className={`absolute rounded transition-transform duration-50 ${
                 activeEffects1.SHIELD?.active ? 'ring-4 ring-cyan-400' : ''
@@ -517,7 +508,6 @@ const SpaceRivalry = () => {
               }}
             />
 
-            {/* Lasers */}
             {lasers1.map((laser, i) => (
               <div
                 key={`laser1-${i}`}
@@ -543,7 +533,6 @@ const SpaceRivalry = () => {
               />
             ))}
 
-            {/* Asteroids */}
             {asteroids.map((asteroid, i) => (
               <div
                 key={`asteroid-${i}`}
@@ -560,7 +549,6 @@ const SpaceRivalry = () => {
               />
             ))}
 
-            {/* Power-ups */}
             {powerups.map((powerup, i) => (
               <div
                 key={`powerup-${i}`}
@@ -590,7 +578,6 @@ const SpaceRivalry = () => {
             ))}
           </div>
 
-          {/* Game Over overlay */}
           {gameOver && (
             <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center">
               <div className="text-white text-center p-8 bg-gray-800 rounded-lg">
