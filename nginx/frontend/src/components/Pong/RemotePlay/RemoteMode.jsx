@@ -94,7 +94,7 @@ const RemoteMode = () => {
             }
 
             const ws = new WebSocket(
-                `${env.WS_URL}/ws/pong/${gameId}/?token=${localStorage.getItem('access_token')}`
+                `/ws/pong/${gameId}/?token=${localStorage.getItem('access_token')}`
             );
             websocketRef.current = ws;
 
@@ -889,7 +889,7 @@ const RemoteMode = () => {
     return (
         <>
             <canvas ref={canvasRef} className="webgl" />
-            
+
             <div className="absolute top-10 left-1/2 transform -translate-x-1/2 flex items-center justify-between w-full max-w-4xl px-6 py-4 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full border-4 border-cyan-400 shadow-glow">
                 <div className="flex items-center space-x-4">
                     <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-cyan-400">
@@ -904,7 +904,7 @@ const RemoteMode = () => {
                     </div>
                     <span className="text-cyan-400 text-xl">{isPlayer1 ? username : opponent}</span>
                 </div>
-                
+
                 <div className="flex flex-col items-center">
                     <div className="text-white text-2xl">
                         {scores[isPlayer1 ? 'player1' : 'player2']} - {scores[isPlayer1 ? 'player2' : 'player1']}
@@ -913,7 +913,7 @@ const RemoteMode = () => {
                         Round {matches[isPlayer1 ? 'player1' : 'player2'] + matches[isPlayer1 ? 'player2' : 'player1'] + 1}
                     </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-4">
                     <span className="text-rose-400 text-xl">{isPlayer1 ? opponent : username}</span>
                     <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-rose-400">
@@ -928,13 +928,13 @@ const RemoteMode = () => {
                     </div>
                 </div>
             </div>
-    
+
             {errorMessage && (
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-gray-800 to-gray-900 text-neon-white text-lg pixel-font px-6 py-4 rounded-lg border-2 border-neon-red shadow-glow z-50">
                     {errorMessage}
                 </div>
             )}
-    
+
             <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-neon-white text-lg pixel-font bg-gray-800/80 px-6 py-2 rounded-full border-2 border-neon-cyan animate-flicker">
                 {connectionState.status === 'connecting' ? 'Connecting...' :
                  connectionState.status === 'waiting_opponent' ? 'Waiting for opponent...' :
@@ -942,7 +942,7 @@ const RemoteMode = () => {
                  gameStatus === 'completed' ? 'Game ended' :
                  connectionState.hasGameStarted ? 'Game in progress' : 'Waiting to start'}
             </div>
-    
+
             <div className={`fixed bottom-4 right-4 flex items-center gap-2 px-4 py-2 rounded-full text-sm ${
                 connectionState.status === 'connected' ? 'bg-green-500/20' :
                 connectionState.status === 'unstable' ? 'bg-yellow-500/20' :
@@ -960,7 +960,7 @@ const RemoteMode = () => {
                      'Disconnected'}
                 </span>
             </div>
-    
+
             {gameStatus === 'completed' && (
                 <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
                     <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-lg text-center border-2 border-cyan-400">

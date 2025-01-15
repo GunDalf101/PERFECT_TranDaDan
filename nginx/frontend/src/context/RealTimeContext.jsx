@@ -50,7 +50,7 @@ export const RealTimeProvider = ({ children }) => {
       const accessToken = localStorage.getItem("access_token");
 
       if (accessToken) {
-        socket = new WebSocket(`${env.WS_URL}/ws/notifs/?token=${accessToken}`);
+        socket = new WebSocket(`/ws/notifs/?token=${accessToken}`);
 
         socket.onopen = () => {
           console.log('WebSocket connection established');

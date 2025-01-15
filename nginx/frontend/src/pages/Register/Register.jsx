@@ -129,7 +129,7 @@ const Register = () => {
 	};
 
 	const handle42Login = () => {
-		window.location.href = `${env.API_URL}/api/oauth2/42/`;
+		window.location.href = `/api/oauth2/42/`;
 	};
 
 	return (

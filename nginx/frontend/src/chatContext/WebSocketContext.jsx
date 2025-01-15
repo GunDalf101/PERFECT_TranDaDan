@@ -4,7 +4,7 @@ import { useUser } from '../components/auth/UserContext';
 import PropTypes from 'prop-types';
 import { env } from '../config/env';
 
-const WEBSOCKET_URL = `${env.WS_URL}/ws/chat`;
+const WEBSOCKET_URL = `/ws/chat`;
 const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_DELAY = 3000;
 

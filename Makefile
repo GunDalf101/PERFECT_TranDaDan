@@ -8,7 +8,6 @@ logs:
 	docker compose logs -f
 
 build:
-	grep '^VITE_' .env > nginx/frontend/.env
 	docker compose build
 
 stop:

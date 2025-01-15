@@ -18,7 +18,7 @@ const ClassicPong = () => {
   const [gameSession, setGameSession] = useState(null);
   const [userAvatar, setUserAvatar] = useState('/default_profile.webp');
   const [opponentAvatar, setOpponentAvatar] = useState('/default_profile.webp');
-  
+
   const navigate = useNavigate();
   const wsRef = useRef(null);
   const cleanupRef = useRef(false);
@@ -43,9 +43,9 @@ const ClassicPong = () => {
     if (!gameSession) return;
 
     const { gameId, username, opponent, isPlayer1 } = gameSession;
-    
+
     const ws = new WebSocket(
-      `${env.WS_URL}/ws/classic-pong/${gameId}/?token=${localStorage.getItem('access_token')}`
+      `/ws/classic-pong/${gameId}/?token=${localStorage.getItem('access_token')}`
     );
     wsRef.current = ws;
 
@@ -251,7 +251,7 @@ const ClassicPong = () => {
       </div>
 
       {errorMessage && !gameState.gameOver && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2
                       bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg">
           {errorMessage}
         </div>

@@ -67,7 +67,7 @@ const MatchMaking = ({ gameType = "pong" }) => {
     try {
       const response = await axiosInstance.get(`api/search/?q=${encodeURIComponent(opponentUsername)}`);
       const opponentData = response.data.results.find(user => user.username === opponentUsername);
-      
+
       if (opponentData) {
         setOpponent({
           username: opponentData.username,
@@ -92,7 +92,7 @@ const MatchMaking = ({ gameType = "pong" }) => {
   useEffect(() => {
     if (!isDataReady || !username) return;
 
-    const ws = new WebSocket(`${env.WS_URL}/ws/matchmaking/?token=${localStorage.getItem('access_token')}`);
+    const ws = new WebSocket(`/ws/matchmaking/?token=${localStorage.getItem('access_token')}`);
 
     ws.onopen = () => {
       console.log("WebSocket connected");

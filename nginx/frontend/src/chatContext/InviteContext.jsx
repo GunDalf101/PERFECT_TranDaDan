@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { useUser } from '../components/auth/UserContext';
 import { env } from '../config/env';
 
-const WEBSOCKET_URL = `${env.WS_URL}/ws/invites`;
+const WEBSOCKET_URL = `/ws/invites`;
 const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_DELAY = 3000;
 
@@ -30,7 +30,7 @@ export const InviteProvider = ({ children }) => {
 
   const handleWebSocketMessage = useCallback((data) => {
     console.log("Received websocket message:", data.type);
-    
+
     switch (data.type) {
       case 'game_invite':
         setInvites(prev => [...prev, data]);
@@ -47,9 +47,9 @@ export const InviteProvider = ({ children }) => {
           opponent: data.opponent,
           isPlayer1: myUsername === data.player1
         };
-        
+
         localStorage.setItem('gameSession', JSON.stringify(gameSession));
-        
+
         setNotification({
           type: 'success',
           message: `${data.opponent} accepted your invitation`
@@ -134,11 +134,11 @@ export const InviteProvider = ({ children }) => {
 
       ws.onclose = (event) => {
         console.log("WebSocket Disconnected", event.code);
-        
-        if (!event.wasClean && 
-            reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS && 
+
+        if (!event.wasClean &&
+            reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS &&
             myUsername) {
-          
+
           setNotification({
             type: 'warning',
             message: `Connection lost. Reconnecting... (Attempt ${reconnectAttemptsRef.current + 1}/${MAX_RECONNECT_ATTEMPTS})`
@@ -189,7 +189,7 @@ export const InviteProvider = ({ children }) => {
       }
     };
   }, [isReady, connectWebSocket]);
-  
+
   const sendInvite = useCallback((targetUsername) => {
     if (!isReady) {
       setNotification({

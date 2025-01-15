@@ -28,7 +28,7 @@ const RemoteRivalry = () => {
   const [gameSession, setGameSession] = useState(null);
   const [userAvatar, setUserAvatar] = useState('/default_profile.webp');
   const [opponentAvatar, setOpponentAvatar] = useState('/default_profile.webp');
-  
+
   const wsRef = useRef(null);
   const cleanupRef = useRef(false);
   const reconnectAttempts = useRef(0);
@@ -75,7 +75,7 @@ const RemoteRivalry = () => {
     if (!gameSession) return;
 
     const { gameId, username, opponent, isPlayer1 } = gameSession;
-    
+
     if (wsRef.current) {
       wsRef.current.intentionalClose = true;
       wsRef.current.close();
@@ -83,7 +83,7 @@ const RemoteRivalry = () => {
     }
 
     const ws = new WebSocket(
-      `${env.WS_URL}/ws/space-rivalry/${gameId}/?token=${localStorage.getItem('access_token')}`
+      `/ws/space-rivalry/${gameId}/?token=${localStorage.getItem('access_token')}`
     );
     wsRef.current = ws;
 
@@ -111,7 +111,7 @@ const RemoteRivalry = () => {
         reason: event.reason,
         intentionalClose: ws.intentionalClose
       });
-      
+
       setConnectionStatus('disconnected');
 
       if (!cleanupRef.current && !ws.intentionalClose && gameState?.gameOver !== true && !isReconnecting.current) {
@@ -127,7 +127,7 @@ const RemoteRivalry = () => {
           if (reconnectAttempts.current < maxReconnectAttempts) {
             reconnectAttempts.current++;
             const newWs = new WebSocket(
-              `${env.WS_URL}/ws/space-rivalry/${gameId}/?token=${localStorage.getItem('access_token')}`
+              `/ws/space-rivalry/${gameId}/?token=${localStorage.getItem('access_token')}`
             );
             wsRef.current = newWs;
           } else {
@@ -193,12 +193,12 @@ const RemoteRivalry = () => {
 
     return () => {
       cleanupRef.current = true;
-      
+
       if (reconnectTimeout.current) {
         clearTimeout(reconnectTimeout.current);
         reconnectTimeout.current = null;
       }
-      
+
       if (reconnectTimeoutId.current) {
         clearTimeout(reconnectTimeoutId.current);
         reconnectTimeoutId.current = null;
@@ -214,7 +214,7 @@ const RemoteRivalry = () => {
 
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      
+
       reconnectAttempts.current = 0;
       isReconnecting.current = false;
       setErrorMessage('');
