@@ -26,7 +26,9 @@ const showUserContent = (relationship) => (
 );
 
 const User = () => {
+
   const navigate = useNavigate();
+
   const [userdata, setuserdata] = useState(null); // Store user data
   const [error, setError] = useState(false); // Handle errors
   const [reload, setReload] = useState(false); // State to trigger useEffect

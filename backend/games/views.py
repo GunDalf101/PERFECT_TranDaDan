@@ -44,6 +44,39 @@ class GetUserMatch(APIView):
                 })
         return Response({'pong': pong_matches[::-1],'space': space_matches[::-1]}, status=200)
 
+# class GetUserMatch(APIView):
+
+#     def get(self, request, userid):
+
+#         matches = Match.objects.filter(
+#             Q(player1_id=userid) |
+#             Q(player2_id=userid),
+#             Q(status='completed')
+#         )
+#         if not matches.first():
+#             Response({"no matches"}, status=200)
+
+#         pong_matches = []
+#         space_matches = []
+#         for _match in matches:
+#             if _match.game_type == 'pong':
+#                 pong_matches.append({
+#                     'id': _match.id,
+#                     'opponent': _match.player2.username if _match.player1.id == userid else _match.player1.username,
+#                     'score': "Forfeit" if _match.forfeit else f"{_match.score_player1}-{_match.score_player2}",
+#                     'result': 'win' if _match.winner_id == userid else 'lose'
+#                 })
+#             elif _match.game_type == 'space-rivalry':
+#                 space_matches.append({
+#                     'id': _match.id,
+#                     'opponent': _match.player2.username if _match.player1.id == userid else _match.player1.username,
+#                     'score': "Forfeit" if _match.forfeit else f"{_match.score_player1}-{_match.score_player2}",
+#                     'result': 'win' if _match.winner_id == userid else 'lose'
+#                 })
+#         return Response({'pong': pong_matches[::-1],'space': space_matches[::-1]}, status=200)
+
+
+
 class CancelMatch(APIView):
 
     def post(self, request, *args, **kwargs):

@@ -21,12 +21,13 @@ function formatSerializerErrors(errors) {
 
 const EditProfile = () => {
 
+  const navigate = useNavigate();
+  const {updateAvatar} = useUser();
+
   const [avatar, setAvatar] = useState({
     data: null,
     path: null
   });
-  const navigate = useNavigate();
-  const {updateAvatar} = useUser();
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [qrCode, setQrCode] = useState("");
   const [verificationCode, setVerificationCode] = useState("");

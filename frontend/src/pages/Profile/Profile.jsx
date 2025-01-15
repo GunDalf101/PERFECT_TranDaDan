@@ -31,12 +31,14 @@ const data = {
 
 
 const Profile = () => {
+
+  const navigate = useNavigate();
+
   const [mydata, setMyData] = useState(null);
   const [mymatches, setMymatches] = useState({
     pong: [],
     space: []
   });
-  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch user data

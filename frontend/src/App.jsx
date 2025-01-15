@@ -64,8 +64,16 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-                <Route path="/profile/edit" element={<EditProfile />} />
-                <Route path="/user/:username" element={<User />} />
+                  <Route path="/profile/edit" element={
+                    <ProtectedRoute>
+                      <EditProfile />
+                    </ProtectedRoute>
+                    } />
+                  <Route path="/user/:username" element={
+                    <ProtectedRoute>
+                      <User />
+                    </ProtectedRoute>
+                    } />
               </Route>
               <Route
                 path="/game-lobby"
