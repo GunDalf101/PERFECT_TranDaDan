@@ -26,7 +26,7 @@ export const RealTimeProvider = ({ children }) => {
     if (data.action == "friends") {
       setFriends((prev) => {
         if (prev.includes(username)) return prev;
-        return prev.concat(username);
+        return [username].concat(prev);
       });
       setOnlineFriends((prev) => {
         if (prev.includes(username)) return prev;
