@@ -87,7 +87,6 @@ const RemoteMode = () => {
         let mouseCurrent = { x: 0, y: 0 };
         const ballSound = new Audio('/sounds/ping_pong.mp3');
 
-        console.log(gameId, username, opponent, isPlayer1);
         const setupWebSocket = () => {
             if (websocketRef.current?.readyState === WebSocket.OPEN) {
                 websocketRef.current.close();
@@ -249,9 +248,9 @@ const RemoteMode = () => {
         const handleGameState = (state) => {
             updatePaddlePositions(state);
             if (state.player1 !== username) {
+                setScores({ player1: state.scores.player2, player2: state.scores.player1 });
+                setMatches({ player1: state.rounds_won.player2, player2: state.rounds_won.player1 });
                 updateBallPosition(state);
-                setScores({ player1: state.scores.player1, player2: state.scores.player2 });
-                setMatches({ player1: state.rounds_won.player1, player2: state.rounds_won.player2 });
             }
         };
         const updatePaddlePositions = (state) => {
@@ -336,7 +335,6 @@ const RemoteMode = () => {
         }
 
         const CreateBall = (position, direction = -1) => {
-            console.log('create ball');
             const radius = 0.1;
             const mesh = new THREE.Mesh(
                 new THREE.SphereGeometry(radius),

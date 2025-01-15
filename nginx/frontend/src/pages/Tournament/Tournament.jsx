@@ -139,6 +139,12 @@ const TournamentBracket = () => {
 
     const updatePlayer = (index, data) => {
         const newPlayers = [...players];
+        const isDuplicate = newPlayers.some((player, i) => i !== index && player.nickname === data.nickname);
+
+        if (isDuplicate) {
+            alert("This nickname is already taken. Please choose another one.");
+            return;
+        }
         newPlayers[index] = data;
         setPlayers(newPlayers);
     };

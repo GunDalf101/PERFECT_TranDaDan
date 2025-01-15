@@ -520,7 +520,6 @@ const LocalMode = () => {
                     paddleCPURef.current.mesh.position.y += paddleCpuVelocityY;
 
                     if (tableBoundsRef.current) {
-                        console.log(tableBoundsRef.current);
                         if (paddleRef.current.mesh.position.x < tableBoundsRef.current.min.x) {
                             paddleRef.current.mesh.position.x = tableBoundsRef.current.min.x;
                         } else if (paddleRef.current.mesh.position.x > tableBoundsRef.current.max.x) {
