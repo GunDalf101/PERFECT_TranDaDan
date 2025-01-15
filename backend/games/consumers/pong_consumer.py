@@ -353,6 +353,7 @@ class PongConsumer(AsyncWebsocketConsumer):
             match.score_player1 = self.shared_games[self.game_id]['rounds_won']['player1']
             match.score_player2 = self.shared_games[self.game_id]['rounds_won']['player2']
             match.forfeit = data.get('forfeit', False)
+            match.ended_at = timezone.now()
             match.status = "completed"
             match.save()
         except Exception as e:
