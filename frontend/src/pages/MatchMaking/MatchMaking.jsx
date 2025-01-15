@@ -128,6 +128,11 @@ const MatchMaking = ({ gameType = "pong" }) => {
               state: gameSession
             });
           }
+          if (receivedGameType === "classic-pong") {
+            navigate('/game-lobby/classic-pong', {
+              state: gameSession
+            });
+          }
         }, 3000);
       } else if (data.status === "searching") {
         console.log("Searching for a match...");

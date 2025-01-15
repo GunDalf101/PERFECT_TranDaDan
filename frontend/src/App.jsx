@@ -22,6 +22,7 @@ import TournamentMode from "./components/Pong/TournamentMode/TournamentMode";
 import RemoteRivalry from "./components/SpaceInvaders/RemoteRivalry/RemoteRivalry.jsx";
 import SpaceRivalry from "./components/SpaceInvaders/SpaceRivalry/SpaceRivalry.jsx";
 import InviteUI from "./components/InviteUI/InviteUI.jsx";
+import ClassicPong from "./components/Pong/ClassicPong/ClassicPong.jsx";
 
 import User from "./pages/User/User";
 import EditProfile from "./pages/EditProfile/EditProfile";
@@ -86,6 +87,7 @@ function App() {
                 <Route path="tournament-mode" element={<TournamentMode />} />
                 <Route path="space-rivalry" element={<SpaceRivalry />} />
                 <Route path="remote-rivalry" element={<RemoteRivalry />} />
+                <Route path="classic-pong" element={<ClassicPong />} />
 
               </Route>
               <Route
