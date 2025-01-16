@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Upload, Swords } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { myToast } from '../../lib/utils1';
 
 const PlayerCard = ({ player, onUpdate, teamColor, playerNumber }) => {
   const [imagePreview, setImagePreview] = useState(null);
@@ -29,9 +30,9 @@ const PlayerCard = ({ player, onUpdate, teamColor, playerNumber }) => {
       <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden mb-4 bg-gray-800
         border-2 border-${baseColor}-500/50">
         {imagePreview ? (
-          <img 
-            src={imagePreview} 
-            alt="Player" 
+          <img
+            src={imagePreview}
+            alt="Player"
             className="w-full h-full object-cover"
           />
         ) : (
@@ -78,17 +79,17 @@ const QuadraRegister = () => {
   const [battleStarted, setBattleStarted] = useState(false);
   const [winner, setWinner] = useState(null);
   const navigate = useNavigate();
-    const location = useLocation();
+  const location = useLocation();
 
-    useEffect(() => {
-        if (location.state?.winner) {
-            setWinner(location.state.winner);
-            setBattleStarted(true);
-            if (location.state.teams) {
-                setTeams(location.state.teams);
-            }
-        }
-    }, [location]);
+  useEffect(() => {
+    if (location.state?.winner) {
+      setWinner(location.state.winner);
+      setBattleStarted(true);
+      if (location.state.teams) {
+        setTeams(location.state.teams);
+      }
+    }
+  }, [location]);
 
   const updatePlayer = (team, index, data) => {
     setTeams(prev => ({
@@ -98,34 +99,44 @@ const QuadraRegister = () => {
   };
 
   const startBattle = () => {
-    const allPlayersReady = 
-        teams.blue.every(player => player.nickname) && 
-        teams.red.every(player => player.nickname);
-    
-    if (allPlayersReady) {
-        setBattleStarted(true);
-        navigate('/game-lobby/quadra-mode', {
-            state: {
-                teams: teams
-            }
-        });
-    }
-};
+    const allPlayersReady =
+      teams.blue.every(player => player.nickname) &&
+      teams.red.every(player => player.nickname);
 
-const resetBattle = () => {
+    if (allPlayersReady) {
+      const nicknames = [...teams.blue, ...teams.red].map(player => player.nickname);
+      const uniqueNicknames = new Set(nicknames);
+
+      if (uniqueNicknames.size !== nicknames.length) {
+        myToast(
+          1,
+          "Each player must have a unique nickname!"
+        );
+        return;
+      }
+      setBattleStarted(true);
+      navigate('/game-lobby/quadra-mode', {
+        state: {
+          teams: teams
+        }
+      });
+    }
+  };
+
+  const resetBattle = () => {
     setTeams({
-        blue: [
-            { nickname: '', image: null },
-            { nickname: '', image: null }
-        ],
-        red: [
-            { nickname: '', image: null },
-            { nickname: '', image: null }
-        ]
+      blue: [
+        { nickname: '', image: null },
+        { nickname: '', image: null }
+      ],
+      red: [
+        { nickname: '', image: null },
+        { nickname: '', image: null }
+      ]
     });
     setBattleStarted(false);
     setWinner(null);
-};
+  };
 
 
   const handleTeamWin = (team) => {

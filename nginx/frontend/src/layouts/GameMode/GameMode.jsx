@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { Outlet } from 'react-router-dom';
-import './GameMode.css';
+import styles from './GameMode.module.scss';
 
 const GameMode = () => {
   const starsRef = useRef(null);
@@ -48,8 +48,8 @@ const GameMode = () => {
   }, []);
 
   return (
-    <div id="retro-background">
-      <div id="stars" ref={starsRef}>
+    <div className={styles.retroBackground}>
+      <div className={styles.stars} ref={starsRef}>
         {stars.map((star, index) => (
           <div
             key={index}
@@ -64,9 +64,13 @@ const GameMode = () => {
           />
         ))}
       </div>
-      <Outlet />
-      {/* <div className="game-preview" />
-      <div id="glitch-overlay">{scanlines}</div> */}
+      <div className={styles.outletContainer}>
+        <Outlet />
+      </div>
+      <div className="game-preview" />
+      <div className={styles.glitchOverlay}>
+        {scanlines}
+      </div>
     </div>
   );
 };

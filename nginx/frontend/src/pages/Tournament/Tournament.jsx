@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Upload, Trophy } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-// cause merge issue
-// PlayerCard component remains the same
+import { myToast } from '../../lib/utils1';
+
 const PlayerCard = ({ player, onUpdate, index }) => {
     const [imagePreview, setImagePreview] = useState(null);
 
@@ -94,7 +94,6 @@ const TournamentBracket = () => {
         return parseInt(localStorage.getItem('currentMatch')) || null;
     });
 
-    // Add state for next match availability
     const [nextMatchAvailable, setNextMatchAvailable] = useState(false);
 
     useEffect(() => {
@@ -139,18 +138,19 @@ const TournamentBracket = () => {
 
     const updatePlayer = (index, data) => {
         const newPlayers = [...players];
-        const isDuplicate = newPlayers.some((player, i) => i !== index && player.nickname === data.nickname);
-
-        if (isDuplicate) {
-            alert("This nickname is already taken. Please choose another one.");
-            return;
-        }
         newPlayers[index] = data;
         setPlayers(newPlayers);
     };
 
     const startTournament = () => {
         if (players.every(player => player.nickname)) {
+            const nicknames = players.map(player => player.nickname);
+            const uniqueNicknames = new Set(nicknames);
+    
+            if (uniqueNicknames.size !== nicknames.length) {
+                myToast(1, "Each player must have a unique nickname!");
+                return;
+            }
             const shuffledPlayers = [...players].sort(() => Math.random() - 0.5);
             const newRound1Matches = [
                 [shuffledPlayers[0], shuffledPlayers[1]],
@@ -170,13 +170,10 @@ const TournamentBracket = () => {
 
     const startNextMatch = () => {
         if (!finalMatch) {
-            // Start first semi-final match
             navigateToMatch([0, 1]);
         } else if (finalMatch.length === 1) {
-            // Start second semi-final match
             navigateToMatch([2, 3]);
         } else if (finalMatch.length === 2) {
-            // Start final match
             startFinalMatch();
         }
         setNextMatchAvailable(false);

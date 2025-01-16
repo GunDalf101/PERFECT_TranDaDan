@@ -119,7 +119,6 @@ const SpaceRivalry = () => {
     }));
   }, []);
 
-  // Power-up collection
   const collectPowerup = useCallback((powerup, playerId) => {
     const setActiveEffects = playerId === 1 ? setActiveEffects1 : setActiveEffects2;
     const currentEffects = playerId === 1 ? activeEffects1 : activeEffects2;
@@ -316,12 +315,11 @@ const SpaceRivalry = () => {
       if (keys.ArrowRight && player2Pos < GAME_WIDTH - SHIP_WIDTH/2) {
         setPlayer2Pos(prev => Math.min(GAME_WIDTH - SHIP_WIDTH/2, prev + MOVEMENT_SPEED));
       }
-    }, 1000/60); // 60 FPS movement updates
+    }, 1000/60);
 
     return () => clearInterval(moveInterval);
   }, [keys, gameStarted, gameOver, player1Pos, player2Pos]);
 
-  // Main game loop
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -329,13 +327,11 @@ const SpaceRivalry = () => {
     if (!gameStarted || gameOver) return;
 
     const gameLoop = setInterval(() => {
-      // Move lasers
       setLasers1(prev => prev.map(laser => ({ ...laser, y: laser.y - 5 }))
         .filter(laser => laser.y > 0));
       setLasers2(prev => prev.map(laser => ({ ...laser, y: laser.y - 5 }))
         .filter(laser => laser.y > 0));
 
-      // Move asteroids with slow motion effect
       const slowMotion1 = activeEffects1.SLOW_MOTION?.active;
       const slowMotion2 = activeEffects2.SLOW_MOTION?.active;
       const speedMultiplier = slowMotion1 || slowMotion2 ? 0.5 : 1;
@@ -347,7 +343,6 @@ const SpaceRivalry = () => {
         }));
         const filtered = moved.filter(asteroid => asteroid.y < GAME_HEIGHT);
         
-        // Spawn new asteroids based on difficulty
         if (Math.random() < 0.02 * difficulty) {
           filtered.push(spawnAsteroid());
         }
@@ -355,22 +350,18 @@ const SpaceRivalry = () => {
         return filtered;
       });
 
-      // Move power-ups
       setPowerups(prev => prev.map(powerup => ({
         ...powerup,
         y: powerup.y + 2
       })).filter(powerup => powerup.y < GAME_HEIGHT));
 
-      // Move debris
       setDebris(prev => prev.map(d => ({ ...d, y: d.y + 3 }))
         .filter(d => d.y < GAME_HEIGHT));
 
-      // Update explosions
       setExplosions(prev => prev.filter(explosion => 
         Date.now() - explosion.created < 500
       ));
 
-      // Check collisions
       checkCollisions();
     }, 1000/60);
 

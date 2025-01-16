@@ -15,7 +15,7 @@ export function myToast(status, message)
       closeOnClick: true,
       pauseOnHover: true,
       draggable: true,
-      theme: "light",
+      theme: "colored",
     });
   else if(status == 1)
     toast.warning(message, {
@@ -25,7 +25,7 @@ export function myToast(status, message)
       closeOnClick: true,
       pauseOnHover: true,
       draggable: true,
-      theme: "light",
+      theme: "colored",
     });
   else
     toast.error(message, {
@@ -35,6 +35,6 @@ export function myToast(status, message)
       closeOnClick: true,
       pauseOnHover: true,
       draggable: true,
-      theme: "light",
+      theme: "colored",
     });
 }

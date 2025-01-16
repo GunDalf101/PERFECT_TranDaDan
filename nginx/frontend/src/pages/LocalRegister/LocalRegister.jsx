@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Upload, Swords, Trophy } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { myToast } from '../../lib/utils1';
 
 const PlayerCard = ({ player, onUpdate, side }) => {
   const [imagePreview, setImagePreview] = useState(null);
@@ -35,9 +36,9 @@ const PlayerCard = ({ player, onUpdate, side }) => {
         <div className="w-24 h-24 mx-auto rounded-full overflow-hidden bg-gray-800
           border-2 border-${colors.primary}-500/50">
           {imagePreview ? (
-            <img 
-              src={imagePreview} 
-              alt="Player" 
+            <img
+              src={imagePreview}
+              alt="Player"
               className="w-full h-full object-cover"
             />
           ) : (
@@ -55,7 +56,7 @@ const PlayerCard = ({ player, onUpdate, side }) => {
             </div>
           )}
         </div>
-        
+
         <Input
           type="text"
           placeholder="Enter nickname"
@@ -65,7 +66,7 @@ const PlayerCard = ({ player, onUpdate, side }) => {
             placeholder-${colors.primary}-700 focus:border-${colors.primary}-400 
             focus:ring-${colors.primary}-400/50 max-w-[200px] mx-auto`}
         />
-        
+
         <div className={`text-sm text-${colors.primary}-400 font-bold`}>
           PLAYER {isLeftSide ? '1' : '2'}
         </div>
@@ -83,7 +84,7 @@ const LocalRegister = () => {
   const [winner, setWinner] = useState(null);
 
   const navigate = useNavigate();
-    const location = useLocation();
+  const location = useLocation();
 
   const updatePlayer = (side, data) => {
     setPlayers(prev => ({
@@ -94,34 +95,41 @@ const LocalRegister = () => {
 
   useEffect(() => {
     if (location.state?.winner) {
-        setWinner(location.state.winner);
-        setBattleStarted(true);
-        setPlayers({
-            left: { 
-                nickname: location.state.player1Name, 
-                image: location.state.player1Image 
-            },
-            right: { 
-                nickname: location.state.player2Name, 
-                image: location.state.player2Image 
-            }
-        });
+      setWinner(location.state.winner);
+      setBattleStarted(true);
+      setPlayers({
+        left: {
+          nickname: location.state.player1Name,
+          image: location.state.player1Image
+        },
+        right: {
+          nickname: location.state.player2Name,
+          image: location.state.player2Image
+        }
+      });
     }
-}, [location]);
+  }, [location]);
 
-const startBattle = () => {
+  const startBattle = () => {
     if (players.left.nickname && players.right.nickname) {
-        setBattleStarted(true);
-        navigate('/game-lobby/local-mode', {
-            state: {
-                player1Name: players.left.nickname,
-                player2Name: players.right.nickname,
-                player1Image: players.left.image,
-                player2Image: players.right.image
-            },
-        });
+      const nicknames = [players.left.nickname, players.right.nickname];
+      const uniqueNicknames = new Set(nicknames);
+
+      if (uniqueNicknames.size !== nicknames.length) {
+        myToast(1, "Each player must have a unique nickname!");
+        return;
+      }
+      setBattleStarted(true);
+      navigate('/game-lobby/local-mode', {
+        state: {
+          player1Name: players.left.nickname,
+          player2Name: players.right.nickname,
+          player1Image: players.left.image,
+          player2Image: players.right.image
+        },
+      });
     }
-};
+  };
 
   const handleWin = (side) => {
     setWinner(side);
@@ -129,12 +137,12 @@ const startBattle = () => {
 
   const resetBattle = () => {
     setPlayers({
-        left: { nickname: '', image: null },
-        right: { nickname: '', image: null }
+      left: { nickname: '', image: null },
+      right: { nickname: '', image: null }
     });
     setBattleStarted(false);
     setWinner(null);
-};
+  };
 
 
   return (

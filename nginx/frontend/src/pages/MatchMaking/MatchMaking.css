@@ -1,4 +1,3 @@
-/* Spacey background and zoom */
 .match-container {
     overflow: hidden;
     animation: zoomIn 2s ease-in-out forwards;
@@ -14,9 +13,7 @@
     }
 }
 
-/* Card Transition Effects */
 .card {
-    /* opacity: 0; */
     transform: scale(0.5);
     animation: cardTransition 1s ease-out forwards;
     box-shadow: 0 0 20px rgba(255, 255, 255, 0.4), 0 0 30px rgba(0, 255, 255, 0.6);
@@ -35,7 +32,6 @@
     }
 }
 
-/* Hover Effect for Neon Glow */
 .hover-glow:hover {
     box-shadow: 0 0 30px rgba(255, 255, 255, 0.8), 0 0 50px rgba(0, 255, 255, 0.8);
 }
@@ -60,7 +56,6 @@
     padding: 12px 24px;
     background-color: transparent;
     color: #00f9ff;
-    /* Light cyan for space effect */
     font-size: 18px;
     border: 2px solid #00f9ff;
     border-radius: 12px;

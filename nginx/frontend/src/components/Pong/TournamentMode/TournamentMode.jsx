@@ -561,6 +561,18 @@ const TournamentMode = () => {
                         } else if (paddleRef.current.mesh.position.y > tableBoundsRef.current.max.y + 3) {
                             paddleRef.current.mesh.position.y = tableBoundsRef.current.max.y + 3;
                         }
+
+                        if (paddleCPURef.current.mesh.position.x < tableBoundsRef.current.min.x) {
+                            paddleCPURef.current.mesh.position.x = tableBoundsRef.current.min.x;
+                        } else if (paddleCPURef.current.mesh.position.x > tableBoundsRef.current.max.x) {
+                            paddleCPURef.current.mesh.position.x = tableBoundsRef.current.max.x;
+                        }
+
+                        if (paddleCPURef.current.mesh.position.y < tableBoundsRef.current.min.y - 0.5) {
+                            paddleCPURef.current.mesh.position.y = tableBoundsRef.current.min.y - 0.5;
+                        } else if (paddleCPURef.current.mesh.position.y > tableBoundsRef.current.max.y + 3) {
+                            paddleCPURef.current.mesh.position.y = tableBoundsRef.current.max.y + 3;
+                        }
                     }
 
                     if (paddleRef.current.mesh.position.x > 0) {
