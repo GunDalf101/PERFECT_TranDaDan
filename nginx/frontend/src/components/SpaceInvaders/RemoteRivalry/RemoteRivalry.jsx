@@ -83,7 +83,7 @@ const RemoteRivalry = () => {
     }
 
     const ws = new WebSocket(
-      `/ws/space-rivalry/${gameId}/?token=${localStorage.getItem('access_token')}`
+      `${location.origin.replace(/^https/, 'wss')}/ws/space-rivalry/${gameId}/?token=${localStorage.getItem('access_token')}`
     );
     wsRef.current = ws;
 
@@ -127,7 +127,7 @@ const RemoteRivalry = () => {
           if (reconnectAttempts.current < maxReconnectAttempts) {
             reconnectAttempts.current++;
             const newWs = new WebSocket(
-              `/ws/space-rivalry/${gameId}/?token=${localStorage.getItem('access_token')}`
+              `${location.origin.replace(/^https/, 'wss')}/ws/space-rivalry/${gameId}/?token=${localStorage.getItem('access_token')}`
             );
             wsRef.current = newWs;
           } else {

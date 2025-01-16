@@ -93,7 +93,7 @@ const RemoteMode = () => {
             }
 
             const ws = new WebSocket(
-                `/ws/pong/${gameId}/?token=${localStorage.getItem('access_token')}`
+                `${location.origin.replace(/^https/, 'wss')}/ws/pong/${gameId}/?token=${localStorage.getItem('access_token')}`
             );
             websocketRef.current = ws;
 

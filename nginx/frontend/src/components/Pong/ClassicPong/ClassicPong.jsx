@@ -45,7 +45,7 @@ const ClassicPong = () => {
     const { gameId, username, opponent, isPlayer1 } = gameSession;
 
     const ws = new WebSocket(
-      `/ws/classic-pong/${gameId}/?token=${localStorage.getItem('access_token')}`
+      `${location.origin.replace(/^https/, 'wss')}/ws/classic-pong/${gameId}/?token=${localStorage.getItem('access_token')}`
     );
     wsRef.current = ws;
 

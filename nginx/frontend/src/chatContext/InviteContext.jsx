@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { useUser } from '../components/auth/UserContext';
 import { env } from '../config/env';
 
-const WEBSOCKET_URL = `/ws/invites`;
+const WEBSOCKET_URL = `${location.origin.replace(/^https/, 'wss')}/ws/invites`;
 const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_DELAY = 3000;
 

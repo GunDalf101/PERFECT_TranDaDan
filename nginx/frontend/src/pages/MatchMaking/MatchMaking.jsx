@@ -92,7 +92,7 @@ const MatchMaking = ({ gameType = "pong" }) => {
   useEffect(() => {
     if (!isDataReady || !username) return;
 
-    const ws = new WebSocket(`/ws/matchmaking/?token=${localStorage.getItem('access_token')}`);
+    const ws = new WebSocket(`${location.origin.replace(/^https/, 'wss')}/ws/matchmaking/?token=${localStorage.getItem('access_token')}`);
 
     ws.onopen = () => {
       console.log("WebSocket connected");

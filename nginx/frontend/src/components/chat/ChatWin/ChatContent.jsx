@@ -1,7 +1,14 @@
-import React, { useRef, useEffect, memo, useMemo, useState, Profiler } from "react";
+import React, {
+  useRef,
+  useEffect,
+  memo,
+  useMemo,
+  useState,
+  Profiler,
+} from "react";
 import { MoreVertical, Send, User, Gamepad2, X, Blocks } from "lucide-react";
 import styles from "../styles.module.scss";
-import { useRealTime } from "../../../context/RealTimeContext"
+import { useRealTime } from "../../../context/RealTimeContext";
 import FriendProfile from "./FriendProfile";
 import { useNavigate } from "react-router-dom";
 import { useInvite } from "../../../chatContext/InviteContext";
@@ -21,7 +28,7 @@ const ChatContent = memo(
     hasMore,
     isLoadingMore,
   }) => {
-    const {sendInvite} = useInvite();
+    const { sendInvite } = useInvite();
     const navigate = useNavigate();
     const chatBodyRef = useRef(null);
     const observerRef = useRef(null);
@@ -39,18 +46,17 @@ const ChatContent = memo(
     const prevScrollHeightRef = useRef(0);
     const isLoadingRef = useRef(false);
 
-    const { onlineFriends,sendRelationshipUpdate } = useRealTime()
-
+    const { onlineFriends, sendRelationshipUpdate } = useRealTime();
 
     const handleBlockUser = async () => {
-        try {
-            await blockUser(selectedUser.name);
-            myToast(2, `${selectedUser.name} has been blocked`);
-            sendRelationshipUpdate("blocked", selectedUser.name);
-        } catch (error) {
-            console.error("Error blocking user:", error);
-            myToast(0, "Failed to block user. Please try again.");
-        }
+      try {
+        await blockUser(selectedUser.name);
+        myToast(2, `${selectedUser.name} has been blocked`);
+        sendRelationshipUpdate("blocked", selectedUser.name);
+      } catch (error) {
+        console.error("Error blocking user:", error);
+        myToast(0, "Failed to block user. Please try again.");
+      }
     };
 
     const isNewMessageReceived = () => {
@@ -66,13 +72,17 @@ const ChatContent = memo(
     // Close dropdown when clicking outside
     useEffect(() => {
       const handleClickOutside = (event) => {
-        if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        if (
+          dropdownRef.current &&
+          !dropdownRef.current.contains(event.target)
+        ) {
           setIsOpen(false);
         }
       };
 
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     const selectedUser = useMemo(() => {
@@ -80,13 +90,13 @@ const ChatContent = memo(
       if (user) {
         return {
           ...user,
-          online: onlineFriends.includes(user.name)
+          online: onlineFriends.includes(user.name),
         };
       }
       return null;
     }, [friends, selectedChat, onlineFriends]);
 
-    const scrollToBottom = (behavior = 'auto') => {
+    const scrollToBottom = (behavior = "auto") => {
       if (chatBodyRef.current) {
         chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
       }
@@ -97,20 +107,25 @@ const ChatContent = memo(
       if (!chatBodyRef.current) return false;
       const { scrollTop, scrollHeight, clientHeight } = chatBodyRef.current;
       return scrollHeight - scrollTop - clientHeight < 100;
-
     };
 
-    const scrollToLatest = (behavior = 'smooth') => {
+    const scrollToLatest = (behavior = "smooth") => {
       if (chatBodyRef.current) {
         chatBodyRef.current.scrollTo({
           top: 0,
-          behavior: behavior
+          behavior: behavior,
         });
       }
     };
 
     const handleScroll = async () => {
-      if (!chatBodyRef.current || isLoadingRef.current || !hasMore || isLoadingMore) return;
+      if (
+        !chatBodyRef.current ||
+        isLoadingRef.current ||
+        !hasMore ||
+        isLoadingMore
+      )
+        return;
 
       const { scrollTop, scrollHeight } = chatBodyRef.current;
 
@@ -143,9 +158,9 @@ const ChatContent = memo(
 
       if (isNewMessageReceived()) {
         // if (isNearBottom()) {
-          scrollToBottom('smooth');
-          setInitialLoad(false);
-          // scrollToLatest();
+        scrollToBottom("smooth");
+        setInitialLoad(false);
+        // scrollToLatest();
         // }
       }
 
@@ -162,9 +177,8 @@ const ChatContent = memo(
     const handleSubmit = (e) => {
       e.preventDefault();
       handleSendMessage(e);
-      setTimeout(() => scrollToBottom('smooth'), 100);
+      setTimeout(() => scrollToBottom("smooth"), 100);
     };
-
 
     const formatMessageTime = (timestamp) => {
       const date = new Date(timestamp);
@@ -180,7 +194,7 @@ const ChatContent = memo(
       } else if (date.toDateString() === yesterday.toDateString()) {
         return `Yesterday ${date.toLocaleTimeString([], {
           hour: "2-digit",
-          minute: "2-digit"
+          minute: "2-digit",
         })}`;
       } else {
         return `${date.toLocaleDateString([], {
@@ -188,7 +202,7 @@ const ChatContent = memo(
           day: "numeric",
         })} ${date.toLocaleTimeString([], {
           hour: "2-digit",
-          minute: "2-digit"
+          minute: "2-digit",
         })}`;
       }
     };
@@ -203,7 +217,6 @@ const ChatContent = memo(
       });
       return groups;
     };
-
 
     useEffect(() => {
       const currentObserverRef = observerRef.current;
@@ -253,7 +266,6 @@ const ChatContent = memo(
     //   }
     // }, [messages]);
 
-    // Loading indicator component
     const LoadingIndicator = () => (
       <div className="flex justify-center items-center space-x-2 p-2">
         <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
@@ -262,7 +274,6 @@ const ChatContent = memo(
       </div>
     );
 
-    // Typing indicator component
     const TypingIndicator = () => (
       <div className="flex items-start space-x-2 mb-4">
         <div className="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center">
@@ -276,7 +287,7 @@ const ChatContent = memo(
 
     if (!selectedUser) {
       return (
-        <div className="flex-1 flex items-center justify-center text-gray-500">
+        <div className="font-pixel flex-1 text-3xl flex justify-center items-center  text-blue-300">
           <p>Select a chat to start messaging</p>
         </div>
       );
@@ -288,7 +299,11 @@ const ChatContent = memo(
           <div className="h-16 border-b px-6 flex justify-between">
             <div className="flex gap-2 items-center">
               <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center">
-                <img src={selectedUser.avatar || "/default_profile.webp"} alt=""  className="w-full h-full object-cover rounded-full" />
+                <img
+                  src={selectedUser.avatar || "/default_profile.webp"}
+                  alt=""
+                  className="w-full h-full object-cover rounded-full"
+                />
               </div>
               <div>
                 <h2 className="font-semibold">{selectedUser.name}</h2>
@@ -300,7 +315,10 @@ const ChatContent = memo(
                 </span>
               </div>
             </div>
-            <div className="relative inline-block left-7 top-2 " ref={dropdownRef}>
+            <div
+              className="relative inline-block left-7 top-2 "
+              ref={dropdownRef}
+            >
               <div className="flex  min-[1030px]:hidden">
                 <button
                   onClick={() => setIsOpen(!isOpen)}
@@ -311,7 +329,6 @@ const ChatContent = memo(
                 </button>
               </div>
 
-              {/* Dropdown Menu */}
               {isOpen && (
                 <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-50">
                   <div className="py-1">
@@ -353,24 +370,51 @@ const ChatContent = memo(
             </div>
           </div>
 
-          <div ref={chatBodyRef} onScroll={handleScroll} className="flex-1 overflow-y-auto flex flex-col-reverse p-5">
+          <div
+            ref={chatBodyRef}
+            onScroll={handleScroll}
+            className={`flex-1 overflow-y-auto flex flex-col-reverse p-2 sm:p-5 min-h-0
+            ${styles['message-container']}`}
+          >
             {messages.slice().map((message) => (
-              <div key={message.id} className="mb-4">
-                <div className={`flex items-start space-x-2 ${message.sender === selectedUser.name ? "justify-start" : "justify-end"}`}>
+              <div key={message.id} className="mb-2 sm:mb-4 w-full">
+                <div
+                  className={`flex items-start space-x-1 sm:space-x-2 ${message.sender === selectedUser.name
+                      ? "justify-start"
+                      : "justify-end"
+                    }`}
+                >
                   {message.sender === selectedUser.name && (
-                    <div className="w-10 h-10 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center overflow-hidden">
-                      <img src={selectedUser.avatar || "/default_profile.webp"} alt="" />
+                    <div className="w-6 h-6 sm:w-10 sm:h-10 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={selectedUser.avatar || "/default_profile.webp"}
+                        alt=""
+                        className="w-full h-full object-cover rounded-full"
+                      />
                     </div>
                   )}
-                  <div className={`relative max-w-[70%] ${message.sender === selectedUser.name ? "mr-auto" : "ml-auto"}`}>
-                    <div className={`p-3 rounded-2xl ${message.sender === selectedUser.name
-                      ? "bg-gray-200 text-black rounded-tl-none"
-                      : "bg-blue-500 text-white rounded-tr-none"
-                      }`}>
-                      <p className="break-words whitespace-pre-wrap">{message.text}</p>
+                  <div
+                    className={`relative max-w-[100%] sm:max-w-[90%] min-w-[40px] ${message.sender === selectedUser.name
+                        ? "mr-auto"
+                        : "ml-auto"
+                      }`}
+                  >
+                    <div
+                      className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl ${message.sender === selectedUser.name
+                          ? "bg-gray-200 text-black rounded-tl-none"
+                          : "bg-blue-500 text-white rounded-tr-none"
+                        }`}
+                    >
+                      <p className="break-words whitespace-pre-wrap text-xs sm:text-sm md:text-base">
+                        {message.text}
+                      </p>
                     </div>
-                    <span className={`text-xs mt-1 ${message.sender === selectedUser.name ? "text-gray-500 ml-2" : "text-gray-500 text-right mr-2"
-                      }`}>
+                    <span
+                      className={`text-[10px] sm:text-xs mt-0.5 sm:mt-1 block ${message.sender === selectedUser.name
+                          ? "text-gray-500 ml-1 sm:ml-2"
+                          : "text-gray-500 text-right mr-1 sm:mr-2"
+                        }`}
+                    >
                       {formatMessageTime(message.timestamp)}
                     </span>
                   </div>
@@ -381,27 +425,29 @@ const ChatContent = memo(
             {isTyping && <TypingIndicator />}
           </div>
 
-          {/* Message Input */}
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit(e);
-            }}
-            className="h-20 px-2 md:px-4 flex items-center"
+            onSubmit={handleSubmit}
+            className="h-14 sm:h-20 px-2 md:px-4 flex items-center mt-auto"
           >
-            <div className="flex flex-1 space-x-2 p-2 bg-black rounded-lg h-[80%] sm:w-1/2">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type a message..."
-                className="flex-1 p-2 rounded-lg bg-[#2c2a2aa8] text-white  focus:outline-none "
-              />
+            <div className="flex flex-1 space-x-1 sm:space-x-2 p-1 sm:p-2 bg-black rounded-lg h-[80%]">
+              <div className="flex flex-1 w-full relative">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type a message..."
+                  maxLength={500}
+                  className="w-full p-1.5 sm:p-2 rounded-lg bg-[#2c2a2aa8] text-white focus:outline-none text-xs sm:text-sm md:text-base placeholder:text-xs sm:placeholder:text-sm"
+                />
+                <span className="absolute top-0.5 sm:top-1 right-1 sm:right-2 text-[10px] sm:text-xs text-gray-400">
+                  {newMessage.length}/500
+                </span>
+              </div>
               <button
                 type="submit"
-                className={`bg-[#1b243b] p-2 rounded-lg hover:bg-blue-500 text-white flex items-center justify-center transition-colors`}
+                className="bg-[#1b243b] p-1 sm:p-2 rounded-lg hover:bg-blue-500 text-white flex items-center justify-center transition-colors"
               >
-                <Send className="w-8 h-5 text-white" />
+                <Send className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
               </button>
             </div>
           </form>

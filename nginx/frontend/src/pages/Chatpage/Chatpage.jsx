@@ -1,31 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useUser } from "../../components/auth/UserContext";
-import Logged from "../../components/Navbar/Logged";
-import Dprofile from "../../components/chat/Dprofile/Dprofile";
 import ChatContent from "../../components/chat/ChatWin/ChatContent";
 import UserList from "../../components/chat/ChatWin/UserList";
-import getFriends from "../../api/axiosGetFriends";
 import getAllMessage from "../../api/axiosGetallMessage";
 import styles from "../../components/chat/styles.module.scss";
 import { useWebSocket } from "../../chatContext/WebSocketContext";
-import InviteUI from "../../components/InviteUI/InviteUI";
-import {
-  ChevronDown,
-  Send,
-  Paperclip,
-  Clock,
-  User,
-  Gamepad2,
-  X,
-  Check,
-} from "lucide-react";
 import { useRealTime } from "../../context/RealTimeContext"
-import { first } from "lodash";
-import { axiosInstance } from "../../api/axiosInstance";
 import getUserData from "../../api/authServiceUser";
 
 const ChatApp = () => {
-  const [friendAvatars, setFriendAvatars] = useState(new Map());
   const { user, isAuthenticated } = useUser();
   const { sendMessage, registerMessageHandler, isConnected } = useWebSocket();
   const [messages, setMessages] = useState([]);
@@ -37,7 +20,6 @@ const ChatApp = () => {
   const [error, setError] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const wasAtBottomRef = useRef(false);
   const messageIdsRef = useRef(new Set());
   const lastMessageLoadingRef = useRef(new Set());
@@ -85,20 +67,39 @@ const ChatApp = () => {
       setFriendsData((prevFriends) =>
         prevFriends.map((friend) => {
           if (friend.name === friendName) {
+            const isMessageFromMe = newMessage.sender === currentUsername;
+            const isSelectedChat = friend.id === selectedChat;
+
+            const shouldIncrementUnread = !isMessageFromMe && !isSelectedChat;
+
             return {
               ...friend,
               lastMessage: newMessage.text,
               lastMessageTime: newMessage.timestamp,
-              unreadCount:
-                friend.id !== selectedChat ? (friend.unreadCount || 0) + 1 : 0,
+              lastMessageSender: newMessage.sender,
+              unreadCount: shouldIncrementUnread
+                ? (friend.unreadCount || 0) + 1
+                : friend.unreadCount || 0,
             };
           }
           return friend;
         })
       );
     },
-    [selectedChat]
+    [selectedChat, currentUsername]
   );
+
+  const handleChatSelection = useCallback((chatId) => {
+    // Reset unread count for the selected chat
+    setFriendsData((prevFriends) =>
+      prevFriends.map((friend) =>
+        friend.id === chatId ? { ...friend, unreadCount: 0 } : friend
+      )
+    );
+
+    // Update selected chat
+    setSelectedChat(chatId);
+  }, []);
 
   useEffect(() => {
     loadFriendsWithLastMessages();
@@ -133,7 +134,6 @@ const ChatApp = () => {
         newAvatarMap.set(friend, avatarUrl);
       });
 
-      setFriendAvatars(newAvatarMap);
       const friendsData = friends.map((friend, index) => {
         const cachedLastMessage = lastMessagesRef.current.get(friend);
         return {
@@ -387,8 +387,7 @@ const ChatApp = () => {
 
         setMessages((prev) => [newMsg, ...prev]);
 
-        const friendName =
-          data.sender === currentUsername ? data.receiver : data.sender;
+        const friendName = data.sender === currentUsername ? data.receiver : data.sender;
         updateFriendLastMessage(friendName, newMsg);
 
         const chatId = friendsData.find((f) => f.name === friendName)?.id;
@@ -474,40 +473,36 @@ const ChatApp = () => {
   };
 
   return (
-    <div className={`flex flex-col ${styles.nwbody}`}>
+    <>
+      <div className={`flex flex-col ${styles.nwbody}`}>
+        <div className="flex">
+          <div className={`${styles.chat_win}`}>
 
-      <div className="flex">
-        <div className={`${styles.chat_win}`}>
-          <UserList
-            friends={friendsData}
-            selectedChat={selectedChat}
-            setSelectedChat={setSelectedChat}
-            isLoading={isLoading}
-            currentUsername={currentUsername}
-          />
-          <ChatContent
-            friends={friendsData}
-            messages={messages}
-            selectedChat={selectedChat}
-            newMessage={newMessage}
-            setNewMessage={setNewMessage}
-            handleSendMessage={handleSendMessage}
-            handleSidebarToggle={handleSidebarToggle}
-            isOnline={friendsData.find((f) => f.id === selectedChat)?.online}
-            loadMoreMessages={loadMoreMessages}
-            hasMore={hasMore}
-            isLoading={isLoading}
-            isLoadingMore={isLoadingMore}
-          />
+            <UserList
+              friends={friendsData}
+              selectedChat={selectedChat}
+              setSelectedChat={handleChatSelection}
+              isLoading={isLoading}
+              currentUsername={currentUsername}
+            />
+            <ChatContent
+              friends={friendsData}
+              messages={messages}
+              selectedChat={selectedChat}
+              newMessage={newMessage}
+              setNewMessage={setNewMessage}
+              handleSendMessage={handleSendMessage}
+              handleSidebarToggle={handleSidebarToggle}
+              isOnline={friendsData.find((f) => f.id === selectedChat)?.online}
+              loadMoreMessages={loadMoreMessages}
+              hasMore={hasMore}
+              isLoading={isLoading}
+              isLoadingMore={isLoadingMore}
+            />
+          </div>
         </div>
-        {activeSidebar && (
-          <Dprofile
-            selectedUser={friendsData.find((user) => user.id === selectedChat)}
-            onClose={() => setActiveSidebar(null)}
-          />
-        )}
       </div>
-    </div>
+    </>
   );
 };
 
