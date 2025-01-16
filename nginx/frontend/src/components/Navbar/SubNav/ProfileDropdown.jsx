@@ -30,25 +30,7 @@ const ProfileDropdown = React.forwardRef(({isVisible}, ref) => {
         onClick={() => handleNavigation("/profile")}
         className="block px-4 py-2 hover:bg-pink-500 hover:text-gray-900"
       >
-        View Profile
-      </a>
-      <a
-        onClick={() => handleNavigation("/Friends")}
-        className="block px-4 py-2 hover:bg-pink-500 hover:text-gray-900"
-      >
-        Friends
-      </a>
-      <a
-        onClick={() => handleNavigation("/History")}
-        className="block px-4 py-2 hover:bg-pink-500 hover:text-gray-900"
-      >
-        History
-      </a>
-      <a
-        onClick={() => handleNavigation("/Dashboards")}
-        className="block px-4 py-2 hover:bg-pink-500 hover:text-gray-900"
-      >
-        Dashboards
+        My Profile
       </a>
       <a
         onClick={() => handleNavigation("/Settings")}

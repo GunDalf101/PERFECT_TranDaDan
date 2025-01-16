@@ -35,7 +35,7 @@ const Sidebar = React.forwardRef(({ isVisible }, ref) => {
               onClick={() => navigate("#")}
               className="w-full text-left"
             >
-              Leaderboards & Statistics
+              Leaderboards
             </button>
           </li>
           <li className="py-3 px-4 hover:bg-pink-500 hover:text-gray-900 rounded-md transition duration-300">
@@ -44,14 +44,6 @@ const Sidebar = React.forwardRef(({ isVisible }, ref) => {
               className="w-full text-left"
             >
               Live Chat
-            </button>
-          </li>
-          <li className="py-3 px-4 hover:bg-pink-500 hover:text-gray-900 rounded-md transition duration-300">
-            <button
-              onClick={() => navigate("/Settings")}
-              className="w-full text-left"
-            >
-              Settings & Security
             </button>
           </li>
         </ul>
