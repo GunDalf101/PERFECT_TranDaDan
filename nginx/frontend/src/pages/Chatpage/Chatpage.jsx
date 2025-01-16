@@ -14,7 +14,6 @@ const ChatApp = () => {
   const [messages, setMessages] = useState([]);
   const [friendsData, setFriendsData] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
-  const [activeSidebar, setActiveSidebar] = useState(null);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,7 +26,6 @@ const ChatApp = () => {
   const messageCacheRef = useRef(new Map());
   const lastMessagesRef = useRef(new Map());
   const { friends } = useRealTime()
-  const scrollPositionRef = useRef(null);
 
   const currentUsername = user ? JSON.parse(user).username : null;
 
@@ -90,14 +88,11 @@ const ChatApp = () => {
   );
 
   const handleChatSelection = useCallback((chatId) => {
-    // Reset unread count for the selected chat
     setFriendsData((prevFriends) =>
       prevFriends.map((friend) =>
         friend.id === chatId ? { ...friend, unreadCount: 0 } : friend
       )
     );
-
-    // Update selected chat
     setSelectedChat(chatId);
   }, []);
 
@@ -245,14 +240,12 @@ const ChatApp = () => {
         pageTrackingRef.current.get(selectedChat) || new Set([1]);
       const nextPage = Math.max(...Array.from(loadedPages)) + 1;
 
-      // Check if we have any messages at all
       const currentMessages = messageCacheRef.current.get(selectedChat);
       if (!currentMessages || currentMessages.length === 0) {
         setHasMore(false);
         return;
       }
 
-      // Check if we've reached the end
       if ((nextPage - 1) * 50 > currentMessages.length) {
         setHasMore(false);
         return;

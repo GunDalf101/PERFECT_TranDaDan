@@ -39,7 +39,6 @@ export const WebSocketProvider = ({ children }) => {
       const ws = new WebSocket(`${WEBSOCKET_URL}/?token=${token}`);
 
       ws.onopen = () => {
-        console.log("WebSocket Connected");
         setIsConnected(true);
         reconnectAttemptsRef.current = 0;
       };
@@ -54,7 +53,6 @@ export const WebSocketProvider = ({ children }) => {
       };
 
       ws.onclose = (event) => {
-        console.log("WebSocket Disconnected", event.code);
         setIsConnected(false);
 
         if (!event.wasClean && reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
@@ -72,7 +70,6 @@ export const WebSocketProvider = ({ children }) => {
 
       wsRef.current = ws;
     } catch (error) {
-      // console.error("Error creating WebSocket:", error);
       setIsConnected(false);
     }
   }, []);
