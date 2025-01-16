@@ -1,30 +1,24 @@
-import React, { useEffect } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import styles from "../styles.module.scss";
-import ChatContent from "./ChatContent";
-import UserList from "./UserList";
 import { useInvite } from "../../../chatContext/InviteContext";
 import { useRealTime } from "../../../context/RealTimeContext";
 import { blockUser } from "../../../api/blockService";
 import { myToast } from "../../../lib/utils1";
 
 import {
-    ChevronDown,
-    Paperclip,
-    Clock,
     User,
     Gamepad2,
     X,
-    Check,
+    Trophy,
 } from "lucide-react";
-// import { useRealTime } from "../../../context/RealTimeContext";
 
 const FriendProfile = ({
     selectedUser,
 }) => {
 
     const navigate = useNavigate();
-    const {sendInvite} = useInvite();
+    const {sendInvite, sendTournamentJoinRequest} = useInvite();
     
     const { sendRelationshipUpdate} = useRealTime();
     const handleBlockUser = async () => {
@@ -39,14 +33,12 @@ const FriendProfile = ({
     };
     
     return (
-        // <div className={`${styles.chat_profile}`}>
         <div className={`${styles.chat_profile}`}>
             <div className="flex flex-col items-center mb-4 border border-blue-300 rounded-lg p-4 bg-[#1b243bae]">
             <div className="size-40 lg:max-xl:size-28  rounded-full overflow-hidden bg-gray-300 flex items-center justify-center">
                 <img
                     src={selectedUser.avatar || "/default_profile.webp"}
                     alt="Profile"
-                    // className="rounded-full object-cover mb-2 size-[70%]"
                     className="w-full h-full object-cover rounded-full"
                 />
             </div>
@@ -84,6 +76,20 @@ const FriendProfile = ({
                             </div>
                         </div>
                     </button>
+                    <button 
+                    onClick={() => { sendTournamentJoinRequest(selectedUser.name)}}
+                    className="bg-purple-400 bg-opacity-20 rounded-lg hover:bg-purple-400 hover:bg-opacity-50 transition-all duration-200">
+                        <div className="flex items-center p-3 justify-start lg:max-2xl:justify-center">
+                            <div className="flex items-center">
+                                <div className="bg-purple-500 bg-opacity-20 p-2 rounded-full ">
+                                    <Trophy size={16} />
+                                </div>
+                                <div className="ml-2 lg:max-2xl:hidden">
+                                    <div className="text-xs sm:text-sm lg:text-base text-gray-300">Tournament</div>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
 
                     <button onClick={handleBlockUser} className="bg-red-400 bg-opacity-20 rounded-lg hover:bg-red-400 hover:bg-opacity-50 transition-all duration-200">
                         <div className="flex items-center p-3 justify-start lg:max-2xl:justify-center  ">
@@ -100,7 +106,6 @@ const FriendProfile = ({
                 </div>
             </div>
         </div>
-        //   </div>
     );
 };
 

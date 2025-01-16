@@ -73,8 +73,8 @@ const UserList = ({
 
   const getMessagePreview = (message, sender) => {
     if (!message) return "No messages yet";
-    if (sender === currentUsername) return `You: ${message}`
-    return `him: ${message}`;
+    if (sender === currentUsername) return `You: ${message}`;
+    return message
   };
 
 

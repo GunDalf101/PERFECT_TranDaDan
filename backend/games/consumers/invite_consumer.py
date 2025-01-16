@@ -42,6 +42,37 @@ class InviteConsumer(AsyncJsonWebsocketConsumer):
             await self.handle_accept_invite(content)
         elif msg_type == 'decline_invite':
             await self.handle_decline_invite(content)
+        elif msg_type == 'tournament_request':
+            await self.handle_tournament_request(content)
+
+    async def handle_tournament_request(self, content):
+        target_username = content.get('target_username')
+                
+        target_connection = InviteConsumer.active_connections.get(target_username)
+            
+        tournament_data = {
+            'type': 'tournament_request',
+            'from_username': self.username,
+            'timestamp': time.time()
+        }
+            
+        if target_connection:
+            await target_connection.send_json(tournament_data)
+            await self.send_json({
+                'type': 'tournament_request_sent',
+               'target_username': target_username
+            })
+        else:
+            if target_username not in InviteConsumer.pending_invites:
+                InviteConsumer.pending_invites[target_username] = []
+            InviteConsumer.pending_invites[target_username].append(tournament_data)
+                
+            await self.send_json({
+                'type': 'tournament_request_pending',
+                'message': f'User {target_username} is offline. Request will be delivered when they connect.',
+                'target_username': target_username
+            })
+    
 
     async def handle_send_invite(self, content):
         print(content)

@@ -2,7 +2,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '../components/auth/UserContext';
 import PropTypes from 'prop-types';
-import { env } from '../config/env';
 
 const WEBSOCKET_URL = `${location.origin.replace(/^https/, 'wss')}/ws/chat`;
 const MAX_RECONNECT_ATTEMPTS = 3;

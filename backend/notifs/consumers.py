@@ -93,7 +93,7 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
             'msgtype': 'notification',
             'notifications': notifications
         })
-
+    
     async def send_friends_list(self):
         friends = await self.get_user_friends(self.user)
         friends = list(map(lambda friend: friend.username, friends))
