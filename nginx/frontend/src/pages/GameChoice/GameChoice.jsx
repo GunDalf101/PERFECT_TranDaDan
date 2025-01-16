@@ -4,10 +4,13 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import gsap from 'gsap'
 import { GLTFLoader } from 'three/examples/jsm/Addons.js'
 import { Link } from 'react-router-dom'
+import './GameChoice.scss'
+
 
 
 const GameChoice = () => {
     useEffect(() => {
+        let audioContext;
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
         scene.background = null
@@ -231,38 +234,43 @@ const GameChoice = () => {
             updateModelPositions();
         });
 
-        let audioContext;
 
         function setupEventListeners() {
             const pongSection = document.getElementById('pong-container');
             const invadersSection = document.getElementById('invaders-container');
             const title = document.getElementById('dynamic-title');
-
+        
+            function initializeAudioContext() {
+                if (!audioContext) {
+                    audioContext = new AudioContext(); // Create it only after a user gesture.
+                }
+            }
+        
             pongSection.addEventListener('mouseenter', () => {
+                initializeAudioContext();
                 playSound(440);
                 title.textContent = 'PONG';
             });
-
+        
             invadersSection.addEventListener('mouseenter', () => {
+                initializeAudioContext();
                 playSound(523.25);
                 title.textContent = 'SPACE RIVALRY';
             });
         }
 
         function playSound(frequency) {
-            if (!audioContext) {
-                audioContext = new AudioContext();
-            }
-
+            if (!audioContext) return; // Ensure the AudioContext exists.
+        
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
-
+        
             oscillator.frequency.value = frequency;
             oscillator.type = 'sine';
-
+        
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
-
+        
             oscillator.start();
             gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.5);
             oscillator.stop(audioContext.currentTime + 0.5);

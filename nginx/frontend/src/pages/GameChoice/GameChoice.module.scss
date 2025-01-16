@@ -1,6 +1,8 @@
+/* Global imports */
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
 
+/* Background styles */
 .retroBackground {
     position: fixed;
     z-index: -1;
@@ -11,8 +13,6 @@
     background: radial-gradient(circle, rgba(0, 0, 50, 1) 0%, rgba(0, 0, 0, 1) 100%);
 }
 
-
-
 .stars {
     position: absolute;
     width: 100%;
@@ -21,6 +21,7 @@
     pointer-events: none;
 }
 
+/* Game preview effects */
 .gamePreview {
     position: relative;
     overflow: hidden;
@@ -45,6 +46,7 @@
     animation: shine 3s infinite;
 }
 
+/* Glitch overlay */
 .glitchOverlay {
     position: absolute;
     top: 0;
@@ -62,6 +64,7 @@
     animation: glitchEffect 1s infinite;
 }
 
+/* Scanline effect */
 .scanline {
     position: relative;
     top: 0;
@@ -72,6 +75,7 @@
     animation: scan 2s linear infinite;
 }
 
+/* Star effect */
 .star {
     width: 2px;
     height: 2px;
@@ -80,6 +84,7 @@
     animation: twinkle 5s infinite ease-in-out;
 }
 
+/* Title styles */
 .dynamicTitle {
     position: absolute;
     top: 20px;
@@ -91,6 +96,7 @@
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
+/* Canvas container */
 .canvasContainer {
     position: fixed;
     top: 0;
@@ -104,6 +110,7 @@
     background: transparent;
 }
 
+/* Game option styles */
 .gameOption {
     position: absolute;
     background: rgba(10, 10, 25, 0.9);
@@ -162,6 +169,7 @@
     animation-duration: 2s;
 }
 
+/* Game area and container styles */
 .gameArea {
     position: relative;
     width: 100%;
@@ -199,6 +207,7 @@
     letter-spacing: 2px;
 }
 
+/* Animations */
 @keyframes shine {
     0% { left: -100%; }
     20% { left: 100%; }
@@ -242,6 +251,7 @@
     }
 }
 
+/* Media Queries */
 @media (max-width: 1200px) {
     .gameContainer {
         margin: 0 4rem;

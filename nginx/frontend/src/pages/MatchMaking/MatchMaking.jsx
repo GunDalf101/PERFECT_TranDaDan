@@ -56,7 +56,6 @@ const MatchMaking = ({ gameType = "pong" }) => {
         setUsername(data.username);
         setIsDataReady(true);
         setAvatar(data.avatar_url);
-        console.log("Fetched user data:", userDataRef.current);
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -101,14 +100,12 @@ const MatchMaking = ({ gameType = "pong" }) => {
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log("Message received:", data);
 
       if (data.status === "matched") {
         setMatchFound(true);
         fetchOpponentData(data.opponent);
         setIsSearching(false);
 
-        console.log("Match found:", data);
         const gameSession = {
           gameId: data.game_id,
           username: username,
@@ -140,7 +137,6 @@ const MatchMaking = ({ gameType = "pong" }) => {
     };
 
     ws.onclose = (event) => {
-      console.log(event);
       if (event.code === 4001) {
         alert("Connection failed: You are already in a game.");
       }

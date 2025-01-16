@@ -123,7 +123,6 @@ const CpuMode = () => {
 
                 scene.add(model);
 
-                // Create CPU paddle
                 paddleCPURef.current = new GameObject(model.clone());
                 paddleCPURef.current.mesh.position.z = -10;
                 scene.add(paddleCPURef.current.mesh);
@@ -133,9 +132,7 @@ const CpuMode = () => {
         let tableObject;
         let netObject;
 
-        // Create table and net
         const createTableAndNet = () => {
-            // Net
             const net = new THREE.Mesh(
                 new THREE.BoxGeometry(1, 1, 1),
                 new THREE.MeshStandardMaterial({
@@ -154,7 +151,6 @@ const CpuMode = () => {
 
             scene.add(net);
 
-            // Table
             const table = new THREE.Mesh(
                 new THREE.BoxGeometry(1, 1, 1),
                 new THREE.MeshStandardMaterial({
@@ -175,32 +171,24 @@ const CpuMode = () => {
             return { netObject, tableObject };
         };
 
-        // Physics simulation
         const simulatePhysics = (deltaTime) => {
             gameObjectsRef.current.forEach(obj => {
-                // Apply gravity
-                console.log(i);
-                i++;
                 obj.velocity.y += -9.82 * deltaTime;
 
-                // Update positions
                 obj.position.x += obj.velocity.x * deltaTime;
                 obj.position.y += obj.velocity.y * deltaTime;
                 obj.position.z += obj.velocity.z * deltaTime;
 
-                // Ground collision
                 if (obj.position.y < 0.5) {
                     obj.velocity.y *= -0.5;
                     obj.position.y = 0.5;
                 }
 
-                // Update mesh position
                 obj.mesh.position.copy(obj.position);
             });
         };
 
         
-        // Collision detection
         const collisionTimestamps = new Map();
         const collisionDelay = 100;
         
@@ -221,13 +209,11 @@ const CpuMode = () => {
             return false;
         };
         
-        // Add this after the collision detection functions and before the animation loop
         const checkCollisions = () => {
             if (!paddleRef.current || gameObjectsRef.current.length === 0 || !paddleCPURef.current) return;
             
             const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
             
-            // Paddle collision
             if (twoObjCollide(paddleRef.current, ball) && lastHitAI) {
                 lastHitAI = false;
                 ballSound.volume = Math.min(1, 1);
@@ -252,13 +238,11 @@ const CpuMode = () => {
                 ball.applyImpulse(new THREE.Vector3(forceX, forceY, -forceZ));
             }
             
-            // CPU paddle collision
             else if (twoObjCollide(paddleCPURef.current, ball) && !lastHitAI) {
                 lastHitAI = true;
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
                 ballSound.play();
-                // advancedAISystem.onHit();
                 
                 const paddleBox = new THREE.Box3().setFromObject(paddleCPURef.current.mesh);
                 const ballWidth = ball.position.x - paddleBox.min.x;
@@ -275,19 +259,13 @@ const CpuMode = () => {
                 
                 ball.velocity = new THREE.Vector3(0, 0, 0);
                 ball.applyImpulse(new THREE.Vector3(forceX, forceY, 16));
-            }
-            
-            // Table collision
+            }  
             else if (twoObjCollide(tableObject, ball)) {
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
                 ballSound.play();
                 
                 ball.velocity.y = -ball.velocity.y;
-
-                // if (ball.position.z < 0 && aiSideBounces === 1) {
-                //     advancedAISystem.onMiss();
-                // }
                 
                 if (ball.position.z < 0) {
                     aiSideBounces++;
@@ -306,7 +284,6 @@ const CpuMode = () => {
                 }
             }
 
-            // Net collision
             else if (twoObjCollide(netObject, ball)) {
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
@@ -319,7 +296,6 @@ const CpuMode = () => {
             }
         };
 
-        // Game logic functions
         const resetBall = (direction = 1) => {
             gameObjectsRef.current.forEach(obj => scene.remove(obj.mesh));
             gameObjectsRef.current = [];
@@ -366,7 +342,6 @@ const CpuMode = () => {
             
             const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
             const tableBounds = new THREE.Box3().setFromObject(tableObject.mesh);
-            console.log(tableBounds)
             
             if (ball.position.z > tableBounds.max.z + 3 && playerSideBounces === 1) {
                 aiScore++;
@@ -389,7 +364,6 @@ const CpuMode = () => {
             winCheck();
         };
         
-        // Event handlers
         const handleMouseMove = (event) => {
             mouseCurrent = {
                 x: (event.clientX / window.innerWidth) * 2 - 1,
@@ -404,7 +378,6 @@ const CpuMode = () => {
             }
         };
         
-        // Lighting setup
         const setupLighting = () => {
             const ambientLight = new THREE.AmbientLight(0xffffff, 2.1);
             scene.add(ambientLight);
@@ -421,7 +394,6 @@ const CpuMode = () => {
             scene.add(directionalLight);
         };
         
-        // Window resize handler
         const handleResize = () => {
             const width = window.innerWidth;
             const height = window.innerHeight;
@@ -489,7 +461,6 @@ const CpuMode = () => {
                         });
                     }
                     
-                    // CPU paddle rotation
                     if (paddleCPURef.current?.mesh.position.x > 0) {
                         gsap.to(paddleCPURef.current.mesh.rotation, {
                             x: -2.81,
@@ -543,7 +514,6 @@ const CpuMode = () => {
             }
         };
         
-        // Initialize scene
         const init = () => {
             setupLighting();
             const { netObject, tableObject } = createTableAndNet();
