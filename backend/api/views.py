@@ -635,8 +635,8 @@ class UsersMeAvatarView(APIView):
             image_data = base64.b64decode(base64_data)
             file_path = default_storage.save(filename, ContentFile(image_data))
             file_url = default_storage.url(file_path)
-            if settings.DEBUG:
-                file_url = f"{os.getenv('BACKEND_URL')}{default_storage.url(file_path)}"
+            # if settings.DEBUG:
+            #     file_url = f"{os.getenv('BACKEND_URL')}{default_storage.url(file_path)}"
             request.user.avatar_url = file_url
             request.user.save()
             return Response({'url': file_url}, status=status.HTTP_200_OK)
