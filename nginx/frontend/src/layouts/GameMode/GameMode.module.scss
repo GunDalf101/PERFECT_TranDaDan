@@ -11,7 +11,13 @@
     background: radial-gradient(circle, rgba(0, 0, 50, 1) 0%, rgba(0, 0, 0, 1) 100%);
 }
 
-
+.outletContainer {
+    position: relative;
+    margin-top: auto;
+    z-index: 0;
+    overflow-y: auto;
+    height: 100%;
+  }
 
 .stars {
     position: absolute;

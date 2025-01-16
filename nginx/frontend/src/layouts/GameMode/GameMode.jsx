@@ -64,7 +64,9 @@ const GameMode = () => {
           />
         ))}
       </div>
-      <Outlet />
+      <div className={styles.outletContainer}>
+        <Outlet />
+      </div>
       <div className="game-preview" />
       <div className={styles.glitchOverlay}>
         {scanlines}
