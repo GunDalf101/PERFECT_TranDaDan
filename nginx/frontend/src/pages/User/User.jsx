@@ -42,10 +42,6 @@ const User = () => {
   const { username } = useParams();
 
   useEffect(() => {
-    console.log(friends);
-  }, [friends]);
-
-  useEffect(() => {
     setReload(!reload);
   }, [relationshipUpdate, username, onlineFriends]);
 

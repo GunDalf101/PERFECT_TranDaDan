@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import Loading from "../../components/Loading/Loading";
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { useRealTime } from "../../context/RealTimeContext";
 
 // Register necessary components
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -39,6 +40,7 @@ const Profile = () => {
     pong: [],
     space: []
   });
+  const {friends} = useRealTime();
 
   useEffect(() => {
     // Fetch user data
@@ -55,7 +57,7 @@ const Profile = () => {
     };
 
     fetchUserData();
-  }, []);
+  }, [friends]);
 
   const statistics = {
     totalMatches: 10,

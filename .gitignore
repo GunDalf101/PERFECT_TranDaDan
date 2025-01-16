@@ -11,4 +11,3 @@ v
 *.pyc
 node_modules/
 backend/media/*
-.vscode/
