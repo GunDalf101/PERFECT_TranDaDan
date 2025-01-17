@@ -22,7 +22,7 @@ class ClassicPongConsumer(AsyncWebsocketConsumer):
     PADDLE_WIDTH = 15
     PADDLE_HEIGHT = 80
     BALL_SIZE = 10
-    PADDLE_SPEED = 8
+    PADDLE_SPEED = 11
     INITIAL_BALL_SPEED = 7
     MAX_BALL_SPEED = 15
     BALL_SPEEDUP = 0.2

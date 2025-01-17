@@ -42,14 +42,10 @@ const User = () => {
   const { sendRelationshipUpdate, relationshipUpdate, onlineFriends, friends } = useRealTime();
   const { username } = useParams();
   const [dash, setDash] = useState();
-
-  useEffect(() => {
-    console.log(friends);
-  }, [friends]);
-
+  
   useEffect(() => {
     setReload(!reload);
-  }, [relationshipUpdate, username, onlineFriends]);
+  }, [relationshipUpdate, username, onlineFriends, friends]);
 
   // Fetch user data and friend request status
   useEffect(() => {

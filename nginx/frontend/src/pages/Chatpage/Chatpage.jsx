@@ -208,7 +208,6 @@ const ChatApp = () => {
           Math.abs(
             chatBody.scrollHeight - chatBody.scrollTop - chatBody.clientHeight
           ) < 10;
-        console.log(isAtBottom);
         wasAtBottomRef.current = isAtBottom;
         scrollPositionRef.current = 0;
       }

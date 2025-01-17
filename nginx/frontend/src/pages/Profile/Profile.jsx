@@ -26,7 +26,6 @@ const Profile = () => {
         const dash_data = await getDash(data.id);
         setDash(dash_data);
         setMymatches(matches);
-        console.log(dash_data)
       } catch (error) {
         console.error("Error fetching user data:", error);
       }

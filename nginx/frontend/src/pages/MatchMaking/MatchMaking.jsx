@@ -94,7 +94,6 @@ const MatchMaking = ({ gameType = "pong" }) => {
     const ws = new WebSocket(`${location.origin.replace(/^https/, 'wss')}/ws/matchmaking/?token=${localStorage.getItem('access_token')}`);
 
     ws.onopen = () => {
-      console.log("WebSocket connected");
       ws.send(JSON.stringify({ type: "find_match", game_type: receivedGameType }));
     };
 
@@ -132,7 +131,6 @@ const MatchMaking = ({ gameType = "pong" }) => {
           }
         }, 3000);
       } else if (data.status === "searching") {
-        console.log("Searching for a match...");
       }
     };
 
@@ -141,7 +139,6 @@ const MatchMaking = ({ gameType = "pong" }) => {
         alert("Connection failed: You are already in a game.");
       }
       if (!matchFound) {
-        console.log("WebSocket disconnected");
         setIsSearching(false);
       }
     };
@@ -162,7 +159,6 @@ const MatchMaking = ({ gameType = "pong" }) => {
 
   const handleLeaveQueue = () => {
     if (socket && socket.readyState === WebSocket.OPEN) {
-      console.log("Leaving queue");
       socket.send(JSON.stringify({ type: "cancel_match" }));
       setIsSearching(false);
       socket.close();

@@ -88,6 +88,7 @@ const LocalMode = () => {
 
         const controls = new OrbitControls(camera, canvasRef.current);
         controls.enableDamping = true;
+        controls.enablePan = false;
 
         class GameObject {
             static id = 0;

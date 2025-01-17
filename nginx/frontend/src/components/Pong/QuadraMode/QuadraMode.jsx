@@ -106,6 +106,7 @@ const QuadraMode = () => {
 
         const controls = new OrbitControls(cameraP1, canvasRef.current);
         controls.enableDamping = true;
+        controls.enablePan = false;
 
         class GameObject {
             static id = 0;

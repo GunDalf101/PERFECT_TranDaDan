@@ -98,7 +98,6 @@ const RemoteMode = () => {
             websocketRef.current = ws;
 
             websocketRef.current.onopen = () => {
-                console.log('WebSocket connection opened');
                 setConnectionState(prev => ({
                     ...prev,
                     status: 'connected',
@@ -126,7 +125,6 @@ const RemoteMode = () => {
             };
 
             websocketRef.current.onclose = (event) => {
-                console.log('WebSocket connection closed', event);
                 setConnectionState(prev => ({
                     ...prev,
                     status: 'disconnected'
@@ -320,6 +318,7 @@ const RemoteMode = () => {
 
         const controls = new OrbitControls(camera, canvasRef.current);
         controls.enableDamping = true;
+        controls.enablePan = false;
 
         class GameObject {
             static id = 0;

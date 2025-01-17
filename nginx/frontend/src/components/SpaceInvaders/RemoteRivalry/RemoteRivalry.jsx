@@ -88,7 +88,6 @@ const RemoteRivalry = () => {
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log('Connected to game server');
       setConnectionStatus('connected');
       setErrorMessage('');
       reconnectAttempts.current = 0;
@@ -104,14 +103,6 @@ const RemoteRivalry = () => {
 
     ws.onclose = (event) => {
       if (cleanupRef.current) return;
-      console.log('WebSocket closed:', {
-        timestamp: new Date().toISOString(),
-        wasClean: event.wasClean,
-        code: event.code,
-        reason: event.reason,
-        intentionalClose: ws.intentionalClose
-      });
-
       setConnectionStatus('disconnected');
 
       if (!cleanupRef.current && !ws.intentionalClose && gameState?.gameOver !== true && !isReconnecting.current) {

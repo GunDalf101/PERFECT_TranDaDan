@@ -111,7 +111,6 @@ export const InviteProvider = ({ children }) => {
     }
 
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      console.log("WebSocket already connected");
       return;
     }
 
@@ -123,7 +122,6 @@ export const InviteProvider = ({ children }) => {
       const ws = new WebSocket(`${WEBSOCKET_URL}/?token=${localStorage.getItem('access_token')}`);
 
       ws.onopen = () => {
-        console.log("WebSocket Connected");
         reconnectAttemptsRef.current = 0;
         // setNotification({
         //   type: 'success',
@@ -145,7 +143,6 @@ export const InviteProvider = ({ children }) => {
       };
 
       ws.onclose = (event) => {
-        console.log("WebSocket Disconnected", event.code);
 
         if (!event.wasClean &&
           reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS &&
