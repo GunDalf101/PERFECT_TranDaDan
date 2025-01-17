@@ -58,7 +58,7 @@ export const RealTimeProvider = ({ children }) => {
 
         socket.onmessage = (event) => {
           const data = JSON.parse(event.data);
-          if (data.msgtype === 'notification' || data.msgtype === 'tournament_request_sent') {
+          if (data.msgtype === 'notification') {
             setNotifications(notifications => data.notifications.concat(notifications));
           }
           else if (data.msgtype === 'friends') {
