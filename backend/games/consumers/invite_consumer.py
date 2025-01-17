@@ -27,10 +27,10 @@ class InviteConsumer(AsyncJsonWebsocketConsumer):
             await self.send_json(invite)
 
     async def disconnect(self, code):
-        if self.username in InviteConsumer.active_connections:
+        if hasattr(self, 'username') and  self.username in InviteConsumer.active_connections:
             del InviteConsumer.active_connections[self.username]
 
-        if self.username in InviteConsumer.pending_invites:
+        if hasattr(self, 'username') and self.username in InviteConsumer.pending_invites:
             del InviteConsumer.pending_invites[self.username]
 
     async def receive_json(self, content):

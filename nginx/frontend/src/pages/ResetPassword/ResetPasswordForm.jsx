@@ -108,6 +108,7 @@ const ResetPasswordForm = () => {
                                 placeholder="New Password"
                                 value={formData.password}
                                 onChange={handleChange}
+                                autoComplete="off"
                                 className={`w-full px-8 py-4 rounded-lg font-medium bg-gray-800 border ${errors.password ? "border-red-500" : "border-gray-600"
                                     } placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-gray-900 text-white`}
                             />
@@ -123,6 +124,7 @@ const ResetPasswordForm = () => {
                                 placeholder="Confirm New Password"
                                 value={formData.password_confirmation}
                                 onChange={handleChange}
+                                autoComplete="off"
                                 className={`w-full px-8 py-4 rounded-lg font-medium bg-gray-800 border ${errors.password_confirmation ? "border-red-500" : "border-gray-600"
                                     } placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-gray-900 text-white`}
                             />
