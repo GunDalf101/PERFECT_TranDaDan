@@ -522,12 +522,14 @@ const RemoteMode = () => {
                 // ballSound.play();
 
                 ball.velocity.y = -ball.velocity.y;
+                let scoringPlayer = null;
 
                 if (ball.position.z < 0) {
                     aiSideBounces++;
                     if (aiSideBounces === 2) {
                         playerScore++;
                         scoreUpdate = true;
+                        scoringPlayer = 'player1';
                         resetBall(-1);
                     }
                 } else if (ball.position.z > 0) {
@@ -535,6 +537,7 @@ const RemoteMode = () => {
                     if (playerSideBounces === 2) {
                         aiScore++;
                         scoreUpdate = true;
+                        scoringPlayer = 'player2';
                         resetBall(1);
                     }
                 }

@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react'
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import gsap from 'gsap'
 import { GLTFLoader } from 'three/examples/jsm/Addons.js'
 import { Link } from 'react-router-dom'
@@ -73,8 +72,6 @@ const GameChoice = () => {
                     width: invadersContainerPosition.width,
                     height: invadersContainerPosition.height
                 };
-
-                const controls = new OrbitControls(camera, renderer.domElement);
 
                 pongModelIn.scale.set(30, 30, 30);
                 invadersModelIn.scale.set(3, 3, 3);
