@@ -518,6 +518,8 @@ const RemoteMode = () => {
             else if (twoObjCollide(tableObject, ball)) {
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
+
+                let scoreUpdate = false;
                 // ballSound.play();
 
                 ball.velocity.y = -ball.velocity.y;
@@ -526,16 +528,29 @@ const RemoteMode = () => {
                     aiSideBounces++;
                     if (aiSideBounces === 2) {
                         playerScore++;
-                        updateScore();
+                        scoreUpdate = true;
                         resetBall(-1);
                     }
                 } else if (ball.position.z > 0) {
                     playerSideBounces++;
                     if (playerSideBounces === 2) {
                         aiScore++;
-                        updateScore();
+                        scoreUpdate = true;
                         resetBall(1);
                     }
+                }
+
+                if (scoreUpdate && websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
+                    websocketRef.current.send(JSON.stringify({
+                        type: 'score_update',
+                        scores: {
+                            player1: playerScore,
+                            player2: aiScore
+                        },
+                        scoringPlayer: scoringPlayer,
+                        playerGamesWon: playerGamesWon,
+                        aiGamesWon: aiGamesWon
+                    }));
                 }
             } else if (twoObjCollide(netObject, ball)) {
                 ballSound.volume = Math.min(1, 1);
@@ -581,11 +596,6 @@ const RemoteMode = () => {
             aiSideBounces = 0;
         };
 
-        const updateScore = () => {
-            // setScores({ player1: playerScore, player2: aiScore });
-            // setMatches({ player1: playerGamesWon, player2: aiGamesWon });
-        };
-
         const winCheck = () => {
             if (playerScore >= maxScore || aiScore >= maxScore) {
                 if (Math.abs(playerScore - aiScore) >= 2) {
@@ -629,8 +639,6 @@ const RemoteMode = () => {
                         playerGamesWon = 0;
                         aiGamesWon = 0;
                     }
-
-                    updateScore();
                 }
             }
         };
@@ -648,25 +656,21 @@ const RemoteMode = () => {
                 aiScore++;
                 scoreUpdate = true;
                 scoringPlayer = 'player2';
-                updateScore();
                 resetBall(-1);
             } else if (ball.position.z < tableBounds.min.z - 3 && aiSideBounces === 1) {
                 playerScore++;
                 scoreUpdate = true;
                 scoringPlayer = 'player1';
-                updateScore();
                 resetBall(1);
             } else if (ball.position.z > tableBounds.max.z + 3 && playerSideBounces === 0) {
                 playerScore++;
                 scoreUpdate = true;
                 scoringPlayer = 'player1';
-                updateScore();
                 resetBall(1);
             } else if (ball.position.z < tableBounds.min.z - 3 && aiSideBounces === 0) {
                 aiScore++;
                 scoreUpdate = true;
                 scoringPlayer = 'player2';
-                updateScore();
                 resetBall(-1);
             }
 
