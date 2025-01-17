@@ -126,7 +126,7 @@ const ResetPasswordForm = () => {
                                 className={`w-full px-8 py-4 rounded-lg font-medium bg-gray-800 border ${errors.password_confirmation ? "border-red-500" : "border-gray-600"
                                     } placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-gray-900 text-white`}
                             />
-                            {errors.confirmPassword && (
+                            {errors.password_confirmation && (
                                 <p className="mt-1 text-sm text-red-500">{errors.password_confirmation}</p>
                             )}
                         </div>
