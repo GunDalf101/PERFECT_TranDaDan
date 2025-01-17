@@ -33,7 +33,7 @@ const ProfileDropdown = React.forwardRef(({isVisible}, ref) => {
         My Profile
       </a>
       <a
-        onClick={() => handleNavigation("/Settings")}
+        onClick={() => handleNavigation("/profile/edit")}
         className="block px-4 py-2 hover:bg-pink-500 hover:text-gray-900"
       >
         Settings
