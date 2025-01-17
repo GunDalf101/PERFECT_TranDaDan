@@ -16,12 +16,12 @@ import {
 
 const FriendProfile = ({
     selectedUser,
+    handleTournamentRequest,
 }) => {
 
     const navigate = useNavigate();
     const { sendInvite } = useInvite();
-    const [tournamentCooldowns, setTournamentCooldowns] = useState({});
-    const { sendRelationshipUpdate, sendTournamentRequest} = useRealTime();
+    const { sendRelationshipUpdate} = useRealTime();
     const handleBlockUser = async () => {
         try {
             await blockUser(selectedUser.name);
@@ -33,25 +33,6 @@ const FriendProfile = ({
         }
     };
 
-    const handleTournamentRequest = () => {
-        const now = Date.now();
-        const lastRequestTime = tournamentCooldowns[selectedUser.name] || 0;
-        const cooldownPeriod = 30000;
-
-        if (now - lastRequestTime < cooldownPeriod) {
-            const remainingSeconds = Math.ceil((cooldownPeriod - (now - lastRequestTime)) / 1000);
-            myToast(2, `Please wait ${remainingSeconds} seconds before sending another tournament request`);
-            return;
-        }
-
-        setTournamentCooldowns(prev => ({
-            ...prev,
-            [selectedUser.name]: now
-        }));
-
-        sendTournamentRequest(selectedUser.name);
-        myToast(0, `Tournament request sent to ${selectedUser.name}`);
-    };
 
     return (
         <div className={`${styles.chat_profile}`}>

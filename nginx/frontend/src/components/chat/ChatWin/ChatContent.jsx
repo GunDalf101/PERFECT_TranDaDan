@@ -6,7 +6,7 @@ import React, {
   useState,
   Profiler,
 } from "react";
-import { MoreVertical, Send, User, Gamepad2, X, Blocks } from "lucide-react";
+import { MoreVertical, Send, User, Gamepad2, X, Trophy } from "lucide-react";
 import styles from "../styles.module.scss";
 import { useRealTime } from "../../../context/RealTimeContext";
 import FriendProfile from "./FriendProfile";
@@ -34,11 +34,11 @@ const ChatContent = memo(
     const loadingTimerRef = useRef(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
-
+    const [tournamentCooldowns, setTournamentCooldowns] = useState({});
     const previousMessagesLength = useRef(messages.length);
     const isLoadingRef = useRef(false);
 
-    const { onlineFriends, sendRelationshipUpdate } = useRealTime();
+    const { onlineFriends, sendRelationshipUpdate, sendTournamentRequest } = useRealTime();
 
     const handleBlockUser = async () => {
       try {
@@ -222,6 +222,26 @@ const ChatContent = memo(
       );
     }
 
+      const handleTournamentRequest = () => {
+        const now = Date.now();
+        const lastRequestTime = tournamentCooldowns[selectedUser.name] || 0;
+        const cooldownPeriod = 30000;
+
+        if (now - lastRequestTime < cooldownPeriod) {
+            const remainingSeconds = Math.ceil((cooldownPeriod - (now - lastRequestTime)) / 1000);
+            myToast(2, `Please wait ${remainingSeconds} seconds before sending another tournament request`);
+            return;
+        }
+
+        setTournamentCooldowns(prev => ({
+            ...prev,
+            [selectedUser.name]: now
+        }));
+
+        sendTournamentRequest(selectedUser.name);
+        myToast(0, `Tournament request sent to ${selectedUser.name}`);
+    };
+
     return (
       <>
         <div className={`${styles.chat_content}`}>
@@ -281,6 +301,16 @@ const ChatContent = memo(
                     >
                       <Gamepad2 className="w-4 h-4" />
                       Game
+                    </button>
+                    <button
+                      className="w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                      onClick={() => {
+                        handleTournamentRequest();
+                        setIsOpen(false);
+                      }}
+                    >
+                      <Trophy className="w-4 h-4" />
+                      Tournement
                     </button>
 
                     <button
@@ -383,6 +413,7 @@ const ChatContent = memo(
         </div>
         <FriendProfile
           selectedUser={friends.find((user) => user.id === selectedChat)}
+          handleTournamentRequest={handleTournamentRequest}
         />
       </>
     );
