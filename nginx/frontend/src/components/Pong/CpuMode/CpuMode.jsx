@@ -67,10 +67,8 @@ const CpuMode = () => {
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
         const controls = new OrbitControls(camera, canvasRef.current);
-        controls.enableDamping = false;
+        controls.enableDamping = true;
         controls.enablePan = false;
-
-
         class GameObject {
             static id = 0;
             constructor(mesh, mass = 1) {

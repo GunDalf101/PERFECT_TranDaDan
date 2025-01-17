@@ -103,7 +103,11 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
         if password and password != password_confirmation:
             raise serializers.ValidationError("Password and password confirmation do not match.")
-
+        if password:
+            try:
+                password_validation.validate_password(password)
+            except ValidationError as e:
+                raise serializers.ValidationError(e.messages)
         return data
 
     def update(self, instance, validated_data):

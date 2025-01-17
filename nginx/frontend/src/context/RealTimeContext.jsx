@@ -53,7 +53,7 @@ export const RealTimeProvider = ({ children }) => {
         socket = new WebSocket(`${location.origin.replace(/^https/, 'wss')}/ws/notifs/?token=${accessToken}`);
 
         socket.onopen = () => {
-          console.log('WebSocket connection established');
+
         };
 
         socket.onmessage = (event) => {
@@ -84,7 +84,6 @@ export const RealTimeProvider = ({ children }) => {
         socket.onclose = socket.onerror = (event) => {
           clearRealTimeContext();
           // setRetryWSConnect(!retryWSConnect);
-          console.log('WebSocket connection closed:', event);
         };
 
         setWs(socket);
