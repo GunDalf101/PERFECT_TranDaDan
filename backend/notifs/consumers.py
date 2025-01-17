@@ -94,7 +94,7 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         target_user = await self.get_user_by_username(target_username)
 
         if target_user:
-            notification_content = f"@{self.user.username} has invited you to a tournament"
+            notification_content = f"@{self.user.username} wants to meet you for a tournament."
 
             notif = await self.create_new_notification(
                 target_username,
