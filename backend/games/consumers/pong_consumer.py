@@ -5,7 +5,7 @@ import time
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from ..models import Match
-from ..utils import PlayersManager
+from ..utils import PlayersManager, XPManager
 from django.utils import timezone
 
 
@@ -27,7 +27,7 @@ class PongConsumer(AsyncWebsocketConsumer):
         self.game_id = None
         self.username = None
         self.delta_time = 1/60
-        self.reconnection_grace_period = 5
+        self.reconnection_grace_period = 0
 
     @database_sync_to_async
     def check_match_status(self):
@@ -348,6 +348,9 @@ class PongConsumer(AsyncWebsocketConsumer):
             match = Match.objects.get(id=self.game_id)
             winner_username = self.get_user_from_player_number(data['winner'])
             winner_user = get_user_model().objects.get(username=winner_username)
+            xp_manager = XPManager(winner_user)
+            xp_manager.add_xp(100)
+            winner_user.save()
 
             match.winner = winner_user
             match.final_score = f"{data['finalScore']['player1']}-{data['finalScore']['player2']}"

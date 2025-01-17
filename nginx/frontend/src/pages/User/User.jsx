@@ -5,10 +5,11 @@ import getUserData from "../../api/authServiceUser";
 import {getMyData} from "../../api/authServiceMe"
 import { sendFriendReq, cancelFriendReq, acceptFriendReq, unfriendReq} from "../../api/friendService";
 import { blockUser, unblockUser } from "../../api/blockService";
-import getMatches from "../../api/gameService";
+import {getMatches, getDash} from "../../api/gameService";
 import { useRealTime } from "../../context/RealTimeContext";
 import {myToast} from "../../lib/utils1"
 import { useNavigate } from 'react-router-dom';
+import {MyLine, MyPie, UserLevelBox} from "../../components/user/dashboard"
 import Loading from "../../components/Loading/Loading";
 
 const r = {
@@ -40,6 +41,11 @@ const User = () => {
   });
   const { sendRelationshipUpdate, relationshipUpdate, onlineFriends, friends } = useRealTime();
   const { username } = useParams();
+  const [dash, setDash] = useState();
+
+  useEffect(() => {
+    console.log(friends);
+  }, [friends]);
 
   useEffect(() => {
     setReload(!reload);
@@ -54,6 +60,8 @@ const User = () => {
         setuserdata(data);
         const matches = await getMatches(data.id)
         setUserMatches(matches)
+        const dash_data = await getDash(data.id);
+        setDash(dash_data);
         if(mydata.id == data.id)
             navigate("/profile");
       } catch (error) {
@@ -137,7 +145,7 @@ const User = () => {
   };
 
   if (error) return <NotFound />;
-  if (!userdata) return <Loading />;
+  if (!userdata || !dash) return <Loading />;
 
   const statistics = {
     totalMatches: 10,
@@ -238,6 +246,10 @@ const User = () => {
           </div>
         </div>
 
+        {showUserContent(userdata.relationship) ?(
+        <UserLevelBox level={userdata.level} progress={userdata.xp_progress}/>
+        ):""}
+
         {/* Friends Box */}
         {showUserContent(userdata.relationship) ?(
         <div className="flex-1 min-w-[500px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink overflow-y-auto">
@@ -246,16 +258,26 @@ const User = () => {
             <ul className="space-y-4">
               {userdata.friends.map((friend) => (
                 <li
-                  key={friend.id}
-                  className="flex items-center gap-4 bg-gray-800 p-3 rounded-lg border border-gray-600 shadow-md hover:shadow-lg transition-shadow duration-300"
-                >
+                key={friend.id}
+                className="flex items-center justify-between gap-4 p-3 bg-gradient-to-r from-purple-700 via-pink-400 to-purple-700 rounded-lg border-2 border-neonPink shadow-lg hover:shadow-2xl transition-shadow duration-300"
+              >
+                <div className="flex items-center gap-4">
                   <img
                     src={friend.avatar_url || '/default_profile.webp'}
                     alt={`${friend.username}'s avatar`}
-                    className="w-12 h-12 rounded-full border-2 border-white"
+                    className="w-12 h-12 rounded-full border-4 border-white shadow-[0_0_10px_2px] shadow-neonPink"
                   />
-                  <a href="#" onClick={() => navigate(`/user/${friend.username}`)}><p className="text-lg text-white font-medium">{friend.username}</p></a>
-                </li>
+                  <a href="#" onClick={() => navigate(`/user/${friend.username}`)}>
+                    <p className="text-lg text-white font-medium text-shadow-lg hover:text-neonPink transition-colors">
+                      {friend.username}
+                    </p>
+                  </a>
+                </div>
+                <div className="text-lg font-bold text-white">
+                  <span className="text-lg text-neonPink">Level </span>
+                  <span className="text-xl text-neonBlue">{friend.level}</span>
+                </div>
+              </li>
               ))}
             </ul>
           ) : (
@@ -334,27 +356,28 @@ const User = () => {
 
       {/* Match History and Statistics Section */}
       {showUserContent(userdata.relationship) ?(
-      <div className="flex flex-wrap justify-between w-11/12 gap-4">
-
-        {/* Statistics Card */}
-        <div className="flex-1 min-w-[300px] h-fit p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
-          <h2 className="text-2xl text-center text-neonBlue mb-4">Game Statistics</h2>
-          <ul className="text-center text-white">
-            <li className="mb-2">
-              <strong>Total Matches:</strong> {statistics.totalMatches}
-            </li>
-            <li className="mb-2">
-              <strong>Wins:</strong> {statistics.wins}
-            </li>
-            <li className="mb-2">
-              <strong>Losses:</strong> {statistics.losses}
-            </li>
-            <li>
-              <strong>Win Rate:</strong> {statistics.winRate}
-            </li>
-          </ul>
+        <div className="flex flex-wrap justify-between w-11/12 gap-4 mb-4">
+          <div className="flex-1 min-w-[500px] h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
+            <p className="text-3xl text-center text-neonBlue mb-5">PingPong</p>
+            <h1 className="text-center text-2xl m-2"><span className="text-red-700">Lose</span> and <span className="text-neonBlue">Win</span> rate.</h1>
+            <div className="w-full h-[350px] flex items-center justify-center">
+              <MyPie data={dash.pong}/>
+            </div>
+          </div>
+          <div className="flex-1 min-w-[500px] h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
+            <p className="text-3xl text-center text-red-600 mb-5">SPACExRIVALRY</p>
+            <h1 className="text-center text-2xl m-2"><span className="text-red-700">Lose</span> and <span className="text-neonBlue">Win</span> rate.</h1>
+            <div className="w-full h-[350px] flex items-center justify-center">
+              <MyPie data={dash.space}/>
+            </div>
+          </div>
+          <div className="flex-1 min-w-[500px] h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
+            <h1 className="text-center text-2xl m-2"><span className="text-red-700">Lose</span> and <span className="text-neonBlue">Win</span> rate.</h1>
+            <div className="w-full h-[350px] flex items-center justify-center">
+            <MyLine data={dash}/>
+            </div>
+          </div>
         </div>
-      </div>
       ):""}
     </div>
   );

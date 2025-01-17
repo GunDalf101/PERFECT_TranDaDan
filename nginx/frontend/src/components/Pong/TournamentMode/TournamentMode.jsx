@@ -7,19 +7,17 @@ import gsap from 'gsap';
 import { split } from 'three/src/nodes/TSL.js';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
+import { useTournament } from '../../../context/TournamentContext';
 
 const TournamentMode = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { currentMatch, players } = location.state;
+    const { tournamentState, updateTournamentState } = useTournament();
+
     useEffect(() => {
-        if (!location.state?.currentMatch || !location.state?.players) {
-            const tournamentStarted = localStorage.getItem('tournamentStarted');
-            if (tournamentStarted === 'true') {
-                const players = JSON.parse(localStorage.getItem('tournamentPlayers'));
-                const currentMatch = parseInt(localStorage.getItem('currentMatch'));
-                const round1Matches = JSON.parse(localStorage.getItem('round1Matches'));
-                const finalMatch = JSON.parse(localStorage.getItem('finalMatch'));
+        if (!location.state?.matchPlayers) {
+            if (tournamentState.tournamentStarted) {
+                const { players, currentMatch, round1Matches, finalMatch } = tournamentState;
                 
                 if (players && currentMatch !== null) {
                     navigate('/game-lobby/tournament', {
@@ -40,8 +38,16 @@ const TournamentMode = () => {
             return;
         }
     }, []);
-    const player1 = players[currentMatch[0]];
-    const player2 = players[currentMatch[1]];
+
+    if (!location.state) {
+        navigate('/game-lobby/tournament');
+        return null;
+    }
+
+    const { matchPlayers, players } = location.state;
+    const player1 = players[matchPlayers[0]];
+    const player2 = players[matchPlayers[1]];
+    
     const canvasRef = useRef(null);
     const sceneRef = useRef(null);
     const gameObjectsRef = useRef([]);
@@ -54,11 +60,9 @@ const TournamentMode = () => {
     let tableBoundsRef = useRef(null);
 
     useEffect(() => {
-        if (!canvasRef.current) return;
-
         let playerScore = 0;
         let aiScore = 0;
-        const maxScore = 11;
+        const maxScore = 2;
         let playerGamesWon = 0;
         let aiGamesWon = 0;
         let maxGames = 3;
@@ -66,6 +70,9 @@ const TournamentMode = () => {
         let aiSideBounces = 0;
         let inGame = false;
         let lastHitAI = true;
+        if (!canvasRef.current) return;
+
+
 
         const scene = new THREE.Scene();
         sceneRef.current = scene;
@@ -234,7 +241,7 @@ const TournamentMode = () => {
             if (boxA.intersectsBox(boxB)) {
                 const currentTime = performance.now();
                 const key = `${objA.id}-${objB.id}`;
-                
+
                 if (!collisionTimestamps.has(key) ||
                 currentTime - collisionTimestamps.get(key) > collisionDelay) {
                     collisionTimestamps.set(key, currentTime);
@@ -245,7 +252,7 @@ const TournamentMode = () => {
         };
         const checkCollisions = () => {
             if (!paddleRef.current || gameObjectsRef.current.length === 0 || !paddleCPURef.current) return;
-            
+
             const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
 
             if (twoObjCollide(paddleRef.current, ball) && lastHitAI) {
@@ -253,21 +260,21 @@ const TournamentMode = () => {
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
                 ballSound.play();
-                
+
                 const paddleBox = new THREE.Box3().setFromObject(paddleRef.current.mesh);
                 const ballWidth = ball.position.x - paddleBox.min.x;
                 const paddleWidth = paddleBox.max.x - paddleBox.min.x;
                 const hitDirection = ballWidth / paddleWidth;
-                
+
                 let forceX = -(hitDirection - paddleWidth / 2) * 3;
                 const ballHeight = ball.position.y - paddleBox.min.y;
                 const paddleHeight = paddleBox.max.y - paddleBox.min.y;
                 let forceY = Math.log(ballHeight / paddleHeight + 1) * 6 + 2;
                 let forceZ = Math.log(ballHeight / paddleHeight + 1) * 13 + 10;
-                
+
                 playerSideBounces = 0;
                 aiSideBounces = 0;
-                
+
                 ball.velocity = new THREE.Vector3(0, 0, 0);
                 ball.applyImpulse(new THREE.Vector3(forceX, forceY, -forceZ));
             } else if (twoObjCollide(paddleCPURef.current, ball) && !lastHitAI) {
@@ -275,20 +282,20 @@ const TournamentMode = () => {
                 ballSound.volume = Math.min(1, 1);
                 ballSound.currentTime = 0;
                 ballSound.play();
-                
+
                 const paddleBox = new THREE.Box3().setFromObject(paddleCPURef.current.mesh);
                 const ballWidth = ball.position.x - paddleBox.min.x;
                 const paddleWidth = paddleBox.max.x - paddleBox.min.x;
                 const hitDirection = ballWidth / paddleWidth;
-                
+
                 let forceX = (hitDirection - paddleWidth / 2) * 3;
                 const ballHeight = ball.position.y - paddleBox.min.y;
                 const paddleHeight = paddleBox.max.y - paddleBox.min.y;
                 let forceY = Math.log(ballHeight / paddleHeight + 1) * 6 + 2;
-                
+
                 playerSideBounces = 0;
                 aiSideBounces = 0;
-                
+
                 ball.velocity = new THREE.Vector3(0, 0, 0);
                 ball.applyImpulse(new THREE.Vector3(forceX, forceY, 16));
             }
@@ -326,7 +333,7 @@ const TournamentMode = () => {
         const resetBall = (direction = 1) => {
             gameObjectsRef.current.forEach(obj => scene.remove(obj.mesh));
             gameObjectsRef.current = [];
-            
+
             const position = new THREE.Vector3(0, 5.0387, 8 * direction);
             CreateBall(position, direction);
 
@@ -334,12 +341,12 @@ const TournamentMode = () => {
             playerSideBounces = 0;
             aiSideBounces = 0;
         };
-        
+
         const updateScore = () => {
             setScores({ player: playerScore, ai: aiScore });
             setMatches({ player: playerGamesWon, ai: aiGamesWon });
         };
-        
+
         const winCheck = () => {
             if (playerScore >= maxScore || aiScore >= maxScore) {
                 if (Math.abs(playerScore - aiScore) >= 2) {
@@ -348,26 +355,30 @@ const TournamentMode = () => {
                     } else {
                         aiGamesWon++;
                     }
-                    
+
                     playerScore = 0;
                     aiScore = 0;
-                    
+
                     if (playerGamesWon >= Math.ceil(maxGames / 2) ||
-                    aiGamesWon >= Math.ceil(maxGames / 2)) {
+                        aiGamesWon >= Math.ceil(maxGames / 2)) {
                         setGameOver(true);
                         inGame = false;
                         const winner = playerGamesWon > aiGamesWon ? player1 : player2;
-                        
+
+                        updateTournamentState({
+                            matchWinner: winner,
+                            currentMatch: location.state.matchPlayers[0]
+                        });
                         navigate('/game-lobby/tournament', {
                             state: {
                                 matchWinner: winner,
-                                matchIndex: location.state.currentMatch[0],
-                                tournamentState: location.state.tournamentState
+                                matchIndex: location.state.matchPlayers[0],
+                                tournamentState: tournamentState
                             },
                             replace: true
                         });
                     }
-                    
+
                     updateScore();
                 }
             }
@@ -375,11 +386,11 @@ const TournamentMode = () => {
 
         const gameLogic = () => {
             if (gameObjectsRef.current.length === 0) return;
-            
+
             const ball = gameObjectsRef.current[gameObjectsRef.current.length - 1];
             const tableBounds = new THREE.Box3().setFromObject(tableObject.mesh);
             tableBoundsRef.current = tableBounds;
-            
+
             if (ball.position.z > tableBounds.max.z + 3 && playerSideBounces === 1) {
                 aiScore++;
                 updateScore();
@@ -397,7 +408,7 @@ const TournamentMode = () => {
                 updateScore();
                 resetBall(-1);
             }
-            
+
             winCheck();
         };
 
@@ -458,24 +469,10 @@ const TournamentMode = () => {
             return current + (target - current) * smoothFactor;
         };
 
-        const handleClick = () => {
-            if (gameObjectsRef.current.length > 0) {
-                gameObjectsRef.current.forEach(obj => scene.remove(obj.mesh));
-                gameObjectsRef.current = [];
-            }
-            lastHitAI = true;
-            const position = new THREE.Vector3(
-                (Math.random() - 0.5) * 4,
-                5.0387,
-                -8
-            );
-            CreateBall(position);
-        };
-
         const setupLighting = () => {
             const ambientLight = new THREE.AmbientLight(0xffffff, 2.1);
             scene.add(ambientLight);
-            
+
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
             directionalLight.castShadow = true;
             directionalLight.shadow.mapSize.set(1024, 1024);
@@ -491,25 +488,25 @@ const TournamentMode = () => {
         const handleResize = () => {
             const width = window.innerWidth;
             const height = window.innerHeight;
-            
+
             camera.aspect = width  * 0.5 / (height);
             camera.updateProjectionMatrix();
             splitCamera.aspect = width  * 0.5 / (height);
             splitCamera.updateProjectionMatrix();
-            
+
             renderer.setSize(width, height);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         };
 
         const clock = new THREE.Clock();
         let oldElapsedTime = 0;
-        
+
         let isBoundingBoxVisible = false;
         const animate = () => {
             const elapsedTime = clock.getElapsedTime();
             const deltaTime = elapsedTime - oldElapsedTime;
             oldElapsedTime = elapsedTime;
-            
+
             if (inGame) {
                 if (paddleRef.current?.mesh) {
                     const cameraOffset = new THREE.Vector3(0, -2.5, 4);
@@ -529,10 +526,10 @@ const TournamentMode = () => {
 
                     const currentLookAt = new THREE.Vector3();
                     const currentSplitLookAt = new THREE.Vector3();
-                    
+
                     camera.getWorldDirection(currentLookAt);
                     splitCamera.getWorldDirection(currentSplitLookAt);
-                    
+
                     const newLookAt = currentLookAt.lerp(targetLookAt, 0.05);
                     const newSplitLookAt = currentSplitLookAt.lerp(targetSplitLookAt, 0.05);
 
@@ -616,7 +613,7 @@ const TournamentMode = () => {
                 checkCollisions();
                 gameLogic();
             }
-            
+
             controls.update();
             // renderer.setScissorTest(true);
             // renderer.setViewport(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
@@ -652,7 +649,7 @@ const TournamentMode = () => {
                     scene.add(netBoxHelper);
                     isBoundingBoxVisible = true;
                 }
-            
+
             }
         };
 
@@ -660,24 +657,28 @@ const TournamentMode = () => {
             setupLighting();
             const { netObject, tableObject } = createTableAndNet();
             CreatePaddle();
+            const position = new THREE.Vector3(
+                (Math.random() - 0.5) * 4,
+                5.0387,
+                -8
+            );
+            CreateBall(position);
 
             window.addEventListener('keydown', handleKeyDown);
             window.addEventListener('keyup', handleKeyUp);
-            window.addEventListener('click', handleClick);
             window.addEventListener('resize', handleResize);
-            
+
             animate();
         };
-        
+
         init();
 
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
-            window.removeEventListener('click', handleClick);
             window.removeEventListener('resize', handleResize);
             inGame = false;
-            
+
             scene.traverse((object) => {
                 if (object instanceof THREE.Mesh) {
                     object.geometry.dispose();
@@ -685,7 +686,7 @@ const TournamentMode = () => {
                     object.material.dispose();
                 }
             });
-            
+
             renderer.dispose();
             if (controls) controls.dispose();
         };
@@ -694,62 +695,62 @@ const TournamentMode = () => {
     return (
         <>
             <canvas ref={canvasRef} className="webgl" />
-            
+
             <div className="absolute top-10 left-1/2 transform -translate-x-1/2 flex items-center justify-between w-full max-w-4xl px-6 py-4 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full border-4 border-cyan-400 shadow-glow">
                 <div className="flex items-center space-x-4">
                     <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-cyan-400">
-                        {player1.image && (
-                            <img 
-                                src={player1.image} 
-                                alt={player1.nickname}
-                                className="w-full h-full object-cover"
-                            />
-                        )}
-                    </div>
-                    <span className="text-cyan-400 text-xl">{player1.nickname}</span>
-                </div>
-                
-                <div className="flex flex-col items-center">
-                    <div className="text-white text-2xl">
-                        {scores.player} - {scores.ai}
-                    </div>
-                    <div className="text-gray-400">
-                        Round {matches.player + matches.ai + 1}
-                    </div>
-                </div>
-                
-                <div className="flex items-center space-x-4">
-                    <span className="text-rose-400 text-xl">{player2.nickname}</span>
-                    <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-rose-400">
                         {player2.image && (
-                            <img 
-                                src={player2.image} 
+                            <img
+                                src={player2.image}
                                 alt={player2.nickname}
                                 className="w-full h-full object-cover"
                             />
                         )}
                     </div>
+                    <span className="text-cyan-400 text-xl">{player2.nickname}</span>
+                </div>
+
+                <div className="flex flex-col items-center">
+                    <div className="text-white text-2xl">
+                        {scores.ai} - {scores.player}
+                    </div>
+                    <div className="text-gray-400">
+                        Round {matches.ai + matches.player + 1}
+                    </div>
+                </div>
+
+                <div className="flex items-center space-x-4">
+                    <span className="text-rose-400 text-xl">{player1.nickname}</span>
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-rose-400">
+                        {player1.image && (
+                            <img
+                                src={player1.image}
+                                alt={player1.nickname}
+                                className="w-full h-full object-cover"
+                            />
+                        )}
+                    </div>
                 </div>
             </div>
-            
+
             <div className="absolute bottom-4 left-4 text-white text-sm space-y-1">
-                <p>{player1.nickname}: Arrow Keys</p>
-            </div>
-            
-            <div className="absolute bottom-4 right-4 text-white text-sm space-y-1 text-right">
                 <p>{player2.nickname}: WASD</p>
             </div>
-            
+
+            <div className="absolute bottom-4 right-4 text-white text-sm space-y-1 text-right">
+                <p>{player1.nickname}: Arrow Keys</p>
+            </div>
+
             <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-white text-lg">
                 Press ENTER to start/pause game
             </div>
-            
+
             {gameOver && (
                 <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
                     <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-lg text-center border-2 border-cyan-400">
-                        <Trophy className={`w-16 h-16 mx-auto mb-4 ${playerGamesWon > aiGamesWon ? 'text-cyan-400' : 'text-rose-400'} animate-pulse`} />
-                        <div className={`text-2xl font-bold ${playerGamesWon > aiGamesWon ? 'text-cyan-400' : 'text-rose-400'} animate-pulse mb-4`}>
-                            {playerGamesWon > aiGamesWon ? player1.nickname : player2.nickname} Advances!
+                        <Trophy className={`w-16 h-16 mx-auto mb-4 ${matches.player > matches.ai ? 'text-cyan-400' : 'text-rose-400'} animate-pulse`} />
+                        <div className={`text-2xl font-bold ${matches.player > matches.ai ? 'text-cyan-400' : 'text-rose-400'} animate-pulse mb-4`}>
+                            {matches.player > matches.ai ? player1.nickname : player2.nickname} Advances!
                         </div>
                         <button
                             onClick={() => navigate('/game-lobby/tournament')}

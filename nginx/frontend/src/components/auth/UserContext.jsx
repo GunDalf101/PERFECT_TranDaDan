@@ -11,22 +11,23 @@ const UserContext = createContext({
 const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [refetchUser, setRefetchUser] = useState(false);
 
-  const [avatarUrl, setAvatarUrl] = useState("/default_profile.webp");
+  // const [avatarUrl, setAvatarUrl] = useState("/default_profile.webp");
 
-  useEffect(() => {
-    if (user) {
-      const parsedUser = typeof user === 'string' ? JSON.parse(user) : user;
-      const avatar = parsedUser?.avatar_url || "/default_profile.webp";
-      setAvatarUrl(avatar);
-    }
-  }, [user]);
+  // useEffect(() => {
+  //   if (user) {
+  //     const parsedUser = typeof user === 'string' ? JSON.parse(user) : user;
+  //     const avatar = parsedUser?.avatar_url || "/default_profile.webp";
+  //     // setAvatarUrl(avatar);
+  //   }
+  // }, [user]);
 
   // const updateUser = (newUser) => {
   //   setUser(newUser);
   // };
 
- 
+
 
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -52,20 +53,20 @@ const UserProvider = ({ children }) => {
     };
 
     checkAuthStatus();
-  }, []);
+  }, [refetchUser]);
 
 
-  const updateAvatar = (newAvatarUrl) => {
-    setAvatarUrl(newAvatarUrl);
-    if (user) {
-      const parsedUser = typeof user === 'string' ? JSON.parse(user) : user;
-      const updatedUser = {
-        ...parsedUser,
-        avatar_url: newAvatarUrl
-      };
-      setUser(JSON.stringify(updatedUser));
-    }
-  };
+  // const updateAvatar = (newAvatarUrl) => {
+  //   setAvatarUrl(newAvatarUrl);
+  //   if (user) {
+  //     const parsedUser = typeof user === 'string' ? JSON.parse(user) : user;
+  //     const updatedUser = {
+  //       ...parsedUser,
+  //       avatar_url: newAvatarUrl
+  //     };
+  //     setUser(JSON.stringify(updatedUser));
+  //   }
+  // };
 
   const login = (userData) => {
     setUser(userData);
@@ -78,10 +79,15 @@ const UserProvider = ({ children }) => {
     localStorage.removeItem('access_token');
   };
 
+  const triggerRefetchUser = () => {
+    setRefetchUser(!refetchUser);
+  }
+
   const contextValue = {
     user,
     login,
-    updateAvatar,
+    // updateAvatar,
+    triggerRefetchUser,
     logout,
     isAuthenticated
   };

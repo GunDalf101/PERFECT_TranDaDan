@@ -15,5 +15,6 @@ stop:
 
 clean:
 	docker system prune -af
-	docker volume prune -f
+	docker volume rm $(shell docker volume ls -q -f name=media)
+	docker volume rm $(shell docker volume ls -q -f name=postgres_data)
 	docker network prune -f

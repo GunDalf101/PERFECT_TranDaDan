@@ -23,6 +23,7 @@ import RemoteRivalry from "./components/SpaceInvaders/RemoteRivalry/RemoteRivalr
 import SpaceRivalry from "./components/SpaceInvaders/SpaceRivalry/SpaceRivalry.jsx";
 import InviteUI from "./components/InviteUI/InviteUI.jsx";
 import ClassicPong from "./components/Pong/ClassicPong/ClassicPong.jsx";
+import { TournamentProvider } from "./context/TournamentContext.jsx";
 
 import User from "./pages/User/User";
 import EditProfile from "./pages/EditProfile/EditProfile";
@@ -36,6 +37,7 @@ import EmailVerificationPage from "./pages/EmailVerificationPage.jsx";
 import { InviteProvider } from "./chatContext/InviteContext.jsx";
 import { Space } from "lucide-react";
 import AnauthNotFound from "./pages/NotFound/AnauthNotFound.jsx";
+import MatchDashboard from "./pages/Dashboard/Dashboard.jsx";
 
 function App() {
   return (
@@ -49,19 +51,27 @@ function App() {
             <ToastContainer position="top-right" autoClose={3000} />
             <Routes>
               <Route path="/" element={
-                  <InviteProvider>
-                    <MainLayout />
-                  </InviteProvider>
-                }>
-                <Route index element={<Homepage />} />
+                <InviteProvider>
+                  <MainLayout />
+                </InviteProvider>
+              }>
                 <Route
-                path="/chat"
+                path="/dashboard"
                 element={
                   <ProtectedRoute>
-                    <ChatApp />
+                    <MatchDashboard />
                   </ProtectedRoute>
                 }
               />
+                <Route index element={<Homepage />} />
+                <Route
+                  path="/chat"
+                  element={
+                    <ProtectedRoute>
+                      <ChatApp />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/profile"
                   element={
@@ -70,17 +80,19 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-                  <Route path="/profile/edit" element={
-                    <ProtectedRoute>
-                      <EditProfile />
-                    </ProtectedRoute>
-                    } />
-                  <Route path="/user/:username" element={
-                    <ProtectedRoute>
-                      <User />
-                    </ProtectedRoute>
-                    } />
+                <Route path="/profile/edit" element={
+                  <ProtectedRoute>
+                    <EditProfile />
+                  </ProtectedRoute>
+                } />
+                <Route path="/user/:username" element={
+                  <ProtectedRoute>
+                    <User />
+                  </ProtectedRoute>
+                } />
               </Route>
+
+
               <Route
                 path="/game-lobby"
                 element={
@@ -89,16 +101,23 @@ function App() {
                   </ProtectedRoute>
                 }
               >
-                <Route index element={<GameChoice />} />
+                <Route index element={<TournamentProvider><GameChoice /></TournamentProvider>} />
                 <Route path="matchmaking" element={<MatchMaking />} />
                 <Route path="cpu-mode" element={<CpuMode />} />
                 <Route path="remote-play" element={<RemoteMode />} />
                 <Route path="local-mode" element={<LocalMode />} />
                 <Route path="quadra-mode" element={<QuadraMode />} />
-                <Route path="tournament" element={<TournamentBracket />} />
+                <Route path="tournament" element={
+                  <TournamentProvider>
+                    <TournamentBracket />
+                  </TournamentProvider>
+                } />
                 <Route path="quadra-register" element={<QuadraRegister />} />
                 <Route path="local-register" element={<LocalRegister />} />
-                <Route path="tournament-mode" element={<TournamentMode />} />
+                <Route path="tournament-mode" element={
+                  <TournamentProvider>
+                    <TournamentMode />
+                  </TournamentProvider>} />
                 <Route path="space-rivalry" element={<SpaceRivalry />} />
                 <Route path="remote-rivalry" element={<RemoteRivalry />} />
                 <Route path="classic-pong" element={<ClassicPong />} />
@@ -121,19 +140,19 @@ function App() {
                 }
               />
               <Route path="/email-verify/:token" element={
-              <PublicRoute>
-                <EmailVerificationPage />
-              </PublicRoute>
+                <PublicRoute>
+                  <EmailVerificationPage />
+                </PublicRoute>
               }>
-                </Route>
+              </Route>
               <Route path="/Intra/callback/" element={
-              <PublicRoute>
-              <IntraCallback />
-              </PublicRoute>
+                <PublicRoute>
+                  <IntraCallback />
+                </PublicRoute>
               } />
               <Route path="/reset-password/:token" element={
 
-              <ResetPasswordForm />
+                <ResetPasswordForm />
               } />
               {/*           <Route path="*" element={<Link to="/"/>}></Route> */}
               <Route path="*" element={<AnauthNotFound />} />

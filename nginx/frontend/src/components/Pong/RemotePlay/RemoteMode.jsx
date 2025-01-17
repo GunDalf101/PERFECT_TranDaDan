@@ -251,6 +251,9 @@ const RemoteMode = () => {
                 setScores({ player1: state.scores.player2, player2: state.scores.player1 });
                 setMatches({ player1: state.rounds_won.player2, player2: state.rounds_won.player1 });
                 updateBallPosition(state);
+            } else {
+                setScores({ player1: state.scores.player1, player2: state.scores.player2 });
+                setMatches({ player1: state.rounds_won.player1, player2: state.rounds_won.player2 });
             }
         };
         const updatePaddlePositions = (state) => {
@@ -579,8 +582,8 @@ const RemoteMode = () => {
         };
 
         const updateScore = () => {
-            setScores({ player1: playerScore, player2: aiScore });
-            setMatches({ player1: playerGamesWon, player2: aiGamesWon });
+            // setScores({ player1: playerScore, player2: aiScore });
+            // setMatches({ player1: playerGamesWon, player2: aiGamesWon });
         };
 
         const winCheck = () => {

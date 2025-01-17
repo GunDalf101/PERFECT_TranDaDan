@@ -8,7 +8,7 @@ from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from ..models import Match
-from ..utils import PlayersManager
+from ..utils import PlayersManager, XPManager
 
 class ClassicPongConsumer(AsyncWebsocketConsumer):
     shared_games = {}
@@ -34,7 +34,7 @@ class ClassicPongConsumer(AsyncWebsocketConsumer):
         self.username = None
         self.player_num = None
         self.delta_time = 1/60
-        self.reconnection_grace_period = 5
+        self.reconnection_grace_period = 0
         self.cleanup_ref = False
         self.user = None
 
@@ -52,6 +52,9 @@ class ClassicPongConsumer(AsyncWebsocketConsumer):
             match = Match.objects.get(id=self.game_id)
             winner_username = game_state['winner']
             winner_user = get_user_model().objects.get(username=winner_username)
+            xp_manager = XPManager(winner_user)
+            xp_manager.add_xp(50)
+            winner_user.save()
             
             match.winner = winner_user
             match.score_player1 = game_state['score1']

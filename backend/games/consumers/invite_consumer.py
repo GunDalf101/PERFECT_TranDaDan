@@ -43,7 +43,6 @@ class InviteConsumer(AsyncJsonWebsocketConsumer):
         elif msg_type == 'decline_invite':
             await self.handle_decline_invite(content)
 
-
     async def handle_send_invite(self, content):
         print(content)
         target_username = content.get('target_username')

@@ -1,45 +1,19 @@
 import styles from "./Profile.module.scss";
 import { useState, useEffect } from "react";
 import {getMyData} from "../../api/authServiceMe";
-import getMatches from "../../api/gameService"
+import {getMatches, getDash} from "../../api/gameService"
 import { useNavigate } from 'react-router-dom';
 import Loading from "../../components/Loading/Loading";
-import { Pie } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import {MyLine, MyPie, UserLevelBox} from "../../components/user/dashboard"
 import { useRealTime } from "../../context/RealTimeContext";
-
-// Register necessary components
-ChartJS.register(ArcElement, Tooltip, Legend);
-
-
-const data = {
-  labels: [
-    "win",
-    "lose"
-  ],
-  datasets: [{
-    label: 'win lose rate',
-    data: [1, 1],
-    backgroundColor: [
-      'rgb(0 212 255)',
-      'rgb(220 38 38)',
-    ],
-    borderColor: ['rgb(255 0 204)'], // Set border color for each slice
-    borderWidth: 0, // Set border width
-    hoverOffset: 3
-  }]
-};
-
 
 const Profile = () => {
 
   const navigate = useNavigate();
 
   const [mydata, setMyData] = useState(null);
-  const [mymatches, setMymatches] = useState({
-    pong: [],
-    space: []
-  });
+  const [dash, setDash] = useState(null);
+  const [mymatches, setMymatches] = useState(null);
   const {friends} = useRealTime();
 
   useEffect(() => {
@@ -49,8 +23,10 @@ const Profile = () => {
         const data = await getMyData();
         setMyData(data);
         const matches = await getMatches(data.id);
-        // console.log(matches)
-        setMymatches(matches)
+        const dash_data = await getDash(data.id);
+        setDash(dash_data);
+        setMymatches(matches);
+        console.log(dash_data)
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
@@ -66,7 +42,7 @@ const Profile = () => {
     winRate: "70%",
   };
 
-  if (!mydata) return <Loading />
+  if (!mydata || !mymatches || !dash) return <Loading />
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-cover bg-center bg-[url('/retro_1.jpeg')] from-darkBackground via-purpleGlow to-neonBlue text-white font-retro">
@@ -102,6 +78,7 @@ const Profile = () => {
           </div>
         </div>
 
+        <UserLevelBox progress={mydata.xp_progress} level={mydata.level} />
 
         {/* Friends Box */}
         <div className="flex-1 min-w-[500px] h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink overflow-y-auto">
@@ -110,16 +87,26 @@ const Profile = () => {
               <ul className="space-y-4">
                 {mydata.friends.map((friend) => (
                   <li
-                    key={friend.id}
-                    className="flex items-center gap-4 bg-gray-800 p-3 rounded-lg border border-gray-600 shadow-md hover:shadow-lg transition-shadow duration-300"
-                  >
+                  key={friend.id}
+                  className="flex items-center justify-between gap-4 p-3 bg-gradient-to-r from-purple-700 via-pink-400 to-purple-700 rounded-lg border-2 border-neonPink shadow-lg hover:shadow-2xl transition-shadow duration-300"
+                >
+                  <div className="flex items-center gap-4">
                     <img
                       src={friend.avatar_url || '/default_profile.webp'}
                       alt={`${friend.username}'s avatar`}
-                      className="w-12 h-12 rounded-full border-2 border-white"
+                      className="w-12 h-12 rounded-full border-4 border-white shadow-[0_0_10px_2px] shadow-neonPink"
                     />
-                    <a href="#" onClick={() => navigate(`/user/${friend.username}`)}><p className="text-lg text-white font-medium">{friend.username}</p></a>
-                  </li>
+                    <a href="#" onClick={() => navigate(`/user/${friend.username}`)}>
+                      <p className="text-lg text-white font-medium text-shadow-lg hover:text-neonPink transition-colors">
+                        {friend.username}
+                      </p>
+                    </a>
+                  </div>
+                  <div className="text-lg font-bold text-white">
+                    <span className="text-gl text-neonPink">Level </span>
+                    <span className="text-xl text-neonBlue">{friend.level}</span>
+                  </div>
+                </li>
               ))}
             </ul>
           ) : (
@@ -192,14 +179,26 @@ const Profile = () => {
       </div>
 
       {/* Match History and Statistics Section */}
-      <div className="flex flex-wrap justify-between w-11/12 gap-4">
-        <div className="flex-1 min-w-[300px] max-w-[500px] h-fit p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
-        <h1 className="text-center text-2xl m-2"><span className="text-red-700">Lose</span> and <span className="text-neonBlue">Win</span> rate.</h1>
-        <Pie className="text-xl" data={data}/>
+      <div className="flex flex-wrap justify-between w-11/12 gap-4 mb-4">
+        <div className="flex-1 min-w-[500px] h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
+          <p className="text-3xl text-center text-neonBlue mb-5">PingPong</p>
+          <h1 className="text-center text-2xl m-2"><span className="text-red-700">Lose</span> and <span className="text-neonBlue">Win</span> rate.</h1>
+          <div className="w-full h-[350px] flex items-center justify-center">
+            <MyPie data={dash.pong}/>
+          </div>
         </div>
-        <div className="flex-1 min-w-[300px] max-w-[500px] h-fit p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
-        <h1 className="text-center text-2xl m-2"><span className="text-red-700">Lose</span> and <span className="text-neonBlue">Win</span> rate.</h1>
-        <Pie className="text-xl" data={data}/>
+        <div className="flex-1 min-w-[500px] h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
+          <p className="text-3xl text-center text-red-600 mb-5">SPACExRIVALRY</p>
+          <h1 className="text-center text-2xl m-2"><span className="text-red-700">Lose</span> and <span className="text-neonBlue">Win</span> rate.</h1>
+          <div className="w-full h-[350px] flex items-center justify-center">
+            <MyPie data={dash.space}/>
+          </div>
+        </div>
+        <div className="flex-1 min-w-[500px] h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
+          <h1 className="text-center text-2xl m-2"><span className="text-red-700">Lose</span> and <span className="text-neonBlue">Win</span> rate.</h1>
+          <div className="w-full h-[350px] flex items-center justify-center">
+          <MyLine data={dash}/>
+          </div>
         </div>
       </div>
     </div>

@@ -22,7 +22,7 @@ function formatSerializerErrors(errors) {
 const EditProfile = () => {
 
   const navigate = useNavigate();
-  const {updateAvatar} = useUser();
+  const {triggerRefetchUser} = useUser();
 
   const [avatar, setAvatar] = useState({
     data: null,
@@ -96,16 +96,17 @@ const EditProfile = () => {
       if(formData["password"] == "")
         delete formData["password"], delete formData["password_confirmation"]
       if(Object.keys(formData).length == 0 && avatar.data == null)
-        {
-          myToast(1, "nothing has been updated !");
-          return;
-        }
-        console.log(avatar.data)
-      if(avatar.data != null)
+      {
+        myToast(1, "nothing has been updated !");
+        return;
+      }
+      else if(avatar.data != null)
+      {
+        const new_avatar = await changeAvatarReq(avatar.data);
+      } else if (Object.keys(formData).length > 0)
         await editMyData(formData);
-      const new_avatar = await changeAvatarReq(avatar.data);
-      updateAvatar(new_avatar.url);
       myToast(0, "you profile has been updated.");
+      triggerRefetchUser();
       navigate("/profile");
     } catch (error) {
       let errors = formatSerializerErrors(error.response.data['error']);
