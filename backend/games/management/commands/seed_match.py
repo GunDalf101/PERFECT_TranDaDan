@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from games.models import Match
 from django.contrib.auth import get_user_model
 from random import choice, getrandbits
+from django.utils.timezone import now
 
 User = get_user_model()  # Get the user model dynamically
 
@@ -25,6 +26,7 @@ class Command(BaseCommand):
                     winner=choice([first, second]),
                     forfeit=False,
                     status= 'completed',
+                    ended_at= now().date()
                 )
                 self.stdout.write(self.style.SUCCESS(f'Created Match: {match.id} with game_type={game_type}'))
 

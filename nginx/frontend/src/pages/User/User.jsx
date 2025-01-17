@@ -284,7 +284,7 @@ const User = () => {
 
         {/* Match History Card */}
         {showUserContent(userdata.relationship) ?(
-        <div className="flex-1 min-w-[500px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
+        <div className="flex-1 min-w-[600px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
           <p className="text-3xl text-center text-neonBlue mb-5">PingPong</p>
           <h2 className="text-2xl text-center text-neonPink mb-4">Match History</h2>
           <div className="overflow-x-auto h-72 overflow-y-auto">
@@ -293,6 +293,7 @@ const User = () => {
               <thead>
                 <tr className="bg-neonBlue text-black">
                   <th className="p-2 border border-white">#</th>
+                  <th className="p-2 border border-white">Date</th>
                   <th className="p-2 border border-white">Opponent</th>
                   <th className="p-2 border border-white">Result</th>
                   <th className="p-2 border border-white">Score</th>
@@ -302,6 +303,7 @@ const User = () => {
                 {userMatches.pong.map((match) => (
                   <tr key={match.id} className="odd:bg-gray-800 even:bg-gray-700">
                     <td className="p-2 border border-white">{match.id}</td>
+                    <td className="p-2 border border-white">{match.end_date}</td>
                     <td className="p-2 border border-white">{match.opponent}</td>
                     <td className="p-2 border border-white">{match.result}</td>
                     <td className="p-2 border border-white">{match.score}</td>
@@ -317,7 +319,7 @@ const User = () => {
         ):""}
         {/* Match History Card */}
         {showUserContent(userdata.relationship) ? (
-        <div className="flex-1 min-w-[500px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
+        <div className="flex-1 min-w-[600px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
           <p className="text-3xl text-center text-red-600 mb-5">SPACExRIVALRY</p>
           <h2 className="text-2xl text-center text-neonPink mb-4">Match History</h2>
           <div className="overflow-x-auto h-72 overflow-y-auto">
@@ -326,6 +328,7 @@ const User = () => {
               <thead>
                 <tr className="bg-neonBlue text-black">
                   <th className="p-2 border border-white">#</th>
+                  <th className="p-2 border border-white">Date</th>
                   <th className="p-2 border border-white">Opponent</th>
                   <th className="p-2 border border-white">Result</th>
                   <th className="p-2 border border-white">Score</th>
@@ -335,6 +338,7 @@ const User = () => {
                 {userMatches.space.map((match) => (
                   <tr key={match.id} className="odd:bg-gray-800 even:bg-gray-700">
                     <td className="p-2 border border-white">{match.id}</td>
+                    <td className="p-2 border border-white">{match.end_date}</td>
                     <td className="p-2 border border-white">{match.opponent}</td>
                     <td className="p-2 border border-white">{match.result}</td>
                     <td className="p-2 border border-white">{match.score}</td>
