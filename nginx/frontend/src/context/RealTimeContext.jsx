@@ -141,6 +141,7 @@ export const RealTimeProvider = ({ children }) => {
   const clearRealTimeContext = () => {
     setNotifications([]);
     setRelationshipUpdate(null);
+    setOnlineFriends([]);
   };
 
   return (
