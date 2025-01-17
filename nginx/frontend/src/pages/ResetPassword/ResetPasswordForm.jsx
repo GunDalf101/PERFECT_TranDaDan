@@ -15,9 +15,9 @@ const ResetPasswordForm = () => {
     });
 
     const [errors, setErrors] = useState({
+        error: "",
         password: "",
         password_confirmation: "",
-        error: "",
     });
 
     const handleChange = (e) => {
@@ -65,25 +65,35 @@ const ResetPasswordForm = () => {
             navigate('/login');
         } catch (err) {
             if (err.response?.data) {
-				const apiErrors = err.response.data;
-				Object.keys(apiErrors).forEach((field) => {
-					if (Array.isArray(apiErrors[field])) {
-						errors[field] = apiErrors[field][0];
-					}
-				});
-			}
-			setErrors(errors);
-			if (errors.error) {
-				toast.error(errors.error, {
-					position: "top-right",
-					autoClose: 2000,
-					hideProgressBar: false,
-					closeOnClick: true,
-					pauseOnHover: true,
-					draggable: true,
-					theme: "light",
-				});
-			}
+                const errorMessage = err.response.data.error;
+                
+                if (errorMessage) {
+                    toast.error(errorMessage, {
+                        position: "top-right",
+                        autoClose: 2000,
+                        hideProgressBar: false,
+                        closeOnClick: true,
+                        pauseOnHover: true,
+                        draggable: true,
+                        theme: "light",
+                    });
+                    
+                    setErrors(prev => ({
+                        ...prev,
+                        error: errorMessage
+                    }));
+                }
+                
+                const apiErrors = err.response.data;
+                Object.keys(apiErrors).forEach((field) => {
+                    if (Array.isArray(apiErrors[field])) {
+                        setErrors(prev => ({
+                            ...prev,
+                            [field]: apiErrors[field][0]
+                        }));
+                    }
+                });
+            }
         } finally {
             setLoading(false);
         }
