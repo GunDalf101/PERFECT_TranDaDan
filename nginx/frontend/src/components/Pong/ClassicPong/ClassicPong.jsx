@@ -78,7 +78,7 @@ const ClassicPong = () => {
           setGameState(data.state);
           break;
         case 'game_ended':
-          handleGameEnd(data.winner);
+          handleGameEnd(data.state, false);
           break;
         case 'player_disconnected':
           setErrorMessage('Opponent disconnected. Waiting for reconnection...');
@@ -86,6 +86,10 @@ const ClassicPong = () => {
         case 'player_reconnected':
           setErrorMessage('');
           break;
+        case 'game_ended_by_forfeit':
+          handleGameEnd(data.state, true);
+          break;
+
       }
     };
 
@@ -148,9 +152,25 @@ const ClassicPong = () => {
     };
   }, [gameState]);
 
-  const handleGameEnd = (winner) => {
-    setWinner(winner === gameSession?.username ? 'You won!' : `${winner} won!`);
-    setGameState(prev => ({ ...prev, gameOver: true }));
+  const handleGameEnd = (state, isForfeit) => {
+    let winnerMessage;
+
+    if (isForfeit) {
+      winnerMessage = state.winner === gameSession?.username ?
+        'You won by forfeit!' :
+        `${state.winner} won by forfeit!`;
+    } else {
+      winnerMessage = state.winner === gameSession?.username ?
+        'You won!' :
+        `${state.winner} won!`;
+    }
+
+    setWinner(winnerMessage);
+    setGameState(prev => ({
+      ...prev,
+      ...state,
+      gameOver: true,
+    }));
   };
 
   if (!gameState || !gameSession) {

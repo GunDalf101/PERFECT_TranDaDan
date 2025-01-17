@@ -32,10 +32,10 @@ const Sidebar = React.forwardRef(({ isVisible }, ref) => {
           </li>
           <li className="py-3 px-4 hover:bg-pink-500 hover:text-gray-900 rounded-md transition duration-300">
             <button
-              onClick={() => navigate("#")}
+              onClick={() => navigate("/dashboard")}
               className="w-full text-left"
             >
-              Leaderboards
+              Dashboard
             </button>
           </li>
           <li className="py-3 px-4 hover:bg-pink-500 hover:text-gray-900 rounded-md transition duration-300">

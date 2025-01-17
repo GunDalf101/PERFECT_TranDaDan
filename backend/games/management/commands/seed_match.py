@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from games.models import Match
 from django.contrib.auth import get_user_model
-from random import getrandbits
+from random import choice, getrandbits
 
 User = get_user_model()  # Get the user model dynamically
 
@@ -15,14 +15,14 @@ class Command(BaseCommand):
 
         game_types = ['pong', 'space-rivalry']
         for game_type in game_types:
-            for i in range(6):
+            for i in range(10):
                 match = Match.objects.create(
                     game_type=game_type,
                     player1=first,
                     player2=second,
-                    score_player1=0,
-                    score_player2=0,
-                    winner=None,
+                    score_player1=getrandbits(5),
+                    score_player2=getrandbits(5),
+                    winner=choice([first, second]),
                     forfeit=False,
                     status= 'completed',
                 )

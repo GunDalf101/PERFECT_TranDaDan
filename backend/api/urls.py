@@ -4,7 +4,7 @@ from .views import (
     MFATOTPView, RegisterView, VerifyEmailView, LoginView,
     SecurityMFATOTP, RequestResetPasswordView, ResetPasswordView,
     UserView, UsersMeAvatarView, SendFriendRequest, DeleteFriendRequest,
-    AcceptFriendRequestView, BlockUser, UnfriendView, FriendsView
+    AcceptFriendRequestView, BlockUser, UnfriendView, FriendsView, UserRankingsViewSet
     )
 from .views import UserSearchView
 
@@ -28,4 +28,5 @@ urlpatterns = [
     path('blockuser', BlockUser.as_view(), name='block-user'),
     path('friends', FriendsView.as_view(), name='friends'),
     path('search/', UserSearchView.as_view(), name='user-search'),
+    path('leaderboard', UserRankingsViewSet.as_view({'get': 'get'}), name='leaderboard'),
 ]

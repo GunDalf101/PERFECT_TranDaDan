@@ -95,14 +95,13 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
 
         if target_user:
             notification_content = f"@{self.user.username} has invited you to a tournament"
-            
+
             notif = await self.create_new_notification(
                 target_username,
                 notification_content,
-                url=""
+                url=None
             )
 
-            # Send notification to target user
             await self.channel_layer.group_send(
                 f"notifs_user_{target_username}",
                 {
@@ -123,7 +122,7 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
             'msgtype': 'notification',
             'notifications': notifications
         })
-    
+
     async def send_friends_list(self):
         friends = await self.get_user_friends(self.user)
         friends = list(map(lambda friend: friend.username, friends))

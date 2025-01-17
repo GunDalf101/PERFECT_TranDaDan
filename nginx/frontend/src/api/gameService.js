@@ -11,5 +11,15 @@ const getMatches = async (userid) => {
   }
 };
 
+const getDash = async (userid) => {
+  try {
+    const response = await axiosInstance.get('/games/userdash/' + userid);
+    return response.data;
+  } catch (error) {
+    console.error('Error dash request:', error);
+    throw error;
+  }
+};
 
-export default getMatches;
+
+export {getMatches, getDash};

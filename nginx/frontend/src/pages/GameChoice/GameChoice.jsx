@@ -239,19 +239,19 @@ const GameChoice = () => {
             const pongSection = document.getElementById('pong-container');
             const invadersSection = document.getElementById('invaders-container');
             const title = document.getElementById('dynamic-title');
-        
+
             function initializeAudioContext() {
                 if (!audioContext) {
                     audioContext = new AudioContext(); // Create it only after a user gesture.
                 }
             }
-        
+
             pongSection.addEventListener('mouseenter', () => {
                 initializeAudioContext();
                 playSound(440);
                 title.textContent = 'PONG';
             });
-        
+
             invadersSection.addEventListener('mouseenter', () => {
                 initializeAudioContext();
                 playSound(523.25);
@@ -261,16 +261,16 @@ const GameChoice = () => {
 
         function playSound(frequency) {
             if (!audioContext) return; // Ensure the AudioContext exists.
-        
+
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
-        
+
             oscillator.frequency.value = frequency;
             oscillator.type = 'sine';
-        
+
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
-        
+
             oscillator.start();
             gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.5);
             oscillator.stop(audioContext.currentTime + 0.5);
@@ -296,21 +296,23 @@ const GameChoice = () => {
             <div className="game-area">
                 <div className="game-container" id="pong-container">
                     <div className="game-title">PONG</div>
-                    <Link to="/game-lobby/cpu-mode"><div className="game-option" data-index="0">VS CPU</div></Link> 
-                    <Link to="/game-lobby/matchmaking?gameType=pong"><div className="game-option" data-index="1">REMOTE MODE</div></Link> 
-                    <Link to="/game-lobby/tournament"><div className="game-option" data-index="2">TOURNAMENT</div></Link> 
+                    <Link to="/game-lobby/cpu-mode"><div className="game-option" data-index="0">VS CPU</div></Link>
+                    <Link to="/game-lobby/matchmaking?gameType=pong"><div className="game-option" data-index="1">REMOTE MODE</div></Link>
+                    <Link to="/game-lobby/tournament"><div className="game-option" data-index="2">TOURNAMENT</div></Link>
                     <Link to="/game-lobby/local-register"><div className="game-option" data-index="3">LOCAL MODE</div></Link>
-                    <Link to="/game-lobby/quadra-register"><div className="game-option" data-index="4">QUADRA MODE</div></Link> 
-                    <Link to="/game-lobby/matchmaking?gameType=classic-pong"><div className="game-option" data-index="5">CLASSIC MODE</div></Link> 
+                    <Link to="/game-lobby/quadra-register"><div className="game-option" data-index="4">QUADRA MODE</div></Link>
+                    <Link to="/game-lobby/matchmaking?gameType=classic-pong"><div className="game-option" data-index="5">CLASSIC MODE</div></Link>
                 </div>
 
                 <div className="game-container" id="invaders-container">
                     <div className="game-title">SPACE RIVALRY</div>
-                    <Link to="/game-lobby/space-rivalry"><div className="game-option" data-index="0">SPACE RIVALRY</div></Link> 
-                    <Link to="/game-lobby/matchmaking?gameType=space-rivalry"><div className="game-option" data-index="1">REMOTE RIVALRY</div></Link> 
-                    <Link to="/"><div className="game-option" data-index="2">SPEED RUN</div></Link> 
-                    <Link to="/"><div className="game-option" data-index="3">BOSS RUSH</div></Link>
-                    <Link to="/"><div className="game-option" data-index="4">OPTIONS</div></Link> 
+                    <Link to="/game-lobby/space-rivalry"><div className="game-option" data-index="0">SPACE RIVALRY</div></Link>
+                    <Link to="/game-lobby/matchmaking?gameType=space-rivalry"><div className="game-option" data-index="1">REMOTE RIVALRY</div></Link>
+                    <Link to="/game-lobby/space-rivalry"><div className="game-option" data-index="0">SPACE RIVALRY</div></Link>
+                    <Link to="/game-lobby/matchmaking?gameType=space-rivalry"><div className="game-option" data-index="1">REMOTE RIVALRY</div></Link>
+                    <Link to="/game-lobby/space-rivalry"><div className="game-option" data-index="0">SPACE RIVALRY</div></Link>
+                    <Link to="/game-lobby/matchmaking?gameType=space-rivalry"><div className="game-option" data-index="1">REMOTE RIVALRY</div></Link>
+
                 </div>
             </div>
         </>

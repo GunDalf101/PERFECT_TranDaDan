@@ -10,6 +10,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 const QuadraMode = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    useEffect(() => {
+        if (!location.state) {
+            navigate('/game-lobby/quadra-register');
+        }
+    }, [location.state, navigate]);
+    if (!location.state) {
+        return null;
+    }
     const {teams} = location.state;
     const canvasRef = useRef(null);
     const sceneRef = useRef(null);
@@ -538,20 +546,6 @@ const QuadraMode = () => {
             return current + (target - current) * smoothFactor;
         };
 
-        const handleClick = () => {
-            if (gameObjectsRef.current.length > 0) {
-                gameObjectsRef.current.forEach(obj => scene.remove(obj.mesh));
-                gameObjectsRef.current = [];
-            }
-            lastHitAI = true;
-            const position = new THREE.Vector3(
-                (Math.random() - 0.5) * 4,
-                5.0387,
-                -8
-            );
-            CreateBall(position);
-        };
-
         const setupLighting = () => {
             const ambientLight = new THREE.AmbientLight(0xffffff, 2.1);
             scene.add(ambientLight);
@@ -827,10 +821,15 @@ const QuadraMode = () => {
             setupLighting();
             const { netObject, tableObject } = createTableAndNet();
             CreatePaddle();
+            const position = new THREE.Vector3(
+                (Math.random() - 0.5) * 4,
+                5.0387,
+                -8
+            );
+            CreateBall(position);
 
             window.addEventListener('keydown', handleKeyDown);
             window.addEventListener('keyup', handleKeyUp);
-            window.addEventListener('click', handleClick);
             window.addEventListener('resize', handleResize);
             
             animate();
@@ -841,7 +840,6 @@ const QuadraMode = () => {
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
-            window.removeEventListener('click', handleClick);
             window.removeEventListener('resize', handleResize);
             inGame = false;
             

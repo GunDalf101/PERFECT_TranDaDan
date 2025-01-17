@@ -7,7 +7,7 @@ import time
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from ..models import Match
-from ..utils import PlayersManager
+from ..utils import PlayersManager, XPManager
 from django.utils import timezone
 
 class SpaceRivalryConsumer(AsyncWebsocketConsumer):
@@ -48,7 +48,7 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
         self.game_id = None
         self.username = None
         self.player_num = None
-        self.reconnection_grace_period = 5
+        self.reconnection_grace_period = 0
         self.delta_time = 1/60
 
     @database_sync_to_async
@@ -580,6 +580,9 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
             match = Match.objects.get(id=self.game_id)
             winner_username = game_state['winner']
             winner_user = get_user_model().objects.get(username=winner_username)
+            xp_manager = XPManager(winner_user)
+            xp_manager.add_xp(50)
+            winner_user.save()
 
             match.winner = winner_user
             match.score_player1 = game_state['score1']

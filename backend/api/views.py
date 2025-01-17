@@ -34,6 +34,8 @@ import uuid
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 import os
+from .xp_manager import XPManager
+from rest_framework import viewsets
 
 User = get_user_model()
 
@@ -313,6 +315,7 @@ class UsersMeView(APIView):
 
     def get(self, request):
         user = request.user
+        xp_manager = XPManager(user)
         user_data = {
             'id': user.id,
             'username': user.username,
@@ -320,7 +323,11 @@ class UsersMeView(APIView):
             'email': user.intra_connection.email if not user.email else user.email,
             'mfa_enabled': user.mfa_enabled,
             'friends': getFriendList(user.id),
-            'avatar_url': user.avatar_url
+            'avatar_url': user.avatar_url,
+            "level": user.level,
+            "current_xp": user.xp,
+            "xp_to_next_level": xp_manager.xp_to_next_level(),
+            "xp_progress": xp_manager.xp_progress(),
         }
         return Response(user_data, status=status.HTTP_200_OK)
 
@@ -352,7 +359,8 @@ def getFriendList(user_id):
         friendList.append({
             'id': friend.id,
             'username': friend.username,
-            'avatar_url': friend.avatar_url
+            'avatar_url': friend.avatar_url,
+            'level': friend.level
         })
     return friendList
 
@@ -374,7 +382,7 @@ class UserView(APIView):
 
         if relationship:
             relationship_n = createRelativeRelation(current_user, relationship)
-
+        xp_manager = XPManager(target_user)
         user_data = {
             'id': target_user.id,
             'username': target_user.username,
@@ -382,7 +390,11 @@ class UserView(APIView):
             'email': target_user.intra_connection.email if not target_user.email else target_user.email,
             'avatar_url': target_user.avatar_url,
             'relationship': relationship_n,
-            'friends': getFriendList(target_user.id)
+            'friends': getFriendList(target_user.id),
+            "level": target_user.level,
+            "current_xp": target_user.xp,
+            "xp_to_next_level": xp_manager.xp_to_next_level(),
+            "xp_progress": xp_manager.xp_progress(),
         }
 
         return Response(user_data, status=status.HTTP_200_OK)
@@ -636,9 +648,45 @@ class UsersMeAvatarView(APIView):
             file_path = default_storage.save(filename, ContentFile(image_data))
             file_url = default_storage.url(file_path)
             # if settings.DEBUG:
-            #     file_url = f"{os.getenv('BACKEND_URL')}{default_storage.url(file_path)}"
+                # file_url = f"{os.getenv('BACKEND_URL')}{default_storage.url(file_path)}"
             request.user.avatar_url = file_url
             request.user.save()
             return Response({'url': file_url}, status=status.HTTP_200_OK)
         except (ValueError, KeyError) as e:
             return Response({'error': 'Invalid data URL format.'}, status=status.HTTP_400_BAD_REQUEST)
+
+class UserXPLevelView(APIView):
+
+    def get(self, request, username=None):
+        try:
+            user = User.objects.get(username=username)
+
+            xp_manager = XPManager(user)
+            data = {
+                "username": user.username,
+                "level": user.level,
+                "current_xp": user.xp,
+                "xp_to_next_level": xp_manager.xp_to_next_level(),
+                "xp_progress": xp_manager.xp_progress(),
+            }
+            return Response(data, status=200)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+class UserRankingsViewSet(viewsets.ViewSet):
+    def get(self, request):
+        top_users = (User.objects
+                    .values('username', 'level', 'xp', 'avatar_url', 'tournament_alias')
+                    .order_by('-level', '-xp')[:10])
+
+        top_users_formatted = [{
+            'username': user['username'],
+            'tournament_alias': user['tournament_alias'],
+            'level': user['level'],
+            'xp': user['xp'],
+            'avatar_url': user['avatar_url'],
+        } for user in top_users]
+
+        return Response({
+            'top_users': top_users_formatted
+        })
