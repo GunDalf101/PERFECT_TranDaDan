@@ -44,7 +44,7 @@ class User(AbstractBaseUser):
     objects = UserManager()
 
     def has_usable_password(self):
-        return not self.intra_connection and self.email_verified and super().has_usable_password()
+        return self.email and self.email_verified and super().has_usable_password()
 
     def __str__(self):
         fields = [f"{field.name}={getattr(self, field.name)}" for field in self._meta.fields]

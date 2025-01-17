@@ -50,9 +50,9 @@ class OAuth2StartView(UnprotectedView):
 
     def get(self, request, *args, **kwargs):
         state = ''.join(random.choices(string.ascii_letters + string.digits, k=30))
-        authorization_url = f'{os.getenv("42_AUTHORIZE_URL")}?client_id={os.getenv("CLIENT_ID")}&redirect_uri={os.getenv("BACKEND_URL")}{reverse("oauth2-callback")}&response_type=code&state={state}'
+        authorization_url = f'{os.getenv("42_AUTHORIZE_URL")}?client_id={os.getenv("CLIENT_ID")}&redirect_uri={os.getenv("BACKEND_URL")}{reverse("oauth2-callback")}&response_type=code'
         response = HttpResponseRedirect(authorization_url)
-        response.set_cookie('oauth2_state', jwt.encode({"state": state}, settings.SECRET_KEY, algorithm='HS256'))
+        # response.set_cookie('oauth2_state', jwt.encode({"state": state}, settings.SECRET_KEY, algorithm='HS256'))
         return response
 
 
@@ -61,10 +61,10 @@ class OAuth2CallbackView(UnprotectedView):
 
     def get(self, request, *args, **kwargs):
         code = request.GET.get('code')
-        state = request.GET.get('state')
-        saved_state = request.COOKIES.get('oauth2_state')
-        if not saved_state or state != jwt.decode(saved_state, settings.SECRET_KEY, algorithms=['HS256'])["state"]:
-            return Response({"message": "Invalid state parameter"}, status=status.HTTP_400_BAD_REQUEST, headers=unset_cookie_header("oauth2_state"))
+        # state = request.GET.get('state')
+        # saved_state = request.COOKIES.get('oauth2_state')
+        # if not saved_state or state != jwt.decode(saved_state, settings.SECRET_KEY, algorithms=['HS256'])["state"]:
+        #     return Response({"message": "Invalid state parameter"}, status=status.HTTP_400_BAD_REQUEST, headers=unset_cookie_header("oauth2_state"))
 
         data = {
             'grant_type': 'authorization_code',
@@ -126,7 +126,8 @@ class OAuth2CallbackView(UnprotectedView):
                 username=free_username,
                 intra_user=True,
                 tournament_alias=get_free_game_nickname(free_username),
-                avatar_url=avatar_url
+                avatar_url=avatar_url,
+                email_token=get_random_string(32)
             )
             intra_connection = IntraConnection.objects.create(
                 user=user,
@@ -334,6 +335,10 @@ class UsersMeView(APIView):
     def patch(self, request):
         user = request.user
         email = user.email
+        if not email:
+            if 'email' in request.data or 'password' in request.data:
+                if not 'email' in request.data or not 'password' in request.data:
+                    return Response({"error": ["You must set a password and an email for this intra user."]}, status=status.HTTP_400_BAD_REQUEST)
         serializer = UserUpdateSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
