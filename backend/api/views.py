@@ -50,7 +50,7 @@ class OAuth2StartView(UnprotectedView):
 
     def get(self, request, *args, **kwargs):
         state = ''.join(random.choices(string.ascii_letters + string.digits, k=30))
-        authorization_url = f'{os.getenv("42_AUTHORIZE_URL")}?client_id={os.getenv("CLIENT_ID")}&redirect_uri={os.getenv("FRONT_END_REDIRECT_URL")}&response_type=code&state={state}'
+        authorization_url = f'{os.getenv("42_AUTHORIZE_URL")}?client_id={os.getenv("CLIENT_ID")}&redirect_uri={os.getenv("BACKEND_URL")}{reverse("oauth2-callback")}&response_type=code&state={state}'
         response = HttpResponseRedirect(authorization_url)
         response.set_cookie('oauth2_state', jwt.encode({"state": state}, settings.SECRET_KEY, algorithm='HS256'))
         return response
@@ -70,7 +70,7 @@ class OAuth2CallbackView(UnprotectedView):
             'grant_type': 'authorization_code',
             'client_id': os.getenv("CLIENT_ID"),
             'client_secret': os.getenv("CLIENT_SECRET"),
-            'redirect_uri': f"{os.getenv('FRONT_END_REDIRECT_URL')}",
+            'redirect_uri': f"{os.getenv('BACKEND_URL')}{reverse('oauth2-callback')}",
             'code': code,
         }
 
