@@ -98,7 +98,6 @@ const RemoteMode = () => {
             websocketRef.current = ws;
 
             websocketRef.current.onopen = () => {
-                console.log('WebSocket connection opened');
                 setConnectionState(prev => ({
                     ...prev,
                     status: 'connected',
@@ -126,7 +125,6 @@ const RemoteMode = () => {
             };
 
             websocketRef.current.onclose = (event) => {
-                console.log('WebSocket connection closed', event);
                 setConnectionState(prev => ({
                     ...prev,
                     status: 'disconnected'
@@ -320,6 +318,7 @@ const RemoteMode = () => {
 
         const controls = new OrbitControls(camera, canvasRef.current);
         controls.enableDamping = true;
+        controls.enablePan = false;
 
         class GameObject {
             static id = 0;
@@ -523,12 +522,14 @@ const RemoteMode = () => {
                 // ballSound.play();
 
                 ball.velocity.y = -ball.velocity.y;
+                let scoringPlayer = null;
 
                 if (ball.position.z < 0) {
                     aiSideBounces++;
                     if (aiSideBounces === 2) {
                         playerScore++;
                         scoreUpdate = true;
+                        scoringPlayer = 'player1';
                         resetBall(-1);
                     }
                 } else if (ball.position.z > 0) {
@@ -536,6 +537,7 @@ const RemoteMode = () => {
                     if (playerSideBounces === 2) {
                         aiScore++;
                         scoreUpdate = true;
+                        scoringPlayer = 'player2';
                         resetBall(1);
                     }
                 }

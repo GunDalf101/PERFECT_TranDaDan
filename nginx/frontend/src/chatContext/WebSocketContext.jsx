@@ -19,7 +19,6 @@ export const WebSocketProvider = ({ children }) => {
 
   const connectWebSocket = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      console.log("WebSocket already connected");
       setIsConnected(true);
       return;
     }

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+// import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import GUI from 'lil-gui';
 import gsap from 'gsap';
@@ -88,6 +88,7 @@ const LocalMode = () => {
 
         const controls = new OrbitControls(camera, canvasRef.current);
         controls.enableDamping = true;
+        controls.enablePan = false;
 
         class GameObject {
             static id = 0;
@@ -413,7 +414,7 @@ const LocalMode = () => {
             }
             if (event.key === 'Enter') {
                 inGame = !inGame;
-                controls.enableRotate = !inGame;
+                // controls.enableRotate = !inGame;
             }
         };
 
@@ -580,7 +581,7 @@ const LocalMode = () => {
                 gameLogic();
             }
             
-            controls.update();
+            // controls.update();
             // renderer.setScissorTest(true);
             // renderer.setViewport(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
             // renderer.setScissor(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
@@ -654,7 +655,7 @@ const LocalMode = () => {
             });
             
             renderer.dispose();
-            if (controls) controls.dispose();
+            // if (controls) controls.dispose();
         };
     }, []);
 
