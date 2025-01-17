@@ -58,9 +58,10 @@ export const RealTimeProvider = ({ children }) => {
 
         socket.onmessage = (event) => {
           const data = JSON.parse(event.data);
-          if (data.msgtype === 'notification') {
+          if (data.msgtype === 'notification' || data.msgtype === 'tournament_request_sent') {
             setNotifications(notifications => data.notifications.concat(notifications));
-          } else if (data.msgtype === 'friends') {
+          }
+          else if (data.msgtype === 'friends') {
             setFriends(data.friends);
           } else if (data.msgtype === 'relationship_update') {
             updateFriendsFromFSEvent(data);
@@ -96,6 +97,15 @@ export const RealTimeProvider = ({ children }) => {
       }
     };
   }, [isAuthenticated, retryWSConnect]);
+
+  const sendTournamentRequest = useCallback((username) => {
+    if (ws) {
+      ws.send(JSON.stringify({
+        type: 'tournament_request',
+        target_username: username
+      }));
+    }
+  }, [ws]);
 
   const sendRelationshipUpdate = (action, username) => {
     if (ws) {
@@ -134,7 +144,7 @@ export const RealTimeProvider = ({ children }) => {
   };
 
   return (
-    <RealTimeContext.Provider value={{ notifications, removeMarkedNotifications , relationshipUpdate, sendRelationshipUpdate, markAsRead, clearRealTimeContext, onlineFriends, selfRelationshipUpdate, friends }}>
+    <RealTimeContext.Provider value={{ notifications, removeMarkedNotifications ,sendTournamentRequest, relationshipUpdate, sendRelationshipUpdate, markAsRead, clearRealTimeContext, onlineFriends, selfRelationshipUpdate, friends }}>
       {children}
     </RealTimeContext.Provider>
   );

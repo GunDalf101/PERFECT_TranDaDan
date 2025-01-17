@@ -38,12 +38,19 @@ export const InviteProvider = ({ children }) => {
         // });
         break;
 
-      case 'tournament_request':
-        setNotification({
-          type: 'info',
-          message: `${data.from_username} invites you to join tournament`
-        });
-        break;
+      // case 'tournament_request':
+      //   setNotification({
+      //     type: 'info',
+      //     message: `${data.from_username} invites you to join tournament`
+      //   });
+      //   break;
+      
+      // case 'tournament_request_sent':
+      //   setNotification({
+      //     type: 'info',
+      //     message: `Notification for tournament was sent ;)`
+      //   });
+      //   break;
 
       case 'invite_accepted':
         const gameSession = {
@@ -179,30 +186,30 @@ export const InviteProvider = ({ children }) => {
     }
   }, [myUsername, handleWebSocketMessage]);  // Added myUsername and handleWebSocketMessage to dependencies
 
-  const sendTournamentJoinRequest = useCallback((targetUsername) => {
-    if (!isReady) {
-      setNotification({
-        type: 'error',
-        message: 'Cannot send tournament request: Connection not ready'
-      });
-      return false;
-    }
+  // const sendTournamentJoinRequest = useCallback((targetUsername) => {
+  //   if (!isReady) {
+  //     setNotification({
+  //       type: 'error',
+  //       message: 'Cannot send tournament request: Connection not ready'
+  //     });
+  //     return false;
+  //   }
 
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({
-        type: 'tournament_request',
-        target_username: targetUsername,
-        from_username: myUsername
-      }));
-      return true;
-    }
+  //   if (wsRef.current?.readyState === WebSocket.OPEN) {
+  //     wsRef.current.send(JSON.stringify({
+  //       type: 'tournament_request',
+  //       target_username: targetUsername,
+  //       from_username: myUsername
+  //     }));
+  //     return true;
+  //   }
 
-    setNotification({
-      type: 'error',
-      message: 'Cannot send tournament request: No connection to server'
-    });
-    return false;
-  }, [isReady, myUsername]);
+  //   setNotification({
+  //     type: 'error',
+  //     message: 'Cannot send tournament request: No connection to server'
+  //   });
+  //   return false;
+  // }, [isReady, myUsername]);
 
 
   useEffect(() => {
@@ -304,7 +311,6 @@ export const InviteProvider = ({ children }) => {
     sendInvite,
     acceptInvite,
     declineInvite,
-    sendTournamentJoinRequest,
     setNotification,
   };
 

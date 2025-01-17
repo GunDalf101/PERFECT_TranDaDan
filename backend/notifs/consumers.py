@@ -85,6 +85,36 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
             await self.mark_as_read(notification_id)
         elif type == "relationship_update":
             await self.handle_relationship_update(content)
+        elif type == "tournament_request":
+            await self.handle_tournament_request(content)
+
+
+    async def handle_tournament_request(self, content):
+        target_username = content.get('target_username')
+        target_user = await self.get_user_by_username(target_username)
+
+        if target_user:
+            notification_content = f"@{self.user.username} has invited you to a tournament"
+            
+            notif = await self.create_new_notification(
+                target_username,
+                notification_content,
+                url=""
+            )
+
+            # Send notification to target user
+            await self.channel_layer.group_send(
+                f"notifs_user_{target_username}",
+                {
+                    'type': 'send_new_notification',
+                    'notification': {
+                        'id': notif.id,
+                        'content': notif.content,
+                        'url': notif.url,
+                        'created_at': notif.created_at.isoformat()
+                    }
+                }
+            )
 
     async def send_notifications(self):
         notifications = await self.get_unread_notifications()

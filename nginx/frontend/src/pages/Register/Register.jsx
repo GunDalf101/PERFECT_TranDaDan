@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 
 
 const Register = () => {
+
 	const navigate = useNavigate();
 	const [formData, setFormData] = useState({
 		username: "",
@@ -22,6 +23,7 @@ const Register = () => {
 		password_confirmation: "",
 		general: "",
 	});
+	const [loading, setLoading] = useState(false);
 
 	const validateForm = () => {
 		let isValid = true;
