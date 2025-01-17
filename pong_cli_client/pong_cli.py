@@ -43,7 +43,6 @@ class KeyboardHandler:
         self.input_rate = 1/60
 
     async def handle_input(self, stdscr):
-        """Handle keyboard input with improved responsiveness"""
         while True:
             try:
                 key = stdscr.getch()
@@ -70,7 +69,6 @@ class KeyboardHandler:
             await asyncio.sleep(0.001)
 
     async def send_input(self, websocket):
-        """Send buffered input commands at a controlled rate"""
         while True:
             current_time = asyncio.get_event_loop().time()
 
@@ -102,7 +100,6 @@ class PongCLI:
         self.game_window = None
 
     def init_curses(self):
-        """Initialize curses settings"""
         self.stdscr = curses.initscr()
         curses.noecho()
         curses.cbreak()
@@ -115,7 +112,6 @@ class PongCLI:
         curses.curs_set(0)
 
     def cleanup_curses(self):
-        """Clean up curses settings"""
         if self.stdscr:
             self.stdscr.keypad(False)
             curses.nocbreak()
@@ -123,7 +119,6 @@ class PongCLI:
             curses.endwin()
 
     async def login(self):
-        """Handle user login"""
         self.cleanup_curses()
         print("\n=== Pong Game Login ===")
         email = input("Email: ")
@@ -162,7 +157,6 @@ class PongCLI:
             return False
 
     async def find_match(self):
-        """Connect to matchmaking and find a game"""
         self.stdscr.clear()
         self.stdscr.addstr(0, 0, "Searching for a match...")
         self.stdscr.refresh()
@@ -209,7 +203,6 @@ class PongCLI:
             return False
 
     async def render_game_state(self, state):
-        """Render the current game state in a fixed 80x22 area"""
         FIXED_WIDTH = 80
         FIXED_HEIGHT = 22
 
@@ -259,7 +252,6 @@ class PongCLI:
         self.stdscr.refresh()
 
     async def play_game(self):
-        """Handle the main game loop"""
         if not self.game_session:
             self.stdscr.addstr(0, 0, "No active game session!")
             self.stdscr.refresh()
@@ -316,7 +308,6 @@ class PongCLI:
             await asyncio.sleep(2)
 
     async def run(self):
-        """Main application loop"""
         try:
             self.init_curses()
 

@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { changeAvatarReq } from "../../api/avatarService";
 import { useNavigate } from 'react-router-dom';
 import { useUser } from "../../components/auth/UserContext";
+import {useRealTime} from "../../context/RealTimeContext"
 
 function formatSerializerErrors(errors) {
   if (typeof errors === "string") return [errors];
@@ -33,12 +34,14 @@ const EditProfile = () => {
   const [verificationCode, setVerificationCode] = useState("");
   const [userData, setUserData] = useState();
   const [formData, setFormData] = useState({
-    username: "",
     email: "",
     tournament_alias: "",
     password: "",
     password_confirmation: "",
   });
+
+  const {sendUserUpdate} = useRealTime();
+
   useEffect(() => {
 
     const fetchUserData = async () => {
@@ -46,7 +49,6 @@ const EditProfile = () => {
         const mydata = await getMyData();
         setUserData(mydata)
         setFormData({
-          username: mydata.username,
           email: mydata.email,
           tournament_alias: mydata.tournament_alias,
           password: "",
@@ -87,7 +89,7 @@ const EditProfile = () => {
       return;
     }
     try {
-      let keys = ["username", "email", "tournament_alias"];
+      let keys = ["email", "tournament_alias"];
       keys.forEach((key) => {
         if (formData[key] == "" || formData[key] === userData[key]) {
           delete formData[key];
@@ -106,6 +108,7 @@ const EditProfile = () => {
       } else if (Object.keys(formData).length > 0)
         await editMyData(formData);
       myToast(0, "you profile has been updated.");
+      sendUserUpdate();
       triggerRefetchUser();
       navigate("/profile");
     } catch (error) {
@@ -167,20 +170,6 @@ const EditProfile = () => {
                 className="hidden"
               />
             </div>
-          </div>
-
-          <div className="flex flex-col">
-            <label htmlFor="username" className="text-neonBlue">
-              Username
-            </label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={handleInputChange}
-              className="p-2 rounded bg-gray-800 text-white border border-gray-600"
-            />
           </div>
 
           <div className="flex flex-col">

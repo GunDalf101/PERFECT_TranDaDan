@@ -15,7 +15,7 @@ class UserConnectionManager:
     _lock = threading.Lock()
 
     @classmethod
-    def increment_connection(cls, username: str):
+    def increment_connection(cls, username):
         """Increment the connection count for a given username."""
         with cls._lock:
             if username in cls._connections:
@@ -25,22 +25,32 @@ class UserConnectionManager:
             return cls._connections[username]
 
     @classmethod
-    def decrement_connection(cls, username: str):
-        """Decrement the connection count for a given username."""
+    def decrement_connection(cls, username):
         with cls._lock:
             if username in cls._connections and cls._connections[username] > 0:
                 cls._connections[username] -= 1
             return cls._connections[username]
 
     @classmethod
-    def get_connection_count(cls, username: str) -> int:
-        """Get the current connection count for a given username."""
+    def get_connection_count(cls, username):
         with cls._lock:
             return cls._connections.get(username, 0)
+        
+    @classmethod
+    def del_user(cls, username):
+        with cls._lock:
+            try:
+                del cls._connections[username]
+            except KeyError:
+                pass
+
+    @classmethod
+    def set_count(cls, username, count):
+        with cls._lock:
+            cls._connections[username] = count
 
     @classmethod
     def get_all_connections(cls):
-        """Return the current state of the connections dictionary."""
         with cls._lock:
             return cls._connections.copy()
 
@@ -52,7 +62,6 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         if self.user is None:
             await self.close()
             return
-
         await self.accept()
         if UserConnectionManager.increment_connection(self.user.username) == 1:
             #print(f"first connect: {self.user.username}")
@@ -78,7 +87,12 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
             if self.user_group_name:
                 await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
+    @database_sync_to_async
+    def refresh_user_from_db(self):
+        self.user.refresh_from_db()
+
     async def receive_json(self, content):
+        await self.refresh_user_from_db()
         type = content.get("type")
         if type == "mark_as_read":
             notification_id = content.get("notification_id")
@@ -87,7 +101,8 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
             await self.handle_relationship_update(content)
         elif type == "tournament_request":
             await self.handle_tournament_request(content)
-
+        elif type == 'user_updated':
+            await self.share_user_updates()
 
     async def handle_tournament_request(self, content):
         target_username = content.get('target_username')
@@ -122,6 +137,12 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
             'msgtype': 'notification',
             'notifications': notifications
         })
+
+    async def share_user_updates(self):
+        try:
+            await self.notify_friends_of_my_data_change(justAvatar=True)
+        except Exception as e:
+            pass
 
     async def send_friends_list(self):
         friends = await self.get_user_friends(self.user)
@@ -231,11 +252,9 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         return notif
 
     async def notify_friends_of_my_status_change(self, user, is_online):
-        """Notify the user's friends about their online/offline status."""
         friends = await self.get_user_friends(user)
 
         for friend in friends:
-            #print(f"f > {friend.username}")
             friend_group_name = f"notifs_user_{friend.username}"
             await self.channel_layer.group_send(
                 friend_group_name,
@@ -246,6 +265,18 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
                 }
             )
 
+    async def notify_friends_of_my_data_change(self, justAvatar=False):
+        friends = await self.get_user_friends(self.user)
+        for friend in friends:
+            friend_group_name = f"notifs_user_{friend.username}"
+            await self.channel_layer.group_send(
+                friend_group_name,
+                {
+                    'type': 'friend_data_updated',
+                    'username': self.user.username,
+                    'justAvatar': True
+                }
+        )
     @database_sync_to_async
     def get_user_friends(self, user):
         friends = UserRelationship.objects.filter(
@@ -286,3 +317,17 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
             'username': event['username'],
             'is_online': event['is_online'],
         }))
+
+    async def friend_data_updated(self, event):
+        if 'justAvatar' in event:
+            await self.send(text_data=json.dumps({
+                'msgtype': 'friend_data_updated',
+                'justAvatar': event['justAvatar'],
+                'username': event['username']
+            }))
+        else:
+            await self.send(text_data=json.dumps({
+                'msgtype': 'friend_data_updated',
+                'username': event['username'],
+                'new_username': event['new_username'],
+            }))

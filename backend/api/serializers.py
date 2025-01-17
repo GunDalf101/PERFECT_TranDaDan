@@ -57,7 +57,7 @@ class LoginSerializer(serializers.Serializer):
         user = User.objects.filter(email=email).first()
         if user:
             if not user.email_verified:
-                raise serializers.ValidationError({"email": "Verify your account before logging in."})
+                raise serializers.ValidationError({"email": "Verify your email before logging in."})
         return data
 
 class RequestResetPasswordSerializer(serializers.Serializer):
@@ -95,7 +95,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'password_confirmation', 'tournament_alias']
+        fields = ['email', 'password', 'password_confirmation', 'tournament_alias']
 
     def validate(self, data):
         password = data.get('password')
