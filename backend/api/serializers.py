@@ -95,7 +95,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'password_confirmation', 'tournament_alias']
+        fields = ['email', 'password', 'password_confirmation', 'tournament_alias']
 
     def validate(self, data):
         password = data.get('password')

@@ -131,6 +131,7 @@ const MatchMaking = ({ gameType = "pong" }) => {
           }
         }, 3000);
       } else if (data.status === "searching") {
+        console.log("Searching for a match...");
       }
     };
 
@@ -139,6 +140,7 @@ const MatchMaking = ({ gameType = "pong" }) => {
         alert("Connection failed: You are already in a game.");
       }
       if (!matchFound) {
+        console.log("WebSocket disconnected");
         setIsSearching(false);
       }
     };
@@ -159,6 +161,7 @@ const MatchMaking = ({ gameType = "pong" }) => {
 
   const handleLeaveQueue = () => {
     if (socket && socket.readyState === WebSocket.OPEN) {
+      console.log("Leaving queue");
       socket.send(JSON.stringify({ type: "cancel_match" }));
       setIsSearching(false);
       socket.close();

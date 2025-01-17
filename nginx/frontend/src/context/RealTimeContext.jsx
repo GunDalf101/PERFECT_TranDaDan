@@ -61,6 +61,24 @@ export const RealTimeProvider = ({ children }) => {
           if (data.msgtype === 'notification') {
             setNotifications(notifications => data.notifications.concat(notifications));
           }
+          else if (data.msgtype === 'friend_data_updated') {
+            if (data['justAvatar']) {
+              setFriends((prev) => {
+                if (!prev.includes(data['username'])) return prev;
+                return prev.filter(f => f !== data['username']);
+              });
+              setFriends((perv) => {
+                return perv.concat(data['username'])
+              });
+              setOnlineFriends((prev) => {
+                if (!prev.includes(data['username'])) return prev;
+                return prev.filter(f => f !== data['username']);
+              });
+              setOnlineFriends((perv) => {
+                return perv.concat(data['username'])
+              });
+            }
+          }
           else if (data.msgtype === 'friends') {
             setFriends(data.friends);
           } else if (data.msgtype === 'relationship_update') {
@@ -119,6 +137,15 @@ export const RealTimeProvider = ({ children }) => {
     }
   };
 
+  const sendUserUpdate = () => {
+    if (ws) {
+      let e = {
+        type: 'user_updated',
+      }
+      ws.send(JSON.stringify(e));
+    }
+  };
+
   const markAsRead = useCallback((notificationId) => {
     if (ws && !markedIds.has(notificationId)) {
       ws.send(JSON.stringify({
@@ -144,7 +171,7 @@ export const RealTimeProvider = ({ children }) => {
   };
 
   return (
-    <RealTimeContext.Provider value={{ notifications, removeMarkedNotifications ,sendTournamentRequest, relationshipUpdate, sendRelationshipUpdate, markAsRead, clearRealTimeContext, onlineFriends, selfRelationshipUpdate, friends }}>
+    <RealTimeContext.Provider value={{ notifications, removeMarkedNotifications ,sendTournamentRequest, relationshipUpdate, sendRelationshipUpdate, markAsRead, clearRealTimeContext, onlineFriends, selfRelationshipUpdate, friends, sendUserUpdate }}>
       {children}
     </RealTimeContext.Provider>
   );
