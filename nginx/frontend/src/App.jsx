@@ -24,6 +24,7 @@ import SpaceRivalry from "./components/SpaceInvaders/SpaceRivalry/SpaceRivalry.j
 import InviteUI from "./components/InviteUI/InviteUI.jsx";
 import ClassicPong from "./components/Pong/ClassicPong/ClassicPong.jsx";
 import { TournamentProvider } from "./context/TournamentContext.jsx";
+import NotFound from "./pages/NotFound/NotFound.jsx"
 
 import User from "./pages/User/User";
 import EditProfile from "./pages/EditProfile/EditProfile";
@@ -36,7 +37,6 @@ import ResetPasswordForm from "./pages/ResetPassword/ResetPasswordForm"
 import EmailVerificationPage from "./pages/EmailVerificationPage.jsx";
 import { InviteProvider } from "./chatContext/InviteContext.jsx";
 import { Space } from "lucide-react";
-import AnauthNotFound from "./pages/NotFound/AnauthNotFound.jsx";
 import MatchDashboard from "./pages/Dashboard/Dashboard.jsx";
 
 function App() {
@@ -61,6 +61,12 @@ function App() {
                   <ProtectedRoute>
                     <MatchDashboard />
                   </ProtectedRoute>
+                }
+              />
+                <Route
+                path="/notfound"
+                element={
+                    <NotFound />
                 }
               />
                 <Route index element={<Homepage />} />
@@ -91,7 +97,6 @@ function App() {
                   </ProtectedRoute>
                 } />
               </Route>
-
 
               <Route
                 path="/game-lobby"
@@ -154,8 +159,7 @@ function App() {
 
                 <ResetPasswordForm />
               } />
-              {/*           <Route path="*" element={<Link to="/"/>}></Route> */}
-              <Route path="*" element={<AnauthNotFound />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </RealTimeProvider>
         </WebSocketProvider>

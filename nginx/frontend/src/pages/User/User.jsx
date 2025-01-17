@@ -30,11 +30,10 @@ const User = () => {
 
   const navigate = useNavigate();
 
-  const [userdata, setuserdata] = useState(null); // Store user data
-  const [error, setError] = useState(false); // Handle errors
-  const [reload, setReload] = useState(false); // State to trigger useEffect
-  const [isAddHovering, setIsAddHovering] = useState(false); // State to manage hover
-  const [isBlockHovering, setIsBlockHovering] = useState(false); // State to manage hover for block button
+  const [userdata, setuserdata] = useState(null);
+  const [reload, setReload] = useState(false);
+  const [isAddHovering, setIsAddHovering] = useState(false);
+  const [isBlockHovering, setIsBlockHovering] = useState(false);
   const [userMatches, setUserMatches] = useState({
     pong: [],
     space: []
@@ -47,7 +46,6 @@ const User = () => {
     setReload(!reload);
   }, [relationshipUpdate, username, onlineFriends, friends]);
 
-  // Fetch user data and friend request status
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -61,15 +59,13 @@ const User = () => {
         if(mydata.id == data.id)
             navigate("/profile");
       } catch (error) {
-        console.error("Error fetching user data:", error);
-        setError(true);
+        navigate("/notfound")
       }
     };
 
     fetchUserData();
-  }, [reload]); // Add reload dependency
+  }, [reload]);
 
-  // Handle sending/canceling a friend request
   const handleAddFriend = async () => {
     try {
       await sendFriendReq(username);
@@ -77,24 +73,21 @@ const User = () => {
       myToast(0, "friend request has been sent")
       sendRelationshipUpdate("sent_friend_request", username);
     } catch (error) {
-      console.error("Error sending friend request:", error);
+      console.log("Error sending friend request:", error);
     }
-    setReload(!reload); // Trigger the useEffect to refetch user data
+    setReload(!reload);
   };
 
   const handleCancelReq = async () => {
     try {
-        // if(username.relationship == r.HE_REQUEST)
-        //   {
-            await cancelFriendReq(username);
-            setIsAddHovering(false);
-            myToast(1, "friend request has been canceled")
-            sendRelationshipUpdate("cancel_friend_request", username);
-          // }
+        await cancelFriendReq(username);
+        setIsAddHovering(false);
+        myToast(1, "friend request has been canceled")
+        sendRelationshipUpdate("cancel_friend_request", username);
       } catch (error) {
         console.error("Error sending friend request:", error);
       }
-      setReload(!reload); // Trigger the useEffect to refetch user data
+      setReload(!reload);
   };
 
   const handleUnfriend = async () => {
@@ -104,9 +97,9 @@ const User = () => {
         myToast(2, "I'm sorry mi amori")
         sendRelationshipUpdate("unfriended", username);
       } catch (error) {
-        console.error("Error sending friend request:", error);
+        console.log("Error sending friend request:", error);
       }
-      setReload(!reload); // Trigger the useEffect to refetch user data
+      setReload(!reload);
   };
 
   const handleAcceptRequest = async () => {
@@ -115,7 +108,7 @@ const User = () => {
       myToast(1, "friend request has been accepted.")
       sendRelationshipUpdate("friends", username);
     } catch (error) {
-      console.error("Error accepting friend request:", error);
+      console.log("Error accepting friend request:", error);
     }
     setReload(!reload);
   };
@@ -135,27 +128,18 @@ const User = () => {
           sendRelationshipUpdate("blocked", username);
       }
     } catch (error) {
-      console.error("Error sending friend request:", error);
+      console.log("Error sending friend request:", error);
     }
     setReload(!reload);
   };
-
-  if (error) return <NotFound />;
   if (!userdata || !dash) return <Loading />;
-
-  const statistics = {
-    totalMatches: 10,
-    wins: 7,
-    losses: 3,
-    winRate: "70%",
-  };
 
   return(
     <div className="flex flex-col items-center min-h-screen bg-cover bg-center bg-[url('/retro_1.jpeg')] from-darkBackground via-purpleGlow to-neonBlue text-white font-retro">
       <div className="flex flex-wrap m-10 justify-between w-11/12 gap-4 mt-20">
-        {/* User Box */}
+
         <div className="flex-1 min-w-[500px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">
-          {/* Profile Image */}
+
           <div className="flex flex-col items-center">
           <div className="flex flex-col items-center relative">
             <img
@@ -163,12 +147,12 @@ const User = () => {
               alt="Profile"
               className="w-36 h-36 rounded-full border-4 border-white shadow-[0_0_20px_5px] shadow-neonPink mb-4"
             />
-            {/* Status Dot */}
+
             <div
               className={`absolute top-1 right-1 w-4 h-4 rounded-full border-2 ${
                 onlineFriends.includes(userdata.username) ? "bg-green-500" : "bg-gray-500"
               }`}
-              title={userdata.isOnline ? "Online" : "Offline"} // Tooltip for accessibility
+              title={userdata.isOnline ? "Online" : "Offline"}
             ></div>
           </div>
             <h2 className="text-3xl text-center text-neonPink">username</h2>
@@ -182,10 +166,9 @@ const User = () => {
               {userdata.email}
             </p>
 
-            {/* Friend Request Button */}
            { userdata.relationship == r.FRIENDS ? (
             <button
-              onClick={handleUnfriend} // Assuming this handler unfriends the user
+              onClick={handleUnfriend}
               onMouseEnter={() => setIsAddHovering(true)}
               onMouseLeave={() => setIsAddHovering(false)}
               className="mt-4 px-6 py-2 rounded-lg  bg-neonPink text-xl font-bold transition-all duration-300 hover:bg-red-600 hover:text-white"
@@ -201,7 +184,6 @@ const User = () => {
                Accept Request
              </button>
              ) : userdata.relationship == r.NONE ? (
-               // Add Friend Button
                <button
                  onClick={handleAddFriend}
                  onMouseEnter={() => setIsAddHovering(true)}
@@ -211,9 +193,8 @@ const User = () => {
                  Add Friend
                </button>
              ) : userdata.relationship == r.YOU_REQUEST ? (
-               // Cancel Request Button
                <button
-                 onClick={handleCancelReq} // Assuming the same handler cancels the request
+                 onClick={handleCancelReq}
                  onMouseEnter={() => setIsAddHovering(true)}
                  onMouseLeave={() => setIsAddHovering(false)}
                  className="mt-4 px-6 py-2 rounded-lg text-xl font-bold transition-all duration-300 hover:bg-red-600 text-white bg-gray-500"
@@ -222,7 +203,6 @@ const User = () => {
                </button>
              ) : null}
 
-           {/* Block Button */}
            <button
              onClick={handleBlockUser}
              onMouseEnter={() => setIsBlockHovering(true)}
@@ -246,7 +226,6 @@ const User = () => {
         <UserLevelBox level={userdata.level} progress={userdata.xp_progress}/>
         ):""}
 
-        {/* Friends Box */}
         {showUserContent(userdata.relationship) ?(
         <div className="flex-1 min-w-[500px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink overflow-y-auto">
           <h2 className="text-2xl text-center text-neonPink mb-4">Friends</h2>
@@ -282,7 +261,6 @@ const User = () => {
         </div>
         ):""}
 
-        {/* Match History Card */}
         {showUserContent(userdata.relationship) ?(
         <div className="flex-1 min-w-[600px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
           <p className="text-3xl text-center text-neonBlue mb-5">PingPong</p>
@@ -317,7 +295,7 @@ const User = () => {
           </div>
         </div>
         ):""}
-        {/* Match History Card */}
+
         {showUserContent(userdata.relationship) ? (
         <div className="flex-1 min-w-[600px] min-h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonPink shadow-[0_0_25px_5px] shadow-neonPink">
           <p className="text-3xl text-center text-red-600 mb-5">SPACExRIVALRY</p>
@@ -354,7 +332,6 @@ const User = () => {
         ):""}
       </div>
 
-      {/* Match History and Statistics Section */}
       {showUserContent(userdata.relationship) ?(
         <div className="flex flex-wrap justify-between w-11/12 gap-4 mb-4">
           <div className="flex-1 min-w-[500px] h-[500px] p-6 bg-black bg-opacity-80 rounded-lg border-2 border-neonBlue shadow-[0_0_25px_5px] shadow-neonBlue">

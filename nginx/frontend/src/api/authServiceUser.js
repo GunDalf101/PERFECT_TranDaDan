@@ -6,7 +6,6 @@ const getUserData = async (username) => {
     const response = await axiosInstance.get('api/user/' + username);
     return response.data;
   } catch (error) {
-    console.error('Get user data error:', error);
     throw error;
   }
 };
