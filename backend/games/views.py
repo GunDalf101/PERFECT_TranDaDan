@@ -33,14 +33,16 @@ class GetUserMatch(APIView):
                     'id': _match.id,
                     'opponent': _match.player2.username if _match.player1.id == userid else _match.player1.username,
                     'score': "Forfeit" if _match.forfeit else f"{_match.score_player1}-{_match.score_player2}",
-                    'result': 'win' if _match.winner_id == userid else 'lose'
+                    'result': 'win' if _match.winner_id == userid else 'lose',
+                    'end_date': _match.ended_at.strftime("%m/%d/%Y")
                 })
             elif _match.game_type == 'space-rivalry':
                 space_matches.append({
                     'id': _match.id,
                     'opponent': _match.player2.username if _match.player1.id == userid else _match.player1.username,
                     'score': "Forfeit" if _match.forfeit else f"{_match.score_player1}-{_match.score_player2}",
-                    'result': 'win' if _match.winner_id == userid else 'lose'
+                    'result': 'win' if _match.winner_id == userid else 'lose',
+                    'end_date': _match.ended_at.strftime("%m/%d/%Y")
                 })
         return Response({'pong': pong_matches[::-1],'space': space_matches[::-1]}, status=200)
 
