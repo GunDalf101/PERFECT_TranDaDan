@@ -312,7 +312,6 @@ class LoginView(UnprotectedView):
 class UsersMeView(APIView):
 
     def get(self, request):
-        raise Exception
         user = request.user
         xp_manager = XPManager(user)
         user_data = {
