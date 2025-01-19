@@ -31,11 +31,13 @@ class DefaultAuthentication(BaseAuthentication):
             return (user, token)
 
         except ExpiredSignatureError:
-            raise AuthenticationFailed(f'Token expired.', code=401)
+            raise AuthenticationFailed(f'Token expired, relogin.', code=401)
         except jwt.PyJWTError as e:
             raise AuthenticationFailed(f'invalid Token: {e}', code=401)
         except User.DoesNotExist:
             raise AuthenticationFailed('User not found.', code=404)
+        except Exception:
+            raise AuthenticationFailed('w00ts.', code=401)
 
 class NoAuthenticationOnly(BaseAuthentication):
     """

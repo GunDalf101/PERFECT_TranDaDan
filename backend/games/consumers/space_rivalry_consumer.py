@@ -66,57 +66,59 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
     #     user.save()
 
     async def connect(self):
+        try:
+            self.user = self.scope.get('user', None)
 
-        self.user = self.scope.get('user', None)
+            if self.user is None:
+                await self.close()
+                return
 
-        if self.user is None:
-            await self.close()
-            return
+            self.game_id = self.scope['url_route']['kwargs']['game_id']
+            self.username = self.user.username
 
-        self.game_id = self.scope['url_route']['kwargs']['game_id']
-        self.username = self.user.username
+            # await self.update_user_ingame(self.username, True)
+            PlayersManager.add_player(self.username)
 
-        # await self.update_user_ingame(self.username, True)
-        PlayersManager.add_player(self.username)
+            if not self.game_id or not self.username:
+                await self.close()
+                return
 
-        if not self.game_id or not self.username:
-            await self.close()
-            return
+            self.room_group_name = f'space_rivalry_{self.game_id}'
 
-        self.room_group_name = f'space_rivalry_{self.game_id}'
+            is_completed = await self.check_match_status()
+            if is_completed:
+                await self.close()
+                return
 
-        is_completed = await self.check_match_status()
-        if is_completed:
-            await self.close()
-            return
+            self.connection_timestamps[self.channel_name] = time.time()
 
-        self.connection_timestamps[self.channel_name] = time.time()
+            if self.game_id in self.disconnection_cleanup_tasks:
+                self.disconnection_cleanup_tasks[self.game_id].cancel()
+                del self.disconnection_cleanup_tasks[self.game_id]
 
-        if self.game_id in self.disconnection_cleanup_tasks:
-            self.disconnection_cleanup_tasks[self.game_id].cancel()
-            del self.disconnection_cleanup_tasks[self.game_id]
-
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
-        await self.accept()
-
-        if self.game_id not in self.shared_games:
-            self.initialize_game_state()
-            if self.game_id not in self.game_loops:
-                self.game_loops[self.game_id] = asyncio.create_task(self.game_loop())
-
-        if self.active_connections.get(self.game_id, 0) > 0:
-            await self.channel_layer.group_send(
+            await self.channel_layer.group_add(
                 self.room_group_name,
-                {
-                    'type': 'player_reconnected',
-                    'message': 'Opponent has reconnected'
-                }
+                self.channel_name
             )
+            await self.accept()
 
-        self.active_connections[self.game_id] = self.active_connections.get(self.game_id, 0) + 1
+            if self.game_id not in self.shared_games:
+                self.initialize_game_state()
+                if self.game_id not in self.game_loops:
+                    self.game_loops[self.game_id] = asyncio.create_task(self.game_loop())
+
+            if self.active_connections.get(self.game_id, 0) > 0:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'player_reconnected',
+                        'message': 'Opponent has reconnected'
+                    }
+                )
+
+            self.active_connections[self.game_id] = self.active_connections.get(self.game_id, 0) + 1
+        except Exception:
+            pass
 
     async def delayed_cleanup(self, game_id, player_number):
         try:
@@ -162,45 +164,49 @@ class SpaceRivalryConsumer(AsyncWebsocketConsumer):
             pass
         except Exception as e:
             print(f"Error in delayed cleanup for game {game_id}: {e}")
+
     async def disconnect(self, close_code):
-        if not hasattr(self, 'game_id'):
-            return
+        try:
+            if not hasattr(self, 'game_id'):
+                return
 
-        disconnect_time = time.time()
-        connection_time = self.connection_timestamps.get(self.channel_name, disconnect_time)
-        connection_duration = disconnect_time - connection_time
+            disconnect_time = time.time()
+            connection_time = self.connection_timestamps.get(self.channel_name, disconnect_time)
+            connection_duration = disconnect_time - connection_time
 
-        self.connection_timestamps.pop(self.channel_name, None)
+            self.connection_timestamps.pop(self.channel_name, None)
 
-        # await self.update_user_ingame(self.username, False)
+            # await self.update_user_ingame(self.username, False)
 
-        PlayersManager.remove_player(self.username)
-        print(f"players: {PlayersManager._players}")
-        if connection_duration < 1:
-            await self.handle_unstable_connection()
-            return
+            PlayersManager.remove_player(self.username)
+            print(f"players: {PlayersManager._players}")
+            if connection_duration < 1:
+                await self.handle_unstable_connection()
+                return
 
-        cleanup_task = asyncio.create_task(
-            self.delayed_cleanup(self.game_id, self.player_num)
-        )
-        self.disconnection_cleanup_tasks[self.game_id] = cleanup_task
+            cleanup_task = asyncio.create_task(
+                self.delayed_cleanup(self.game_id, self.player_num)
+            )
+            self.disconnection_cleanup_tasks[self.game_id] = cleanup_task
 
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'player_disconnected',
-                'player': self.player_num,
-                'message': 'Opponent disconnected. Waiting for reconnection...'
-            }
-        )
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'player_disconnected',
+                    'player': self.player_num,
+                    'message': 'Opponent disconnected. Waiting for reconnection...'
+                }
+            )
 
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
+            await self.channel_layer.group_discard(
+                self.room_group_name,
+                self.channel_name
+            )
 
-        if self.game_id in self.active_connections:
-            self.active_connections[self.game_id] -= 1
+            if self.game_id in self.active_connections:
+                self.active_connections[self.game_id] -= 1
+        except Exception:
+            pass
 
     async def receive(self, text_data):
         try:

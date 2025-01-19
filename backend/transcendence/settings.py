@@ -47,8 +47,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.middleware.common.CommonMiddleware',
+    # 'django.middleware.security.SecurityMiddleware',
+    # 'django.middleware.common.CommonMiddleware',
     # 'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
     # "django.middleware.cache.UpdateCacheMiddleware",
     # "django.middleware.common.CommonMiddleware",
@@ -171,7 +171,8 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'api.authentication.DefaultAuthentication'
-    ]
+    ],
+    'EXCEPTION_HANDLER': 'api.utils.catch_em_all'
 }
 
 SIMPLE_JWT = {

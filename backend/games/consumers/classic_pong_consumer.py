@@ -16,7 +16,7 @@ class ClassicPongConsumer(AsyncWebsocketConsumer):
     active_connections = {}
     connection_timestamps = {}
     disconnection_cleanup_tasks = {}
-    
+
     GAME_WIDTH = 800
     GAME_HEIGHT = 400
     PADDLE_WIDTH = 15
@@ -26,7 +26,7 @@ class ClassicPongConsumer(AsyncWebsocketConsumer):
     INITIAL_BALL_SPEED = 7
     MAX_BALL_SPEED = 15
     BALL_SPEEDUP = 0.2
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.room_group_name = None
@@ -55,7 +55,7 @@ class ClassicPongConsumer(AsyncWebsocketConsumer):
             xp_manager = XPManager(winner_user)
             xp_manager.add_xp(50)
             winner_user.save()
-            
+
             match.winner = winner_user
             match.score_player1 = game_state['score1']
             match.score_player2 = game_state['score2']
@@ -67,93 +67,99 @@ class ClassicPongConsumer(AsyncWebsocketConsumer):
             print(f"Error updating match record: {e}")
 
     async def connect(self):
-        self.user = self.scope.get('user', None)
-        
-        if not self.user:
-            await self.close()
-            return
+        try:
+            self.user = self.scope.get('user', None)
 
-        self.game_id = self.scope['url_route']['kwargs']['game_id']
-        self.username = self.user.username
+            if not self.user:
+                await self.close()
+                return
 
-        PlayersManager.add_player(self.username)
+            self.game_id = self.scope['url_route']['kwargs']['game_id']
+            self.username = self.user.username
 
-        if not self.game_id or not self.username:
-            await self.close()
-            return
+            PlayersManager.add_player(self.username)
 
-        self.room_group_name = f'pong_{self.game_id}'
+            if not self.game_id or not self.username:
+                await self.close()
+                return
 
-        is_completed = await self.check_match_status()
-        if is_completed:
-            await self.close()
-            return
+            self.room_group_name = f'pong_{self.game_id}'
 
-        self.connection_timestamps[self.channel_name] = time.time()
+            is_completed = await self.check_match_status()
+            if is_completed:
+                await self.close()
+                return
 
-        if self.game_id in self.disconnection_cleanup_tasks:
-            self.disconnection_cleanup_tasks[self.game_id].cancel()
-            del self.disconnection_cleanup_tasks[self.game_id]
+            self.connection_timestamps[self.channel_name] = time.time()
 
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
-        await self.accept()
+            if self.game_id in self.disconnection_cleanup_tasks:
+                self.disconnection_cleanup_tasks[self.game_id].cancel()
+                del self.disconnection_cleanup_tasks[self.game_id]
 
-        if self.game_id not in self.shared_games:
-            self.initialize_game_state()
-            if self.game_id not in self.game_loops:
-                self.game_loops[self.game_id] = asyncio.create_task(self.game_loop())
+            await self.channel_layer.group_add(
+                self.room_group_name,
+                self.channel_name
+            )
+            await self.accept()
 
-        if self.active_connections.get(self.game_id, 0) > 0:
+            if self.game_id not in self.shared_games:
+                self.initialize_game_state()
+                if self.game_id not in self.game_loops:
+                    self.game_loops[self.game_id] = asyncio.create_task(self.game_loop())
+
+            if self.active_connections.get(self.game_id, 0) > 0:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'player_reconnected',
+                        'message': 'Opponent has reconnected'
+                    }
+                )
+
+            self.active_connections[self.game_id] = self.active_connections.get(self.game_id, 0) + 1
+        except Exception:
+            pass
+
+    async def disconnect(self, close_code):
+        try:
+            if not hasattr(self, 'game_id'):
+                return
+
+            disconnect_time = time.time()
+            connection_time = self.connection_timestamps.get(self.channel_name, disconnect_time)
+            connection_duration = disconnect_time - connection_time
+
+            self.connection_timestamps.pop(self.channel_name, None)
+
+            PlayersManager.remove_player(self.username)
+
+            if connection_duration < 1:
+                await self.handle_unstable_connection()
+                return
+
+            cleanup_task = asyncio.create_task(
+                self.delayed_cleanup(self.game_id, self.player_num)
+            )
+            self.disconnection_cleanup_tasks[self.game_id] = cleanup_task
+
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    'type': 'player_reconnected',
-                    'message': 'Opponent has reconnected'
+                    'type': 'player_disconnected',
+                    'player': self.player_num,
+                    'message': 'Opponent disconnected. Waiting for reconnection...'
                 }
             )
 
-        self.active_connections[self.game_id] = self.active_connections.get(self.game_id, 0) + 1
+            await self.channel_layer.group_discard(
+                self.room_group_name,
+                self.channel_name
+            )
 
-    async def disconnect(self, close_code):
-        if not hasattr(self, 'game_id'):
-            return
-
-        disconnect_time = time.time()
-        connection_time = self.connection_timestamps.get(self.channel_name, disconnect_time)
-        connection_duration = disconnect_time - connection_time
-        
-        self.connection_timestamps.pop(self.channel_name, None)
-        
-        PlayersManager.remove_player(self.username)
-        
-        if connection_duration < 1:
-            await self.handle_unstable_connection()
-            return
-            
-        cleanup_task = asyncio.create_task(
-            self.delayed_cleanup(self.game_id, self.player_num)
-        )
-        self.disconnection_cleanup_tasks[self.game_id] = cleanup_task
-        
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'player_disconnected',
-                'player': self.player_num,
-                'message': 'Opponent disconnected. Waiting for reconnection...'
-            }
-        )
-        
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
-        
-        if self.game_id in self.active_connections:
-            self.active_connections[self.game_id] -= 1
+            if self.game_id in self.active_connections:
+                self.active_connections[self.game_id] -= 1
+        except Exception:
+            pass
 
     async def receive(self, text_data):
         try:
@@ -227,15 +233,15 @@ class ClassicPongConsumer(AsyncWebsocketConsumer):
                     game_state = self.shared_games[self.game_id]
                     current_time = time.time()
                     dt = current_time - game_state['lastUpdate']
-                    
+
                     if game_state['gameStarted'] and not game_state['gameOver']:
                         self.update_game_state(dt)
                         game_state['lastUpdate'] = current_time
                         await self.check_scoring()
                         await self.broadcast_game_state()
-                
+
                 await asyncio.sleep(self.delta_time)
-                
+
         except asyncio.CancelledError:
             pass
         except Exception as e:
@@ -248,23 +254,23 @@ class ClassicPongConsumer(AsyncWebsocketConsumer):
 
     def update_ball_position(self):
         game_state = self.shared_games[self.game_id]
-        
+
         next_x = game_state['ballX'] + game_state['ballSpeedX']
         next_y = game_state['ballY'] + game_state['ballSpeedY']
-        
+
         if next_y - self.BALL_SIZE/2 <= 0:
             next_y = self.BALL_SIZE/2
             game_state['ballSpeedY'] = abs(game_state['ballSpeedY'])
         elif next_y + self.BALL_SIZE/2 >= self.GAME_HEIGHT:
             next_y = self.GAME_HEIGHT - self.BALL_SIZE/2
             game_state['ballSpeedY'] = -abs(game_state['ballSpeedY'])
-        
+
         game_state['ballX'] = next_x
         game_state['ballY'] = next_y
 
     def check_collisions(self):
         game_state = self.shared_games[self.game_id]
-        
+
         ball_left = game_state['ballX'] - self.BALL_SIZE/2
         ball_right = game_state['ballX'] + self.BALL_SIZE/2
         ball_top = game_state['ballY'] - self.BALL_SIZE/2
@@ -297,24 +303,24 @@ class ClassicPongConsumer(AsyncWebsocketConsumer):
     def handle_paddle_hit(self, game_state, paddle_y, is_left_paddle):
         relative_hit = (game_state['ballY'] - (paddle_y + self.PADDLE_HEIGHT/2)) / (self.PADDLE_HEIGHT/2)
         relative_hit = max(-1, min(1, relative_hit))
-        
+
         max_angle = 5 * math.pi / 12
         angle = relative_hit * max_angle
-        
+
         current_speed = math.sqrt(game_state['ballSpeedX']**2 + game_state['ballSpeedY']**2)
         new_speed = min(current_speed + self.BALL_SPEEDUP, self.MAX_BALL_SPEED)
         new_speed *= 1 + random.uniform(-0.1, 0.1)
 
         direction = 1 if is_left_paddle else -1
         game_state['ballSpeedX'] = direction * abs(new_speed * math.cos(angle))
-        
+
         y_direction = 1 if game_state['ballSpeedY'] > 0 else -1
         game_state['ballSpeedY'] = y_direction * abs(new_speed * math.sin(angle))
         game_state['ballSpeedY'] *= 1 + random.uniform(-0.1, 0.1)
 
     async def check_scoring(self):
         game_state = self.shared_games[self.game_id]
-        
+
         scored = False
         if game_state['ballX'] <= 0:
             game_state['score2'] += 1
@@ -324,7 +330,7 @@ class ClassicPongConsumer(AsyncWebsocketConsumer):
             game_state['score1'] += 1
             game_state['combo1'] = 0
             scored = True
-            
+
         if scored:
             if game_state['score1'] >= 11 or game_state['score2'] >= 11:
                 winner = game_state['player1'] if game_state['score1'] > game_state['score2'] else game_state['player2']
@@ -345,25 +351,25 @@ class ClassicPongConsumer(AsyncWebsocketConsumer):
     async def delayed_cleanup(self, game_id, player_number):
         try:
             await asyncio.sleep(self.reconnection_grace_period)
-            
+
             if game_id in self.shared_games:
                 game_state = self.shared_games[game_id]
-                
+
                 if not game_state.get('winner'):
                     disconnected_player = player_number
                     winning_player = 'player2' if disconnected_player == 'player1' else 'player1'
-                    
+
                     winner_username = game_state[winning_player]
                     game_state['winner'] = winner_username
                     game_state['gameOver'] = True
                     game_state['forfeit'] = True
-                    
+
                     winner_score = max(game_state['score1'], game_state['score2'])
                     game_state['score1'] = winner_score if winning_player == 'player1' else 0
                     game_state['score2'] = winner_score if winning_player == 'player2' else 0
-                    
+
                     await self.update_match_record(game_state)
-                    
+
                     await self.channel_layer.group_send(
                         self.room_group_name,
                         {
@@ -372,17 +378,17 @@ class ClassicPongConsumer(AsyncWebsocketConsumer):
                             'message': f'Game ended due to player disconnection. {winner_username} wins by forfeit.'
                         }
                     )
-                
+
                 if game_id in self.game_loops:
                     self.game_loops[game_id].cancel()
                     del self.game_loops[game_id]
-                    
+
                 if game_id in self.shared_games:
                     del self.shared_games[game_id]
-                    
+
                 if game_id in self.active_connections:
                     del self.active_connections[game_id]
-                    
+
         except asyncio.CancelledError:
             pass
         except Exception as e:

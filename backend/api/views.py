@@ -8,10 +8,8 @@ import requests
 import random
 import string
 import environ
-import jwt
 from django.urls import reverse
 from django.utils import timezone
-from django.conf import settings
 from .utils import (
     generate_jwt, unset_cookie_header, get_free_username,
     get_free_game_nickname, reset_password_for_user, find_user_id_by_reset_token,
@@ -35,7 +33,6 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 import os
 from .xp_manager import XPManager
-from rest_framework import viewsets
 
 User = get_user_model()
 
@@ -315,6 +312,7 @@ class LoginView(UnprotectedView):
 class UsersMeView(APIView):
 
     def get(self, request):
+        raise Exception
         user = request.user
         xp_manager = XPManager(user)
         user_data = {
@@ -678,7 +676,8 @@ class UserXPLevelView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
-class UserRankingsViewSet(viewsets.ViewSet):
+class UserRankingsViewSet(APIView):
+
     def get(self, request):
         top_users = (User.objects
                     .values('username', 'level', 'xp', 'avatar_url', 'tournament_alias')

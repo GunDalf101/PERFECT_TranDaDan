@@ -28,5 +28,5 @@ urlpatterns = [
     path('blockuser', BlockUser.as_view(), name='block-user'),
     path('friends', FriendsView.as_view(), name='friends'),
     path('search/', UserSearchView.as_view(), name='user-search'),
-    path('leaderboard', UserRankingsViewSet.as_view({'get': 'get'}), name='leaderboard'),
+    path('leaderboard', UserRankingsViewSet.as_view(), name='leaderboard'),
 ]

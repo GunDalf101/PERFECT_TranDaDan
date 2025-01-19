@@ -11,37 +11,43 @@ class InviteConsumer(AsyncJsonWebsocketConsumer):
     pending_invites = {}
 
     async def connect(self):
-        user = self.user = self.scope.get('user', None)
-        if self.user is None:
-            await self.close()
-            return
-        self.username = user.username
+        try:
+            user = self.user = self.scope.get('user', None)
+            if self.user is None:
+                await self.close()
+                return
+            self.username = user.username
 
 
-        InviteConsumer.active_connections[self.username] = self
+            InviteConsumer.active_connections[self.username] = self
 
-        await self.accept()
+            await self.accept()
 
-        pending = InviteConsumer.pending_invites.get(self.username, [])
-        for invite in pending:
-            await self.send_json(invite)
+            pending = InviteConsumer.pending_invites.get(self.username, [])
+            for invite in pending:
+                await self.send_json(invite)
+        except Exception:
+            pass
 
     async def disconnect(self, code):
-        if hasattr(self, 'username') and  self.username in InviteConsumer.active_connections:
+        if hasattr(self, 'username') and self.username in InviteConsumer.active_connections:
             del InviteConsumer.active_connections[self.username]
 
         if hasattr(self, 'username') and self.username in InviteConsumer.pending_invites:
             del InviteConsumer.pending_invites[self.username]
 
     async def receive_json(self, content):
-        msg_type = content.get('type')
+        try:
+            msg_type = content.get('type')
 
-        if msg_type == 'send_invite':
-            await self.handle_send_invite(content)
-        elif msg_type == 'accept_invite':
-            await self.handle_accept_invite(content)
-        elif msg_type == 'decline_invite':
-            await self.handle_decline_invite(content)
+            if msg_type == 'send_invite':
+                await self.handle_send_invite(content)
+            elif msg_type == 'accept_invite':
+                await self.handle_accept_invite(content)
+            elif msg_type == 'decline_invite':
+                await self.handle_decline_invite(content)
+        except Exception:
+            pass
 
     async def handle_send_invite(self, content):
         print(content)
