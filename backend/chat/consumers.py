@@ -5,7 +5,6 @@ from channels.db import database_sync_to_async
 from api.models import UserRelationship, RelationshipType
 from .models import Message, Conversation
 from django.db import models
-from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 
@@ -50,6 +49,12 @@ class DirectMessageConsumer(AsyncWebsocketConsumer):
             if username == self.user.username:
                 await self.send(text_data=json.dumps({
                     'error': "not friends",
+                    'username': username
+                }))
+                return
+            if len(content) > 500:
+                await self.send(text_data=json.dumps({
+                    'error': "too much texto",
                     'username': username
                 }))
                 return

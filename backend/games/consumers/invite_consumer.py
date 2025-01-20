@@ -5,6 +5,9 @@ from django.contrib.auth import get_user_model
 from ..utils import PlayersManager
 from ..models import Match
 import time
+from channels.db import database_sync_to_async
+from api.models import UserRelationship, RelationshipType
+from django.db import models
 
 class InviteConsumer(AsyncJsonWebsocketConsumer):
     active_connections = {}
@@ -50,7 +53,6 @@ class InviteConsumer(AsyncJsonWebsocketConsumer):
             pass
 
     async def handle_send_invite(self, content):
-        print(content)
         target_username = content.get('target_username')
         game_type = content.get('game_type', 'pong')
 
@@ -103,6 +105,12 @@ class InviteConsumer(AsyncJsonWebsocketConsumer):
                 'message': 'Cannot invite yourself'
             })
             return
+        if not await self.is_friend(player1, player2):
+            await self.send_json({
+                'type': 'invite_error',
+                'message': 'You guys are not friends.'
+            })
+            return
         match = await sync_to_async(Match.objects.create)(
             player1=self.scope['user'],
             player2=inviter_connection.scope['user'],
@@ -133,3 +141,16 @@ class InviteConsumer(AsyncJsonWebsocketConsumer):
                 'type': 'invite_declined',
                 'by_username': self.username
             })
+
+    @database_sync_to_async
+    def is_friend(self, user, target_user):
+        try:
+            relationship = UserRelationship.objects.get(
+                (models.Q(first_user=user) & models.Q(second_user=target_user)) |
+                (models.Q(first_user=target_user) & models.Q(second_user=user))
+            )
+            if relationship.type == RelationshipType.FRIENDS.value:
+                return True
+            return False
+        except UserRelationship.DoesNotExist:
+            return False
