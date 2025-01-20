@@ -62,7 +62,7 @@ const TournamentMode = () => {
     useEffect(() => {
         let playerScore = 0;
         let aiScore = 0;
-        const maxScore = 2;
+        const maxScore = 11;
         let playerGamesWon = 0;
         let aiGamesWon = 0;
         let maxGames = 3;
