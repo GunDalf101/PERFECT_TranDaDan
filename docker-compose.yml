@@ -8,9 +8,6 @@ services:
     container_name: backend
     volumes:
       - media:/app/media
-      - type: bind
-        source: ./backend
-        target: /app
     env_file:
       - .env
     depends_on:
