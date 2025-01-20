@@ -20,6 +20,11 @@ class InviteConsumer(AsyncJsonWebsocketConsumer):
                 await self.close()
                 return
             self.username = user.username
+            ingame_status = PlayersManager.player_exists(user.username)
+            if ingame_status:
+                await self.close()
+                print(f"jhh ingame_status: {ingame_status}")
+                return
 
 
             InviteConsumer.active_connections[self.username] = self
