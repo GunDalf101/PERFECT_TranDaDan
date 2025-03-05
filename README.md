@@ -2,9 +2,18 @@
 
 ## Overview
 
-TranDaDan is a web application built with Django for the backend and React for the frontend. This project is designed to provide a seamless user experience with real-time features, leveraging WebSockets for chat functionality and a PostgreSQL database for data storage. The application is containerized using Docker, making it easy to deploy and manage.
+TranDaDan is an innovative web application designed to enhance social interaction through real-time communication. Built with a robust Django backend and a dynamic React frontend, this project aims to provide users with a seamless experience for chatting, sharing, playing, and connecting with others.
 
-## Features
+### Project Purpose
+
+In today's fast-paced digital world, effective communication is essential. TranDaDan addresses this need by offering a platform where users can engage in real-time conversations, share multimedia content, and stay connected with friends and family. The application is particularly focused on:
+
+- **Real-Time Messaging**: Utilizing WebSockets, TranDaDan allows users to send and receive messages instantly, creating a chat experience that feels immediate and engaging.
+- **User-Centric Design**: The frontend is crafted with React, ensuring a responsive and intuitive user interface that adapts to various devices, from desktops to mobile phones.
+- **Secure User Authentication**: The application implements secure user registration and login processes, ensuring that user data is protected and private.
+- **Scalability and Performance**: By leveraging Docker for containerization, TranDaDan is designed to be easily deployable and scalable, making it suitable for both small groups and larger communities.
+
+### Key Features
 
 - **Real-time Chat**: Users can send and receive messages instantly.
 - **User Authentication**: Secure user registration and login.
@@ -76,6 +85,40 @@ To stop the application, run:
 ```bash
 docker-compose down
 ```
+
+## Makefile
+
+The Makefile provides a set of convenient commands to manage the Docker containers and the application lifecycle. Here are the available commands:
+
+- **up**: Build and start the application in detached mode.
+  ```bash
+  make up
+  ```
+
+- **down**: Stop and remove the application containers.
+  ```bash
+  make down
+  ```
+
+- **logs**: View the logs of the application containers in real-time.
+  ```bash
+  make logs
+  ```
+
+- **build**: Build the application containers.
+  ```bash
+  make build
+  ```
+
+- **stop**: Stop the application containers without removing them.
+  ```bash
+  make stop
+  ```
+
+- **clean**: Remove unused Docker resources, including volumes and networks.
+  ```bash
+  make clean
+  ```
 
 ## Deployment
 
