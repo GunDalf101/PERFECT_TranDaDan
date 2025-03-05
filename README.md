@@ -60,8 +60,7 @@ In today's fast-paced digital world, effective communication is essential. TranD
    ```
 
 4. **Access the application**:
-   - Frontend: [http://localhost](http://localhost)
-   - Backend API: [http://localhost/api](http://localhost/api)
+   -[https://localhost](https://localhost)
 
 ### Running Migrations
 
