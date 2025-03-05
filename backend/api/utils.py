@@ -10,6 +10,9 @@ from .models import RelationshipType
 import jwt
 import datetime
 from django.conf import settings
+from rest_framework.response import Response
+from rest_framework import status
+# from rest_framework.views import exception_handler
 
 User = get_user_model()
 
@@ -102,3 +105,8 @@ def generate_jwt(user, **kwargs):
 
 def decode_jwt(token):
     return jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+
+def catch_em_all(exc, context):
+    print(f"⚠️\nOps {exc}\n⚠️")
+    return Response(f"Ops: {exc}", status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+

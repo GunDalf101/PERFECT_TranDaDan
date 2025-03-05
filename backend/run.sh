@@ -24,5 +24,5 @@ python3 manage.py seed_match
 echo "!!!!! Run in another terminal: 'export SSL_CERT_FILE=\$(python3 -m certifi); python manage.py process_tasks' to receive emails. !!!!!"
 python3 manage.py process_tasks &
 export DJANGO_SETTINGS_MODULE=transcendence.settings
-# python manage.py runserver localhost:8000
-daphne -b 0.0.0.0 -p 8000 transcendence.asgi:application
+python manage.py runserver 0.0.0.0:8000
+# daphne -b 0.0.0.0 -p 8000 transcendence.asgi:application

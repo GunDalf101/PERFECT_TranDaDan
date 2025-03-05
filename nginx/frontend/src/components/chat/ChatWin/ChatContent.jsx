@@ -84,6 +84,7 @@ const ChatContent = memo(
           online: onlineFriends.includes(user.name),
         };
       }
+      setIsOpen(false);
       return null;
     }, [friends, selectedChat, onlineFriends]);
 

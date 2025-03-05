@@ -67,6 +67,10 @@ export const InviteProvider = ({ children }) => {
           message: `${data.opponent} accepted your invitation`
         });
 
+        if (wsRef.current) {
+          wsRef.current.close();
+        }
+
         setTimeout(() => {
           navigate('/game-lobby/remote-play', {
             state: gameSession

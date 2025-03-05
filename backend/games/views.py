@@ -1,15 +1,12 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
 from .models import Match
-from django.utils.timezone import now
-from .models import Match
-from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models import Q
-
+from django.db.models import Count, Avg, F, Q, Max, Min, StdDev
+from django.db.models.functions import TruncDate, ExtractHour, Abs
+from django.utils import timezone
+from django.utils.timezone import now, timedelta
 
 User = get_user_model()
 
@@ -46,14 +43,6 @@ class GetUserMatch(APIView):
                 })
         return Response({'pong': pong_matches[::-1],'space': space_matches[::-1]}, status=200)
 
-from django.utils.timezone import now, timedelta
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.utils.timezone import now, timedelta
-from django.db.models import Q
-
 class GetUserDash(APIView):
     def get(self, request, userid):
         today = now().date()
@@ -63,8 +52,7 @@ class GetUserDash(APIView):
         loses = [0] * 7
 
         for index, day in enumerate(last_7_days):
-            print(day)
-            
+
             # Count wins for the day
             wins[index] = Match.objects.filter(
                 winner_id=userid,
@@ -123,20 +111,11 @@ class GetUserDash(APIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
 
+class MatchStatsViewSet(APIView):
 
-
-
-from rest_framework import viewsets
-from rest_framework.response import Response
-from django.db.models import Count, Avg, F, Q, Max, Min, StdDev
-from django.db.models.functions import TruncDate, TruncHour, ExtractHour, Abs  # Added Abs import
-from django.utils import timezone
-from datetime import timedelta
-
-class MatchStatsViewSet(viewsets.ViewSet):
     def get(self, request):
         completed_matches = Match.objects.filter(status='completed')
-        
+
         today = timezone.now().date()
         last_week = today - timedelta(days=7)
         last_month = today - timedelta(days=30)
@@ -145,7 +124,7 @@ class MatchStatsViewSet(viewsets.ViewSet):
         active_matches = Match.objects.filter(status='active').count()
         completed_count = completed_matches.count()
         forfeit_count = completed_matches.filter(forfeit=True).count()
-        
+
         game_distribution = (Match.objects.values('game_type')
                            .annotate(count=Count('id'))
                            .order_by('-count'))
@@ -186,7 +165,7 @@ class MatchStatsViewSet(viewsets.ViewSet):
                     .aggregate(avg=Avg(F('ended_at') - F('started_at')))['avg'],
                 'avg_score': game_matches.aggregate(
                     avg=Avg(F('score_player1') + F('score_player2')))['avg'],
-                'forfeit_rate': (game_matches.filter(forfeit=True).count() / 
+                'forfeit_rate': (game_matches.filter(forfeit=True).count() /
                                game['count'] * 100 if game['count'] > 0 else 0)
             }
 
@@ -227,7 +206,7 @@ class MatchStatsViewSet(viewsets.ViewSet):
                 'total_matches': total_matches,
                 'active_matches': active_matches,
                 'completed_matches': completed_count,
-                'forfeit_rate': (forfeit_count / completed_count * 100 
+                'forfeit_rate': (forfeit_count / completed_count * 100
                                if completed_count > 0 else 0)
             },
             'game_distribution': list(game_distribution),
@@ -241,6 +220,6 @@ class MatchStatsViewSet(viewsets.ViewSet):
             'recent_matches': (completed_matches
                             .order_by('-ended_at')
                             .values('id', 'game_type', 'player1__username',
-                                  'player2__username', 'score_player1', 
+                                  'player2__username', 'score_player1',
                                   'score_player2', 'winner__username')[:10])
         })

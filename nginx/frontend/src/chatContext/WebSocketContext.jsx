@@ -44,7 +44,9 @@ export const WebSocketProvider = ({ children }) => {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          messageHandlersRef.current.forEach(handler => handler(data));
+          if (!data.hasOwnProperty("error")) {
+            messageHandlersRef.current.forEach(handler => handler(data));
+          }
         } catch (error) {
           console.error("Error parsing WebSocket message:", error);
         }
