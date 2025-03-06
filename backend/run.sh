@@ -18,8 +18,8 @@
 export SSL_CERT_FILE=$(python3 -m certifi)
 python3 manage.py makemigrations
 python3 manage.py migrate
-echo yes | python3 manage.py seed_users
-python3 manage.py seed_match
+# echo yes | python3 manage.py seed_users
+# python3 manage.py seed_match
 
 echo "!!!!! Run in another terminal: 'export SSL_CERT_FILE=\$(python3 -m certifi); python manage.py process_tasks' to receive emails. !!!!!"
 python3 manage.py process_tasks &

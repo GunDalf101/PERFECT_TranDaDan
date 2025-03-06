@@ -249,8 +249,10 @@ canvas {
     font-family: 'Press Start 2P', cursive;
     position: relative;
     display: flex;
-    width: 1000px;
-    height: 1000px;
+    width: 70vh;
+    height: 70vh;
+    max-width: 90vw;
+    max-height: 90vw;
     margin: 0 8rem;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -274,6 +276,10 @@ canvas {
 @media (max-width: 1200px) {
     .game-container {
         margin: 0 4rem;
+        width: 60vh;
+        height: 60vh;
+        max-width: 85vw;
+        max-height: 85vw;
     }
 }
 
@@ -285,8 +291,10 @@ canvas {
 
     .game-container {
         margin: 4rem 0;
-        width: 300px;
-        height: 300px;
+        width: 50vh;
+        height: 50vh;
+        max-width: 80vw;
+        max-height: 80vw;
     }
 
     .game-option {

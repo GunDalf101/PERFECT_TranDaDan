@@ -1,17 +1,17 @@
 up: build
-	docker compose up -d
+	docker-compose up -d
 
 down:
-	docker compose down
+	docker-compose down
 
 logs:
-	docker compose logs -f
+	docker-compose logs -f
 
 build:
-	docker compose build
+	docker-compose build
 
 stop:
-	docker compose stop
+	docker-compose stop
 
 clean:
 	docker system prune -af
