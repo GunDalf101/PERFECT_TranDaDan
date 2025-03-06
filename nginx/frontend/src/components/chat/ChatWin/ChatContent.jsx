@@ -124,7 +124,8 @@ const ChatContent = memo(
       if (isNewMessageReceived()) {
         scrollToBottom("smooth");
       }
-
+      
+      previousMessagesLength.current = messages.length;
     }, [messages, isLoadingMore]);
 
 
@@ -206,10 +207,10 @@ const ChatContent = memo(
 
     const TypingIndicator = () => (
       <div className="flex items-start space-x-2 mb-4">
-        <div className="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center">
-          <img src={selectedUser.avatar_url} alt="" />
+        <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center overflow-hidden">
+          <img src={selectedUser.avatar_url || selectedUser.avatar} alt="" className="w-full h-full object-cover" />
         </div>
-        <div className="bg-gray-200 p-3 rounded-2xl rounded-tl-none">
+        <div className="bg-gray-200 p-2 sm:p-3 rounded-2xl rounded-tl-none">
           <LoadingIndicator />
         </div>
       </div>
@@ -217,59 +218,61 @@ const ChatContent = memo(
 
     if (!selectedUser) {
       return (
-        <div className="font-pixel flex-1 text-3xl flex justify-center items-center  text-blue-300">
+        <div className="font-pixel flex-1 text-xl sm:text-2xl md:text-3xl flex justify-center items-center text-blue-300">
           <p>Select a chat to start messaging</p>
         </div>
       );
     }
 
-      const handleTournamentRequest = () => {
-        const now = Date.now();
-        const lastRequestTime = tournamentCooldowns[selectedUser.name] || 0;
-        const cooldownPeriod = 30000;
+    const handleTournamentRequest = () => {
+      const now = Date.now();
+      const lastRequestTime = tournamentCooldowns[selectedUser.name] || 0;
+      const cooldownPeriod = 30000;
 
-        if (now - lastRequestTime < cooldownPeriod) {
-            const remainingSeconds = Math.ceil((cooldownPeriod - (now - lastRequestTime)) / 1000);
-            myToast(2, `Please wait ${remainingSeconds} seconds before sending another tournament request`);
-            return;
-        }
+      if (now - lastRequestTime < cooldownPeriod) {
+        const remainingSeconds = Math.ceil((cooldownPeriod - (now - lastRequestTime)) / 1000);
+        myToast(2, `Please wait ${remainingSeconds} seconds before sending another tournament request`);
+        return;
+      }
 
-        setTournamentCooldowns(prev => ({
-            ...prev,
-            [selectedUser.name]: now
-        }));
+      setTournamentCooldowns(prev => ({
+        ...prev,
+        [selectedUser.name]: now
+      }));
 
-        sendTournamentRequest(selectedUser.name);
-        myToast(0, `Tournament request sent to ${selectedUser.name}`);
+      sendTournamentRequest(selectedUser.name);
+      myToast(0, `Tournament request sent to ${selectedUser.name}`);
     };
 
     return (
       <>
         <div className={`${styles.chat_content}`}>
-          <div className="h-16 border-b px-6 flex justify-between">
+          {/* Chat Header */}
+          <div className="h-12 sm:h-14 md:h-16 border-b px-2 sm:px-4 md:px-6 flex justify-between items-center">
             <div className="flex gap-2 items-center">
-              <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center">
                 <img
                   src={selectedUser.avatar || "/default_profile.webp"}
                   alt=""
                   className="w-full h-full object-cover rounded-full"
                 />
               </div>
-              <div>
-                <h2 className="font-semibold">{selectedUser.name}</h2>
+              <div className="overflow-hidden">
+                <h2 className="font-semibold text-sm sm:text-base md:text-lg truncate max-w-[120px] sm:max-w-[180px] md:max-w-[250px]">
+                  {selectedUser.name}
+                </h2>
                 <span
-                  className={`text-sm ${selectedUser.online ? "text-green-500" : "text-red-500"
-                    }`}
+                  className={`text-xs sm:text-sm ${selectedUser.online ? "text-green-500" : "text-red-500"}`}
                 >
                   {selectedUser.online ? "Online" : "Offline"}
                 </span>
               </div>
             </div>
             <div
-              className="relative inline-block left-7 top-2 "
+              className="relative inline-block z-10"
               ref={dropdownRef}
             >
-              <div className="flex  min-[1030px]:hidden">
+              <div className="flex min-[1030px]:hidden">
                 <button
                   onClick={() => setIsOpen(!isOpen)}
                   className="text-blue-300 hover:text-blue-600 focus:outline-none p-2"
@@ -311,7 +314,7 @@ const ChatContent = memo(
                       }}
                     >
                       <Trophy className="w-4 h-4" />
-                      Tournement
+                      Tournament
                     </button>
 
                     <button
@@ -322,7 +325,7 @@ const ChatContent = memo(
                       }}
                     >
                       <X className="w-4 h-4" />
-                      Blocks
+                      Block
                     </button>
                   </div>
                 </div>
@@ -330,22 +333,24 @@ const ChatContent = memo(
             </div>
           </div>
 
+          {/* Messages Container */}
           <div
             ref={chatBodyRef}
             onScroll={handleScroll}
-            className={`flex-1 overflow-y-auto flex flex-col-reverse p-2 sm:p-5 min-h-0
+            className={`flex-1 overflow-y-auto flex flex-col-reverse p-2 sm:p-3 md:p-5 min-h-0
             ${styles['message-container']}`}
           >
             {messages.slice().map((message) => (
-              <div key={message.id} className="mb-2 sm:mb-4 w-full">
+              <div key={message.id} className="mb-1.5 sm:mb-2 md:mb-4 w-full">
                 <div
-                  className={`flex items-start space-x-1 sm:space-x-2 ${message.sender === selectedUser.name
+                  className={`flex items-start space-x-1 sm:space-x-2 ${
+                    message.sender === selectedUser.name
                       ? "justify-start"
                       : "justify-end"
-                    }`}
+                  }`}
                 >
                   {message.sender === selectedUser.name && (
-                    <div className="w-6 h-6 sm:w-10 sm:h-10 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center overflow-hidden">
                       <img
                         src={selectedUser.avatar || "/default_profile.webp"}
                         alt=""
@@ -354,26 +359,29 @@ const ChatContent = memo(
                     </div>
                   )}
                   <div
-                    className={`relative max-w-[100%] sm:max-w-[90%] min-w-[40px] ${message.sender === selectedUser.name
+                    className={`relative max-w-[75%] sm:max-w-[80%] md:max-w-[85%] min-w-[40px] ${
+                      message.sender === selectedUser.name
                         ? "mr-auto"
                         : "ml-auto"
-                      }`}
+                    }`}
                   >
                     <div
-                      className={`p-2 sm:p-3 rounded-2xl ${message.sender === selectedUser.name
+                      className={`p-1.5 sm:p-2 md:p-3 rounded-2xl ${
+                        message.sender === selectedUser.name
                           ? "bg-gray-200 text-black rounded-tl-none"
                           : "bg-blue-500 text-white rounded-tr-none"
-                        }`}
+                      }`}
                     >
                       <p className="break-words whitespace-pre-wrap text-xs sm:text-sm md:text-base">
                         {message.text}
                       </p>
                     </div>
                     <span
-                      className={`text-[10px] sm:text-xs mt-0.5 sm:mt-1 block ${message.sender === selectedUser.name
+                      className={`text-[8px] sm:text-[10px] md:text-xs mt-0.5 sm:mt-1 block ${
+                        message.sender === selectedUser.name
                           ? "text-gray-500 ml-1 sm:ml-2"
                           : "text-gray-500 text-right mr-1 sm:mr-2"
-                        }`}
+                      }`}
                     >
                       {formatMessageTime(message.timestamp)}
                     </span>
@@ -385,9 +393,10 @@ const ChatContent = memo(
             {isTyping && <TypingIndicator />}
           </div>
 
+          {/* Message Input Form */}
           <form
             onSubmit={handleSubmit}
-            className="h-14 sm:h-20 px-2 md:px-4 flex items-center mt-auto"
+            className="h-12 sm:h-14 md:h-16 px-2 md:px-4 flex items-center mt-auto"
           >
             <div className="flex flex-1 space-x-1 sm:space-x-2 p-1 sm:p-2 bg-black rounded-lg h-[80%]">
               <div className="flex flex-1 w-full relative">
@@ -397,17 +406,18 @@ const ChatContent = memo(
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Type a message..."
                   maxLength={500}
-                  className="w-full p-1.5 sm:p-2 rounded-lg bg-[#2c2a2aa8] text-white focus:outline-none text-xs sm:text-sm md:text-base placeholder:text-xs sm:placeholder:text-sm"
+                  className="w-full p-1 sm:p-1.5 md:p-2 rounded-lg bg-[#2c2a2aa8] text-white focus:outline-none text-xs sm:text-sm md:text-base placeholder:text-xs sm:placeholder:text-sm"
                 />
-                <span className="absolute top-0.5 sm:top-1 right-1 sm:right-2 text-[10px] sm:text-xs text-gray-400">
+                <span className="absolute top-0.5 right-1 sm:right-2 text-[8px] sm:text-[10px] md:text-xs text-gray-400">
                   {newMessage.length}/500
                 </span>
               </div>
               <button
                 type="submit"
-                className="bg-[#1b243b] p-1 sm:p-2 rounded-lg hover:bg-blue-500 text-white flex items-center justify-center transition-colors"
+                className="bg-[#1b243b] p-1 sm:p-1.5 md:p-2 rounded-lg hover:bg-blue-500 text-white flex items-center justify-center transition-colors"
+                disabled={!newMessage.trim()}
               >
-                <Send className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
+                <Send className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-white" />
               </button>
             </div>
           </form>

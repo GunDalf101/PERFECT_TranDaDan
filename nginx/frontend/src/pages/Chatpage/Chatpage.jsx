@@ -19,15 +19,27 @@ const ChatApp = () => {
   const [error, setError] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const wasAtBottomRef = useRef(false);
   const messageIdsRef = useRef(new Set());
   const lastMessageLoadingRef = useRef(new Set());
   const pageTrackingRef = useRef(new Map());
   const messageCacheRef = useRef(new Map());
   const lastMessagesRef = useRef(new Map());
-  const { friends } = useRealTime()
+  const scrollPositionRef = useRef(null);
+  const { friends } = useRealTime();
 
   const currentUsername = user ? JSON.parse(user).username : null;
+
+  // Track screen size for responsive layout
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const generateMessageId = useCallback((sender, timestamp) => {
     return `${sender}-${timestamp}-${Math.random().toString(36).slice(2, 9)}`;
@@ -94,7 +106,17 @@ const ChatApp = () => {
       )
     );
     setSelectedChat(chatId);
-  }, []);
+    
+    // On mobile, auto-scroll to the chat content
+    if (isMobile && chatId) {
+      setTimeout(() => {
+        const chatWin = document.querySelector(`.${styles.chat_win}`);
+        if (chatWin) {
+          chatWin.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
+  }, [isMobile]);
 
   useEffect(() => {
     loadFriendsWithLastMessages();
@@ -125,7 +147,7 @@ const ChatApp = () => {
         const avatarResult = avatarResults[index];
         const avatarUrl = avatarResult.status === 'fulfilled' && avatarResult.value
           ? avatarResult.value.avatar_url
-          : 'default-avatar-url';
+          : '/default_profile.webp';
         newAvatarMap.set(friend, avatarUrl);
       });
 
@@ -153,6 +175,7 @@ const ChatApp = () => {
         await loadLastMessagesForFriends(uncachedFriends);
       }
     } catch (error) {
+      console.error("Failed to load friends list:", error);
       setError("Failed to load friends list. Please refresh the page.");
     } finally {
       setIsLoading(false);
@@ -188,6 +211,7 @@ const ChatApp = () => {
                 ...f,
                 lastMessage: lastMessage.content,
                 lastMessageTime: lastMessage.timestamp,
+                lastMessageSender: lastMessage.sender,
               }
               : f
           )
@@ -209,7 +233,7 @@ const ChatApp = () => {
             chatBody.scrollHeight - chatBody.scrollTop - chatBody.clientHeight
           ) < 10;
         wasAtBottomRef.current = isAtBottom;
-        scrollPositionRef.current = 0;
+        scrollPositionRef.current = chatBody.scrollTop;
       }
     }
   }, [selectedChat]);
@@ -276,11 +300,14 @@ const ChatApp = () => {
         restoreScrollPosition();
       });
     } catch (error) {
+      console.error("Error loading more messages:", error);
       const loadedPagesArray = Array.from(
-        pageTrackingRef.current.get(selectedChat)
+        pageTrackingRef.current.get(selectedChat) || []
       );
-      loadedPagesArray.pop();
-      pageTrackingRef.current.set(selectedChat, new Set(loadedPagesArray));
+      if (loadedPagesArray.length > 0) {
+        loadedPagesArray.pop();
+        pageTrackingRef.current.set(selectedChat, new Set(loadedPagesArray));
+      }
     } finally {
       setIsLoadingMore(false);
     }
@@ -315,7 +342,6 @@ const ChatApp = () => {
         }
 
         const response = await getAllMessage(`${selectedFriend.name}?page=1`);
-
 
         if (!response.results || response.results.length === 0) {
           setMessages([]);
@@ -460,16 +486,11 @@ const ChatApp = () => {
     ]
   );
 
-  const handleSidebarToggle = (type) => {
-    setActiveSidebar(activeSidebar === type ? null : type);
-  };
-
   return (
     <>
       <div className={`flex flex-col ${styles.nwbody}`}>
         <div className="flex">
           <div className={`${styles.chat_win}`}>
-
             <UserList
               friends={friendsData}
               selectedChat={selectedChat}
@@ -484,8 +505,6 @@ const ChatApp = () => {
               newMessage={newMessage}
               setNewMessage={setNewMessage}
               handleSendMessage={handleSendMessage}
-              handleSidebarToggle={handleSidebarToggle}
-              isOnline={friendsData.find((f) => f.id === selectedChat)?.online}
               loadMoreMessages={loadMoreMessages}
               hasMore={hasMore}
               isLoading={isLoading}
@@ -493,6 +512,17 @@ const ChatApp = () => {
             />
           </div>
         </div>
+        {error && (
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-md shadow-md z-50">
+            {error}
+            <button 
+              className="ml-2 font-bold" 
+              onClick={() => setError(null)}
+            >
+              ×
+            </button>
+          </div>
+        )}
       </div>
     </>
   );
