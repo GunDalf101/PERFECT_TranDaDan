@@ -383,6 +383,8 @@
   flex-direction: column;
   justify-items: stretch;
   place-items: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
   
   /* Make it wider on small screens to fit content better */
   @media screen and (max-width: 640px) {
@@ -392,6 +394,239 @@
   @media screen and (min-width: 1024px) {
     width: 15%;
     border-radius: 8px;
+  }
+  
+  // Hide on very small screens (can be toggled with a button in parent component)
+  @media screen and (max-width: 480px) {
+    width: 60px;
+  }
+}
+
+.search_container {
+  width: 100%;
+  
+  @media screen and (max-width: 480px) {
+    display: none;
+  }
+}
+
+.ulist {
+  width: 100%;
+  padding: 0.5rem;
+  
+  @media screen and (max-width: 640px) {
+    padding: 0.25rem;
+  }
+}
+
+.user_item {
+  padding: 0.5rem;
+  margin-bottom: 0.375rem;
+  border-radius: 0.375rem;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  background-color: transparent;
+  
+  &.active {
+    background-color: #dbeafe;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  @media screen and (max-width: 640px) {
+    padding: 0.375rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  @media screen and (max-width: 480px) {
+    padding: 0.25rem;
+    display: flex;
+    justify-content: center;
+    border-radius: 0.25rem;
+  }
+}
+
+.user_content {
+  width: 100%;
+  gap: 0.5rem;
+  
+  @media screen and (max-width: 480px) {
+    justify-content: center;
+    gap: 0;
+  }
+}
+
+.avatar_container {
+  position: relative;
+}
+
+.avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  background-color: #93c5fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+  
+  &:hover {
+    transform: rotate(6deg);
+  }
+  
+  &.avatar_selected {
+    ring: 2px;
+    ring-color: #3b82f6;
+  }
+  
+  @media screen and (max-width: 640px) {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  
+  @media screen and (min-width: 1024px) {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+}
+
+.status_indicator {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
+  border: 1.5px solid white;
+  
+  &.online {
+    background-color: #22c55e;
+  }
+  
+  &.offline {
+    background-color: #ef4444;
+  }
+  
+  @media screen and (max-width: 640px) {
+    width: 0.5rem;
+    height: 0.5rem;
+  }
+}
+
+.mobile_badge {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  min-width: 1rem;
+  height: 1rem;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  padding: 0 0.25rem;
+  
+  @media screen and (min-width: 481px) {
+    display: none;
+  }
+}
+
+.user_details {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  
+  @media screen and (max-width: 480px) {
+    display: none;
+  }
+}
+
+.user_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.username {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #60a5fa;
+  font-size: 0.75rem;
+  max-width: 65%;
+  
+  &.username_active {
+    color: #2563eb;
+  }
+  
+  @media screen and (min-width: 1024px) {
+    font-size: 0.875rem;
+  }
+}
+
+.meta_info {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.unread_badge {
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: #3b82f6;
+  background-color: #dbeafe;
+  border-radius: 9999px;
+  min-width: 1.125rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.25rem;
+  
+  @media screen and (min-width: 768px) {
+    font-size: 0.75rem;
+    min-width: 1.25rem;
+    height: 1.5rem;
+  }
+}
+
+.timestamp {
+  font-size: 0.625rem;
+  color: #60a5fa;
+  white-space: nowrap;
+  
+  @media screen and (min-width: 768px) {
+    font-size: 0.75rem;
+  }
+}
+
+.message_preview {
+  font-size: 0.625rem;
+  color: #60a5fa;
+  opacity: 0.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  
+  @media screen and (min-width: 768px) {
+    font-size: 0.75rem;
+  }
+}
+
+.no_results {
+  text-align: center;
+  padding: 0.5rem;
+  color: #60a5fa;
+  font-size: 0.75rem;
+  
+  @media screen and (min-width: 768px) {
+    font-size: 0.875rem;
   }
 }
 
