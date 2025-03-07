@@ -2,17 +2,28 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import GUI from 'lil-gui';
 import gsap from 'gsap';
-import { split } from 'three/src/nodes/TSL.js';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Trophy } from 'lucide-react';
+import { Trophy, Swords } from 'lucide-react';
 import { useTournament } from '../../../context/TournamentContext';
 
 const TournamentMode = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { tournamentState, updateTournamentState } = useTournament();
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
+
+    // Setup responsive detection
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+            setIsLandscape(window.innerWidth > window.innerHeight);
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         if (!location.state?.matchPlayers) {
@@ -57,7 +68,14 @@ const TournamentMode = () => {
     const [matches, setMatches] = useState({ player: 0, ai: 0 });
     const [winner, setWinner] = useState(null);
     const [gameOver, setGameOver] = useState(false);
+    const [gameStarted, setGameStarted] = useState(false);
     let tableBoundsRef = useRef(null);
+
+    // Touch controls state for mobile devices
+    const [touchControls, setTouchControls] = useState({
+        player1: { up: false, down: false, left: false, right: false },
+        player2: { up: false, down: false, left: false, right: false }
+    });
 
     useEffect(() => {
         let playerScore = 0;
@@ -72,8 +90,6 @@ const TournamentMode = () => {
         let lastHitAI = true;
         if (!canvasRef.current) return;
 
-
-
         const scene = new THREE.Scene();
         sceneRef.current = scene;
 
@@ -85,33 +101,41 @@ const TournamentMode = () => {
 
         scene.background = null;
 
-
         const ballSound = new Audio('/sounds/ping_pong.mp3');
 
+        // Set up camera with responsive aspect ratio
+        const aspectRatio = isLandscape 
+            ? window.innerWidth * 0.5 / (window.innerHeight)
+            : window.innerWidth / (window.innerHeight * 0.5);
+            
         const camera = new THREE.PerspectiveCamera(
             75,
-            window.innerWidth * 0.5 / (window.innerHeight ),
+            aspectRatio,
             0.1,
             100
         );
         camera.position.set(10, 10, 15);
         scene.add(camera);
+        
         const splitCamera = new THREE.PerspectiveCamera(
             75,
-            window.innerWidth * 0.5 / (window.innerHeight),
+            aspectRatio,
             0.1,
             100
-        )
+        );
         splitCamera.position.set(-10, 10, 15);
         scene.add(splitCamera);
 
         const renderer = new THREE.WebGLRenderer({
-            canvas: canvasRef.current
+            canvas: canvasRef.current,
+            alpha: true
         });
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.setClearColor(0x000000, 0);
         renderer.setClearAlpha(0);
+        
+        // Set initial size - we'll handle proper sizing in the resize handler
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
@@ -234,6 +258,7 @@ const TournamentMode = () => {
                 obj.mesh.position.copy(obj.position);
             });
         };
+        
         const collisionTimestamps = new Map();
         const collisionDelay = 100;
         const twoObjCollide = (objA, objB) => {
@@ -251,6 +276,7 @@ const TournamentMode = () => {
             }
             return false;
         };
+        
         const checkCollisions = () => {
             if (!paddleRef.current || gameObjectsRef.current.length === 0 || !paddleCPURef.current) return;
 
@@ -331,6 +357,7 @@ const TournamentMode = () => {
                 ball.position.z += ball.velocity.z * 0.01;
             }
         };
+        
         const resetBall = (direction = 1) => {
             gameObjectsRef.current.forEach(obj => scene.remove(obj.mesh));
             gameObjectsRef.current = [];
@@ -413,7 +440,7 @@ const TournamentMode = () => {
             winCheck();
         };
 
-        const paddleSpeed = 0.08;
+        const paddleSpeed = isMobile ? 0.10 : 0.08; // Slightly faster on mobile for better control
         const smoothFactor = 0.05;
         let paddleVelocityX = 0;
         let paddleVelocityY = 0;
@@ -447,6 +474,7 @@ const TournamentMode = () => {
             }
             if (event.key === 'Enter') {
                 inGame = !inGame;
+                setGameStarted(inGame);
                 controls.enableRotate = !inGame;
             }
         };
@@ -489,13 +517,27 @@ const TournamentMode = () => {
         const handleResize = () => {
             const width = window.innerWidth;
             const height = window.innerHeight;
-
-            camera.aspect = width  * 0.5 / (height);
+            
+            // Update isLandscape state
+            const isCurrentlyLandscape = width > height;
+            setIsLandscape(isCurrentlyLandscape);
+            
+            // Calculate aspect ratio based on orientation
+            const aspectRatio = isCurrentlyLandscape 
+                ? width * 0.5 / height
+                : width / (height * 0.5);
+                
+            camera.aspect = aspectRatio;
             camera.updateProjectionMatrix();
-            splitCamera.aspect = width  * 0.5 / (height);
+            splitCamera.aspect = aspectRatio;
             splitCamera.updateProjectionMatrix();
-
-            renderer.setSize(width, height);
+            
+            // Important: make sure the canvas doesn't exceed viewport size
+            // This prevents scrollbars from appearing
+            const clientWidth = document.documentElement.clientWidth;
+            const clientHeight = document.documentElement.clientHeight;
+            
+            renderer.setSize(clientWidth, clientHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         };
 
@@ -509,7 +551,7 @@ const TournamentMode = () => {
             oldElapsedTime = elapsedTime;
 
             if (inGame) {
-                if (paddleRef.current?.mesh) {
+                if (paddleRef.current?.mesh && paddleCPURef.current?.mesh) {
                     const cameraOffset = new THREE.Vector3(0, -2.5, 4);
                     const splitCameraOffset = new THREE.Vector3(0, 2.5, 4);
                     const lookAtOffset = new THREE.Vector3(0, 1, 0);
@@ -537,10 +579,22 @@ const TournamentMode = () => {
                     camera.lookAt(newLookAt);
                     splitCamera.lookAt(newSplitLookAt);
 
+                    // Apply base velocities from keyboard
                     paddleVelocityX = lerp(paddleVelocityX, paddleVelocityX, smoothFactor);
                     paddleVelocityY = lerp(paddleVelocityY, paddleVelocityY, smoothFactor);
                     paddleCpuVelocityX = lerp(paddleCpuVelocityX, paddleCpuVelocityX, smoothFactor);
                     paddleCpuVelocityY = lerp(paddleCpuVelocityY, paddleCpuVelocityY, smoothFactor);
+
+                    // Apply touch control velocities
+                    if (touchControls.player1.up) paddleVelocityY = paddleSpeed;
+                    if (touchControls.player1.down) paddleVelocityY = -paddleSpeed;
+                    if (touchControls.player1.left) paddleVelocityX = -paddleSpeed;
+                    if (touchControls.player1.right) paddleVelocityX = paddleSpeed;
+                    
+                    if (touchControls.player2.up) paddleCpuVelocityY = paddleSpeed;
+                    if (touchControls.player2.down) paddleCpuVelocityY = -paddleSpeed;
+                    if (touchControls.player2.left) paddleCpuVelocityX = paddleSpeed;
+                    if (touchControls.player2.right) paddleCpuVelocityX = -paddleSpeed;
 
                     paddleRef.current.mesh.position.x += paddleVelocityX;
                     paddleRef.current.mesh.position.y += paddleVelocityY;
@@ -616,31 +670,44 @@ const TournamentMode = () => {
             }
 
             controls.update();
-            // renderer.setScissorTest(true);
-            // renderer.setViewport(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
-            // renderer.setScissor(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
-            // renderer.render(scene, splitCamera);
-
-            // renderer.setViewport(0, 0, window.innerWidth, window.innerHeight / 2);
-            // renderer.setScissor(0, 0, window.innerWidth, window.innerHeight / 2);
-            // renderer.render(scene, camera);
-
-            // requestAnimationFrame(animate);
-            // renderer.setScissorTest(false);
+            
+            // Get the current client dimensions to avoid scrollbars
+            const clientWidth = document.documentElement.clientWidth;
+            const clientHeight = document.documentElement.clientHeight;
+            
+            // Handle different layouts based on orientation
             renderer.setScissorTest(true);
 
-            renderer.setViewport(0, 0, window.innerWidth / 2, window.innerHeight);
-            renderer.setScissor(0, 0, window.innerWidth / 2, window.innerHeight);
-            renderer.render(scene, splitCamera);
+            if (isLandscape) {
+                // Landscape mode: side by side
+                const halfWidth = Math.floor(clientWidth / 2);
+                const fullHeight = clientHeight;
+                
+                renderer.setViewport(0, 0, halfWidth, fullHeight);
+                renderer.setScissor(0, 0, halfWidth, fullHeight);
+                renderer.render(scene, splitCamera);
 
-            renderer.setViewport(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
-            renderer.setScissor(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
-            renderer.render(scene, camera);
+                renderer.setViewport(halfWidth, 0, halfWidth, fullHeight);
+                renderer.setScissor(halfWidth, 0, halfWidth, fullHeight);
+                renderer.render(scene, camera);
+            } else {
+                // Portrait mode: stacked
+                const fullWidth = clientWidth;
+                const halfHeight = Math.floor(clientHeight / 2);
+                
+                renderer.setViewport(0, halfHeight, fullWidth, halfHeight);
+                renderer.setScissor(0, halfHeight, fullWidth, halfHeight);
+                renderer.render(scene, splitCamera);
+
+                renderer.setViewport(0, 0, fullWidth, halfHeight);
+                renderer.setScissor(0, 0, fullWidth, halfHeight);
+                renderer.render(scene, camera);
+            }
 
             requestAnimationFrame(animate);
             renderer.setScissorTest(false);
-            if (gameObjectsRef.current.length > 0 && paddleRef.current?.mesh && paddleCPURef.current?.mesh && tableObject.mesh && netObject.mesh) {
 
+            if (gameObjectsRef.current.length > 0 && paddleRef.current?.mesh && paddleCPURef.current?.mesh && tableObject.mesh && netObject.mesh) {
                 tableBoundingBox.setFromObject(tableObject.mesh);
                 netBoundingBox.setFromObject(netObject.mesh);
                 if (!isBoundingBoxVisible) {
@@ -650,7 +717,6 @@ const TournamentMode = () => {
                     scene.add(netBoxHelper);
                     isBoundingBoxVisible = true;
                 }
-
             }
         };
 
@@ -668,7 +734,10 @@ const TournamentMode = () => {
             window.addEventListener('keydown', handleKeyDown);
             window.addEventListener('keyup', handleKeyUp);
             window.addEventListener('resize', handleResize);
-
+            
+            // Call handleResize initially to set correct canvas size
+            handleResize();
+            
             animate();
         };
 
@@ -691,40 +760,63 @@ const TournamentMode = () => {
             renderer.dispose();
             if (controls) controls.dispose();
         };
-    }, []);
+    }, [isLandscape]);
+
+    // Function to handle touch controls
+    const handleTouchControl = (player, direction, isPressed) => {
+        setTouchControls(prev => ({
+            ...prev,
+            [player]: {
+                ...prev[player],
+                [direction]: isPressed
+            }
+        }));
+    };
+
+    // Function to toggle game state
+    const toggleGame = () => {
+        const event = new KeyboardEvent('keydown', { key: 'Enter' });
+        window.dispatchEvent(event);
+    };
 
     return (
-        <>
-            <canvas ref={canvasRef} className="webgl" />
+        <div className="relative w-full h-full overflow-hidden">
+            <canvas ref={canvasRef} className="webgl absolute top-0 left-0 w-full h-full" />
 
-            <div className="absolute top-10 left-1/2 transform -translate-x-1/2 flex items-center justify-between w-full max-w-4xl px-6 py-4 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full border-4 border-cyan-400 shadow-glow">
-                <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-cyan-400">
+            {/* Score display - Styled like LocalPong */}
+            <div className={`
+                fixed z-10 flex items-center justify-between 
+                ${isLandscape ? 'top-4 left-1/2 transform -translate-x-1/2 w-4/5 max-w-4xl' : 'top-2 left-1/2 transform -translate-x-1/2 w-11/12 max-w-sm'}
+                px-4 py-2 bg-gray-800/80 backdrop-blur-sm rounded-full shadow-lg
+                border-2 border-gradient-to-r from-cyan-400 to-rose-400
+            `}>
+                <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-cyan-400">
                         {player2.image && (
-                            <img
-                                src={player2.image}
+                            <img 
+                                src={player2.image} 
                                 alt={player2.nickname}
                                 className="w-full h-full object-cover"
                             />
                         )}
                     </div>
-                    <span className="text-cyan-400 text-xl">{player2.nickname}</span>
+                    <span className="text-cyan-400 text-xs sm:text-base">{player2.nickname}</span>
                 </div>
-
-                <div className="flex flex-col items-center">
-                    <div className="text-white text-2xl">
+                
+                <div className="flex flex-col items-center mx-2">
+                    <div className="text-white text-sm sm:text-xl font-bold">
                         {scores.ai} - {scores.player}
                     </div>
-                    <div className="text-gray-400">
-                        Round {matches.ai + matches.player + 1}
+                    <div className="text-gray-400 text-xs sm:text-sm">
+                        Round {matches.player + matches.ai + 1} • Match {matchPlayers[0] + 1}
                     </div>
                 </div>
-
-                <div className="flex items-center space-x-4">
-                    <span className="text-rose-400 text-xl">{player1.nickname}</span>
-                    <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-rose-400">
+                
+                <div className="flex items-center space-x-2">
+                    <span className="text-rose-400 text-xs sm:text-base">{player1.nickname}</span>
+                    <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-rose-400">
                         {player1.image && (
-                            <img
+                            <img 
                                 src={player1.image}
                                 alt={player1.nickname}
                                 className="w-full h-full object-cover"
@@ -733,37 +825,146 @@ const TournamentMode = () => {
                     </div>
                 </div>
             </div>
-
-            <div className="absolute bottom-4 left-4 text-white text-sm space-y-1">
-                <p>{player2.nickname}: WASD</p>
+    
+            {/* Start/Pause button - styled like QuadraPong */}
+            <button
+                onClick={toggleGame}
+                className={`
+                    fixed z-10 bg-gradient-to-r from-gray-800/80 to-gray-900/80 backdrop-blur-sm 
+                    text-white px-4 py-2 rounded-full
+                    border border-white/30 text-xs sm:text-sm hover:bg-gray-700/80
+                    ${isLandscape ? 'left-1/2 transform -translate-x-1/2 bottom-4' : 'left-1/2 transform -translate-x-1/2 bottom-4'}
+                    transition-all duration-300 ease-in-out
+                `}
+            >
+                {gameStarted ? "Pause Game" : "Start Game"}
+            </button>
+    
+            {/* Touch controls for mobile - styled like QuadraPong */}
+            {isMobile && (
+                <div className={`fixed z-10 w-full ${isLandscape ? 'h-full' : 'h-1/2 bottom-0'} pointer-events-none`}>
+                    {/* Controls divider */}
+                    <div className={`absolute ${isLandscape ? 'h-full w-0.5 left-1/2 top-0' : 'w-full h-0.5 top-1/2 left-0'} bg-white/10`}></div>
+                    
+                    {/* Player 1 controls */}
+                    <div className={`absolute pointer-events-auto ${isLandscape ? 'right-4 bottom-20 w-24 h-24' : 'right-4 bottom-16 w-24 h-24'}`}>
+                        <div className="relative w-full h-full">
+                            <button 
+                                className="absolute top-0 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-rose-500/30 rounded-full flex items-center justify-center"
+                                onTouchStart={() => handleTouchControl('player1', 'up', true)}
+                                onTouchEnd={() => handleTouchControl('player1', 'up', false)}
+                            >
+                                <span className="text-white text-lg">↑</span>
+                            </button>
+                            
+                            <button 
+                                className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-rose-500/30 rounded-full flex items-center justify-center"
+                                onTouchStart={() => handleTouchControl('player1', 'down', true)}
+                                onTouchEnd={() => handleTouchControl('player1', 'down', false)}
+                            >
+                                <span className="text-white text-lg">↓</span>
+                            </button>
+                            
+                            <button 
+                                className="absolute left-0 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-rose-500/30 rounded-full flex items-center justify-center"
+                                onTouchStart={() => handleTouchControl('player1', 'left', true)}
+                                onTouchEnd={() => handleTouchControl('player1', 'left', false)}
+                            >
+                                <span className="text-white text-lg">←</span>
+                            </button>
+                            
+                            <button 
+                                className="absolute right-0 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-rose-500/30 rounded-full flex items-center justify-center"
+                                onTouchStart={() => handleTouchControl('player1', 'right', true)}
+                                onTouchEnd={() => handleTouchControl('player1', 'right', false)}
+                            >
+                                <span className="text-white text-lg">→</span>
+                            </button>
+                            <div className="absolute -bottom-6 w-full text-center text-rose-400 text-xs">
+                                {player1.nickname}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Player 2 controls */}
+                    <div className={`absolute pointer-events-auto ${isLandscape ? 'left-4 bottom-20 w-24 h-24' : 'left-4 top-16 w-24 h-24'}`}>
+                        <div className="relative w-full h-full">
+                            <button 
+                                className="absolute top-0 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-cyan-500/30 rounded-full flex items-center justify-center"
+                                onTouchStart={() => handleTouchControl('player2', 'up', true)}
+                                onTouchEnd={() => handleTouchControl('player2', 'up', false)}
+                            >
+                                <span className="text-white text-lg">↑</span>
+                            </button>
+                            
+                            <button 
+                                className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-cyan-500/30 rounded-full flex items-center justify-center"
+                                onTouchStart={() => handleTouchControl('player2', 'down', true)}
+                                onTouchEnd={() => handleTouchControl('player2', 'down', false)}
+                            >
+                                <span className="text-white text-lg">↓</span>
+                            </button>
+                            
+                            <button 
+                                className="absolute left-0 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-cyan-500/30 rounded-full flex items-center justify-center"
+                                onTouchStart={() => handleTouchControl('player2', 'left', true)}
+                                onTouchEnd={() => handleTouchControl('player2', 'left', false)}
+                            >
+                                <span className="text-white text-lg">←</span>
+                            </button>
+                            
+                            <button 
+                                className="absolute right-0 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-cyan-500/30 rounded-full flex items-center justify-center"
+                                onTouchStart={() => handleTouchControl('player2', 'right', true)}
+                                onTouchEnd={() => handleTouchControl('player2', 'right', false)}
+                            >
+                                <span className="text-white text-lg">→</span>
+                            </button>
+                            <div className="absolute -bottom-6 w-full text-center text-cyan-400 text-xs">
+                                {player2.nickname}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            {/* Desktop control instructions - styled like QuadraPong */}
+            {!isMobile && (
+                <div className="fixed z-10 bottom-16 left-1/2 transform -translate-x-1/2
+                            bg-black/50 backdrop-blur-sm rounded-lg p-2
+                            grid grid-cols-2 gap-x-8 gap-y-1 text-xs">
+                    <div className="text-rose-400">{player1.nickname}: Arrow Keys</div>
+                    <div className="text-cyan-400">{player2.nickname}: WASD</div>
+                </div>
+            )}
+            
+            {/* Tournament Status Indicator - styled like QuadraPong */}
+            <div className="fixed z-10 bottom-28 left-1/2 transform -translate-x-1/2 bg-gray-900/70 backdrop-blur-sm rounded-full px-3 py-1 flex items-center space-x-2">
+                <Swords className="w-4 h-4 text-yellow-400" />
+                <span className="text-white text-xs">Tournament Match {matchPlayers[0] + 1}</span>
             </div>
-
-            <div className="absolute bottom-4 right-4 text-white text-sm space-y-1 text-right">
-                <p>{player1.nickname}: Arrow Keys</p>
-            </div>
-
-            <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-white text-lg">
-                Press ENTER to start/pause game
-            </div>
-
+            
+            {/* Game over screen - styled like QuadraPong with LocalPong elements */}
             {gameOver && (
-                <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
-                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-lg text-center border-2 border-cyan-400">
-                        <Trophy className={`w-16 h-16 mx-auto mb-4 ${matches.player > matches.ai ? 'text-cyan-400' : 'text-rose-400'} animate-pulse`} />
-                        <div className={`text-2xl font-bold ${matches.player > matches.ai ? 'text-cyan-400' : 'text-rose-400'} animate-pulse mb-4`}>
+                <div className="fixed inset-0 z-20 bg-black/80 flex items-center justify-center">
+                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-6 sm:p-8 rounded-lg text-center border-2 border-gradient-to-r from-cyan-400 to-rose-400 max-w-xs sm:max-w-md">
+                        <Trophy className={`w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 ${matches.player > matches.ai ? 'text-rose-400' : 'text-cyan-400'} animate-pulse`} />
+                        <div className={`text-xl sm:text-2xl font-bold ${matches.player > matches.ai ? 'text-rose-400' : 'text-cyan-400'} animate-pulse mb-4`}>
                             {matches.player > matches.ai ? player1.nickname : player2.nickname} Advances!
+                        </div>
+                        <div className="text-white/70 text-sm mb-4">
+                            Final Score: {matches.player} - {matches.ai}
                         </div>
                         <button
                             onClick={() => navigate('/game-lobby/tournament')}
-                            className="bg-transparent text-cyan-400 border-2 border-cyan-400 px-6 py-2 rounded-lg
-                                hover:bg-cyan-400/10 transition-colors duration-300"
+                            className="bg-transparent text-white border-2 border-gradient-to-r from-cyan-400 to-rose-400 px-4 sm:px-6 py-2 rounded-lg hover:bg-gradient-to-r hover:from-cyan-400/10 hover:to-rose-400/10 transition-colors duration-300 text-sm sm:text-base"
                         >
                             Back to Tournament
                         </button>
                     </div>
                 </div>
             )}
-        </>
+        </div>
     );
 };
 

@@ -2,22 +2,39 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import GUI from 'lil-gui';
 import gsap from 'gsap';
-import { split } from 'three/src/nodes/TSL.js';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Swords } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 
 const QuadraMode = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
+    const [gameStarted, setGameStarted] = useState(false);
+    
+    // Set up responsive detection
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+            setIsLandscape(window.innerWidth > window.innerHeight);
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+    
     useEffect(() => {
         if (!location.state) {
             navigate('/game-lobby/quadra-register');
         }
     }, [location.state, navigate]);
+    
     if (!location.state) {
         return null;
     }
+    
     const {teams} = location.state;
     const canvasRef = useRef(null);
     const sceneRef = useRef(null);
@@ -31,6 +48,14 @@ const QuadraMode = () => {
     const [gameOver, setGameOver] = useState(false);
     const [winner, setWinner] = useState(null);
     let tableBoundsRef = useRef(null);
+    
+    // Touch controls for all 4 players
+    const [touchControls, setTouchControls] = useState({
+        player1: { up: false, down: false, left: false, right: false },
+        player2: { up: false, down: false, left: false, right: false },
+        player3: { up: false, down: false, left: false, right: false },
+        player4: { up: false, down: false, left: false, right: false }
+    });
 
     useEffect(() => {
         if (!canvasRef.current) return;
@@ -43,28 +68,26 @@ const QuadraMode = () => {
         let maxGames = 3;
         let playerSideBounces = 0;
         let aiSideBounces = 0;
-        let isGameOver = false;
         let inGame = false;
         let lastHitAI = true;
-        let mouseCurrent = { x: 0, y: 0 };
 
         const scene = new THREE.Scene();
         sceneRef.current = scene;
 
         const ballBoundingBox = new THREE.Box3();
-        const paddleBoundingBox = new THREE.Box3();
-        const paddleCPUBoundingBox = new THREE.Box3();
         const tableBoundingBox = new THREE.Box3();
         const netBoundingBox = new THREE.Box3();
 
         scene.background = null;
 
-
         const ballSound = new Audio('/sounds/ping_pong.mp3');
 
+        // Create responsive cameras
+        const aspectRatio = (window.innerWidth * 0.5) / (window.innerHeight * 0.5);
+        
         const cameraP1 = new THREE.PerspectiveCamera(
             75,
-            (window.innerWidth * 0.5) / (window.innerHeight * 0.5),
+            aspectRatio,
             0.1,
             100
         );
@@ -72,7 +95,7 @@ const QuadraMode = () => {
 
         const cameraP2 = new THREE.PerspectiveCamera(
             75,
-            (window.innerWidth * 0.5) / (window.innerHeight * 0.5),
+            aspectRatio,
             0.1,
             100
         );
@@ -80,7 +103,7 @@ const QuadraMode = () => {
 
         const cameraP3 = new THREE.PerspectiveCamera(
             75,
-            (window.innerWidth * 0.5) / (window.innerHeight * 0.5),
+            aspectRatio,
             0.1,
             100
         );
@@ -88,19 +111,22 @@ const QuadraMode = () => {
 
         const cameraP4 = new THREE.PerspectiveCamera(
             75,
-            (window.innerWidth * 0.5) / (window.innerHeight * 0.5),
+            aspectRatio,
             0.1,
             100
         );
         scene.add(cameraP4);
 
         const renderer = new THREE.WebGLRenderer({
-            canvas: canvasRef.current
+            canvas: canvasRef.current,
+            alpha: true
         });
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.setClearColor(0x000000, 0);
         renderer.setClearAlpha(0);
+        
+        // Initial size - will be updated in handleResize
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
@@ -163,14 +189,17 @@ const QuadraMode = () => {
 
                 scene.add(model);
 
+                // Create paddles for other 3 players
                 paddleRefP2.current = new GameObject(model.clone());
                 paddleRefP2.current.mesh.position.x = -1.2;
                 paddleRefP2.current.mesh.position.z = -10;
                 scene.add(paddleRefP2.current.mesh);
+                
                 paddleRefP3.current = new GameObject(model.clone());
                 paddleRefP3.current.mesh.position.x = 1.2;
                 paddleRefP3.current.mesh.position.z = -10;
                 scene.add(paddleRefP3.current.mesh);
+                
                 paddleRefP4.current = new GameObject(model.clone());
                 paddleRefP4.current.mesh.position.x = -1.2;
                 paddleRefP4.current.mesh.position.z = 10;
@@ -233,6 +262,7 @@ const QuadraMode = () => {
                 obj.mesh.position.copy(obj.position);
             });
         };
+        
         const collisionTimestamps = new Map();
         const collisionDelay = 100;
         const twoObjCollide = (objA, objB) => {
@@ -250,6 +280,7 @@ const QuadraMode = () => {
             }
             return false;
         };
+        
         const checkCollisions = () => {
             if (!paddleRefP1.current || gameObjectsRef.current.length === 0 || !paddleRefP2.current || !paddleRefP3.current || !paddleRefP4.current) return;
             
@@ -374,6 +405,7 @@ const QuadraMode = () => {
                 ball.position.z += ball.velocity.z * 0.01;
             }
         };
+        
         const resetBall = (direction = 1) => {
             gameObjectsRef.current.forEach(obj => scene.remove(obj.mesh));
             gameObjectsRef.current = [];
@@ -450,8 +482,11 @@ const QuadraMode = () => {
             winCheck();
         };
 
-        const paddleSpeed = 0.08;
+        // Adjust paddle speed for mobile
+        const paddleSpeed = isMobile ? 0.10 : 0.08;
         const smoothFactor = 0.05;
+        
+        // Velocity states for all 4 paddles
         let paddleP1VelocityX = 0;
         let paddleP1VelocityY = 0;
         let paddleP2VelocityY = 0;
@@ -462,6 +497,7 @@ const QuadraMode = () => {
         let paddleP4VelocityX = 0;
 
         const handleKeyDown = (event) => {
+            // Player 1 controls
             if (event.key === 'ArrowUp') {
                 paddleP1VelocityY = paddleSpeed;
             }
@@ -474,6 +510,8 @@ const QuadraMode = () => {
             if (event.key === 'ArrowRight') {
                 paddleP1VelocityX = paddleSpeed;
             }
+            
+            // Player 2 controls
             if (event.key === 'W' || event.key === 'w') {
                 paddleP2VelocityY = paddleSpeed;
             }
@@ -486,6 +524,8 @@ const QuadraMode = () => {
             if (event.key === 'D' || event.key === 'd') {
                 paddleP2VelocityX = -paddleSpeed;
             }
+            
+            // Player 3 controls
             if (event.key === 'I' || event.key === 'i') {
                 paddleP3VelocityY = paddleSpeed;
             }
@@ -498,6 +538,8 @@ const QuadraMode = () => {
             if (event.key === 'L' || event.key === 'l') {
                 paddleP3VelocityX = -paddleSpeed;
             }
+            
+            // Player 4 controls
             if (event.key === '8') {
                 paddleP4VelocityY = paddleSpeed;
             }
@@ -510,31 +552,41 @@ const QuadraMode = () => {
             if (event.key === '4') {
                 paddleP4VelocityX = -paddleSpeed;
             }
+            
+            // Start/pause game
             if (event.key === 'Enter') {
                 inGame = !inGame;
+                setGameStarted(inGame);
                 controls.enableRotate = !inGame;
             }
         };
 
         const handleKeyUp = (event) => {
+            // Player 1
             if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
                 paddleP1VelocityY = 0;
             }
             if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
                 paddleP1VelocityX = 0;
             }
+            
+            // Player 2
             if (event.key === 'W' || event.key === 'w' || event.key === 'S' || event.key === 's') {
                 paddleP2VelocityY = 0;
             }
             if (event.key === 'A' || event.key === 'a' || event.key === 'D' || event.key === 'd') {
                 paddleP2VelocityX = 0;
             }
+            
+            // Player 3
             if (event.key === 'I' || event.key === 'i' || event.key === 'K' || event.key === 'k') {
                 paddleP3VelocityY = 0;
             }
             if (event.key === 'J' || event.key === 'j' || event.key === 'L' || event.key === 'l') {
                 paddleP3VelocityX = 0;
             }
+            
+            // Player 4
             if (event.key === '8' || event.key === '5') {
                 paddleP4VelocityY = 0;
             }
@@ -546,7 +598,7 @@ const QuadraMode = () => {
         const lerp = (current, target, smoothFactor) => {
             return current + (target - current) * smoothFactor;
         };
-
+        
         const setupLighting = () => {
             const ambientLight = new THREE.AmbientLight(0xffffff, 2.1);
             scene.add(ambientLight);
@@ -567,16 +619,34 @@ const QuadraMode = () => {
             const width = window.innerWidth;
             const height = window.innerHeight;
             
-            cameraP1.aspect = width * 0.5 / (height * 0.5);
+            // Update landscape state
+            const isCurrentlyLandscape = width > height;
+            setIsLandscape(isCurrentlyLandscape);
+            
+            // Use client dimensions to avoid scrollbars
+            const clientWidth = document.documentElement.clientWidth;
+            const clientHeight = document.documentElement.clientHeight;
+            
+            // Calculate new aspect ratio and adjust based on layout
+            let newAspectRatio;
+            if (isCurrentlyLandscape) { // Landscape
+                newAspectRatio = (clientWidth * 0.5) / (clientHeight * 0.5);
+            } else { // Portrait - stack the quadrants vertically
+                newAspectRatio = clientWidth / (clientHeight * 0.25);
+            }
+            
+            // Update all camera aspect ratios
+            cameraP1.aspect = newAspectRatio;
             cameraP1.updateProjectionMatrix();
-            cameraP2.aspect = width * 0.5 / (height * 0.5);
+            cameraP2.aspect = newAspectRatio;
             cameraP2.updateProjectionMatrix();
-            cameraP3.aspect = width * 0.5 / (height * 0.5);
+            cameraP3.aspect = newAspectRatio;
             cameraP3.updateProjectionMatrix();
-            cameraP4.aspect = width * 0.5 / (height * 0.5);
+            cameraP4.aspect = newAspectRatio;
             cameraP4.updateProjectionMatrix();
             
-            renderer.setSize(width, height);
+            // Set renderer size to client dimensions to avoid scrollbars
+            renderer.setSize(clientWidth, clientHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         };
 
@@ -617,31 +687,44 @@ const QuadraMode = () => {
                     cameraP3.position.lerp(target3CameraPos, 0.05);
                     cameraP4.position.lerp(target4CameraPos, 0.05);
 
-                    const current1LookAt = new THREE.Vector3(cameraP1.position.x, cameraP1.position.y, cameraP1.position.z);
-                    const current2LookAt = new THREE.Vector3(cameraP2.position.x, cameraP2.position.y, cameraP2.position.z);
-                    const current3LookAt = new THREE.Vector3(cameraP3.position.x, cameraP3.position.y, cameraP3.position.z);
-                    const current4LookAt = new THREE.Vector3(cameraP4.position.x, cameraP4.position.y, cameraP4.position.z);
+                    // Look at targets
+                    cameraP1.lookAt(target1LookAt);
+                    cameraP2.lookAt(target2LookAt);
+                    cameraP3.lookAt(target3LookAt);
+                    cameraP4.lookAt(target4LookAt);
 
-                    const newLookAt1 = target1LookAt.lerp(current1LookAt, 0.05);
-                    const newLookAt2 = target2LookAt.lerp(current2LookAt, 0.05);
-                    const newLookAt3 = target3LookAt.lerp(current3LookAt, 0.05);
-                    const newLookAt4 = target4LookAt.lerp(current4LookAt, 0.05);
-
-                    cameraP1.lookAt(newLookAt1);
-                    cameraP2.lookAt(newLookAt2);
-                    cameraP3.lookAt(newLookAt3);
-                    cameraP4.lookAt(newLookAt4);
-
-
+                    // Apply smooth velocity for all paddles
                     paddleP1VelocityX = lerp(paddleP1VelocityX, paddleP1VelocityX, smoothFactor);
                     paddleP1VelocityY = lerp(paddleP1VelocityY, paddleP1VelocityY, smoothFactor);
                     paddleP2VelocityX = lerp(paddleP2VelocityX, paddleP2VelocityX, smoothFactor);
                     paddleP2VelocityY = lerp(paddleP2VelocityY, paddleP2VelocityY, smoothFactor);
                     paddleP3VelocityY = lerp(paddleP3VelocityY, paddleP3VelocityY, smoothFactor);
-                    paddleP3VelocityY = lerp(paddleP3VelocityY, paddleP3VelocityY, smoothFactor);
+                    paddleP3VelocityX = lerp(paddleP3VelocityX, paddleP3VelocityX, smoothFactor);
                     paddleP4VelocityY = lerp(paddleP4VelocityY, paddleP4VelocityY, smoothFactor);
-                    paddleP4VelocityY = lerp(paddleP4VelocityY, paddleP4VelocityY, smoothFactor);
+                    paddleP4VelocityX = lerp(paddleP4VelocityX, paddleP4VelocityX, smoothFactor);
 
+                    // Apply touch controls
+                    if (touchControls.player1.up) paddleP1VelocityY = paddleSpeed;
+                    if (touchControls.player1.down) paddleP1VelocityY = -paddleSpeed;
+                    if (touchControls.player1.left) paddleP1VelocityX = -paddleSpeed;
+                    if (touchControls.player1.right) paddleP1VelocityX = paddleSpeed;
+                    
+                    if (touchControls.player2.up) paddleP2VelocityY = paddleSpeed;
+                    if (touchControls.player2.down) paddleP2VelocityY = -paddleSpeed;
+                    if (touchControls.player2.left) paddleP2VelocityX = paddleSpeed;
+                    if (touchControls.player2.right) paddleP2VelocityX = -paddleSpeed;
+                    
+                    if (touchControls.player3.up) paddleP3VelocityY = paddleSpeed;
+                    if (touchControls.player3.down) paddleP3VelocityY = -paddleSpeed;
+                    if (touchControls.player3.left) paddleP3VelocityX = paddleSpeed;
+                    if (touchControls.player3.right) paddleP3VelocityX = -paddleSpeed;
+                    
+                    if (touchControls.player4.up) paddleP4VelocityY = paddleSpeed;
+                    if (touchControls.player4.down) paddleP4VelocityY = -paddleSpeed;
+                    if (touchControls.player4.left) paddleP4VelocityX = paddleSpeed;
+                    if (touchControls.player4.right) paddleP4VelocityX = -paddleSpeed;
+
+                    // Apply velocities to paddles
                     paddleRefP1.current.mesh.position.x += paddleP1VelocityX;
                     paddleRefP1.current.mesh.position.y += paddleP1VelocityY;
                     paddleRefP2.current.mesh.position.x += paddleP2VelocityX;
@@ -651,129 +734,50 @@ const QuadraMode = () => {
                     paddleRefP4.current.mesh.position.x += paddleP4VelocityX;
                     paddleRefP4.current.mesh.position.y += paddleP4VelocityY;
 
+                    // Constrain paddle positions to table bounds
                     if (tableBoundsRef.current) {
-                        if (paddleRefP1.current.mesh.position.x < tableBoundsRef.current.min.x) {
-                            paddleRefP1.current.mesh.position.x = tableBoundsRef.current.min.x;
-                        } else if (paddleRefP1.current.mesh.position.x > tableBoundsRef.current.max.x) {
-                            paddleRefP1.current.mesh.position.x = tableBoundsRef.current.max.x;
-                        }
-
-                        if (paddleRefP1.current.mesh.position.y < tableBoundsRef.current.min.y - 0.5) {
-                            paddleRefP1.current.mesh.position.y = tableBoundsRef.current.min.y - 0.5;
-                        } else if (paddleRefP1.current.mesh.position.y > tableBoundsRef.current.max.y + 3) {
-                            paddleRefP1.current.mesh.position.y = tableBoundsRef.current.max.y + 3;
-                        }
-
-                        if (paddleRefP2.current.mesh.position.x < tableBoundsRef.current.min.x) {
-                            paddleRefP2.current.mesh.position.x = tableBoundsRef.current.min.x;
-                        } else if (paddleRefP2.current.mesh.position.x > tableBoundsRef.current.max.x) {
-                            paddleRefP2.current.mesh.position.x = tableBoundsRef.current.max.x;
-                        }
-
-                        if (paddleRefP2.current.mesh.position.y < tableBoundsRef.current.min.y - 0.5) {
-                            paddleRefP2.current.mesh.position.y = tableBoundsRef.current.min.y - 0.5;
-                        } else if (paddleRefP2.current.mesh.position.y > tableBoundsRef.current.max.y + 3) {
-                            paddleRefP2.current.mesh.position.y = tableBoundsRef.current.max.y + 3;
-                        }
-
-                        if (paddleRefP3.current.mesh.position.x < tableBoundsRef.current.min.x) {
-                            paddleRefP3.current.mesh.position.x = tableBoundsRef.current.min.x;
-                        } else if (paddleRefP3.current.mesh.position.x > tableBoundsRef.current.max.x) {
-                            paddleRefP3.current.mesh.position.x = tableBoundsRef.current.max.x;
-                        }
-
-                        if (paddleRefP3.current.mesh.position.y < tableBoundsRef.current.min.y - 0.5) {
-                            paddleRefP3.current.mesh.position.y = tableBoundsRef.current.min.y - 0.5;
-
-                        } else if (paddleRefP3.current.mesh.position.y > tableBoundsRef.current.max.y + 3) {
-                            paddleRefP3.current.mesh.position.y = tableBoundsRef.current.max.y + 3;
-                        }
-
-                        if (paddleRefP4.current.mesh.position.x < tableBoundsRef.current.min.x) {
-                            paddleRefP4.current.mesh.position.x = tableBoundsRef.current.min.x;
-                        } else if (paddleRefP4.current.mesh.position.x > tableBoundsRef.current.max.x) {
-                            paddleRefP4.current.mesh.position.x = tableBoundsRef.current.max.x;
-                        }
-
-                        if (paddleRefP4.current.mesh.position.y < tableBoundsRef.current.min.y - 0.5) {
-                            paddleRefP4.current.mesh.position.y = tableBoundsRef.current.min.y - 0.5;
-                        } else if (paddleRefP4.current.mesh.position.y > tableBoundsRef.current.max.y + 3) {
-                            paddleRefP4.current.mesh.position.y = tableBoundsRef.current.max.y + 3;
-                        }
+                        const paddleRefs = [paddleRefP1, paddleRefP2, paddleRefP3, paddleRefP4];
+                        paddleRefs.forEach(paddleRef => {
+                            const paddle = paddleRef.current.mesh;
                             
+                            // X-axis bounds
+                            if (paddle.position.x < tableBoundsRef.current.min.x) {
+                                paddle.position.x = tableBoundsRef.current.min.x;
+                            } else if (paddle.position.x > tableBoundsRef.current.max.x) {
+                                paddle.position.x = tableBoundsRef.current.max.x;
+                            }
+
+                            // Y-axis bounds
+                            if (paddle.position.y < tableBoundsRef.current.min.y - 0.5) {
+                                paddle.position.y = tableBoundsRef.current.min.y - 0.5;
+                            } else if (paddle.position.y > tableBoundsRef.current.max.y + 3) {
+                                paddle.position.y = tableBoundsRef.current.max.y + 3;
+                            }
+                        });
                     }
 
-                    if (paddleRefP1.current.mesh.position.x > 0) {
-                        gsap.to(paddleRefP1.current.mesh.rotation, {
-                            x: 2.81,
-                            y: 2.96,
-                            z: 2.81,
-                            duration: 0.095,
-                            ease: "power2.inOut",
-                        });
-                    } else {
-                        gsap.to(paddleRefP1.current.mesh.rotation, {
-                            x: 2.81,
-                            y: 6.28,
-                            z: 2.81,
-                            duration: 0.095,
-                            ease: "power2.inOut",
-                        });
-                    }
+                    // Animate paddle rotations based on position
+                    const paddleRotations = [
+                        { ref: paddleRefP1, positive: { x: 2.81, y: 2.96, z: 2.81 }, negative: { x: 2.81, y: 6.28, z: 2.81 } },
+                        { ref: paddleRefP2, positive: { x: -2.81, y: 2.96, z: 2.81 }, negative: { x: -2.81, y: 6.28, z: 2.81 } },
+                        { ref: paddleRefP3, positive: { x: -2.81, y: 2.96, z: 2.81 }, negative: { x: -2.81, y: 6.28, z: 2.81 } },
+                        { ref: paddleRefP4, positive: { x: 2.81, y: 2.96, z: 2.81 }, negative: { x: 2.81, y: 6.28, z: 2.81 } }
+                    ];
                     
-                    if (paddleRefP4.current.mesh.position.x > 0) {
-                        gsap.to(paddleRefP4.current.mesh.rotation, {
-                            x: 2.81,
-                            y: 2.96,
-                            z: 2.81,
-                            duration: 0.095,
-                            ease: "power2.inOut",
-                        });
-                    } else {
-                        gsap.to(paddleRefP4.current.mesh.rotation, {
-                            x: 2.81,
-                            y: 6.28,
-                            z: 2.81,
-                            duration: 0.095,
-                            ease: "power2.inOut",
-                        });
-                    }
-
-                    if (paddleRefP2.current?.mesh.position.x > 0) {
-                        gsap.to(paddleRefP2.current.mesh.rotation, {
-                            x: -2.81,
-                            y: 2.96,
-                            z: 2.81,
-                            duration: 0.095,
-                            ease: "power2.inOut",
-                        });
-                    } else {
-                        gsap.to(paddleRefP2.current.mesh.rotation, {
-                            x: -2.81,
-                            y: 6.28,
-                            z: 2.81,
-                            duration: 0.095,
-                            ease: "power2.inOut",
-                        });
-                    }
-
-                    if (paddleRefP3.current?.mesh.position.x > 0) {
-                        gsap.to(paddleRefP3.current.mesh.rotation, {
-                            x: -2.81,
-                            y: 2.96,
-                            z: 2.81,
-                            duration: 0.095,
-                            ease: "power2.inOut",
-                        });
-                    } else {
-                        gsap.to(paddleRefP3.current.mesh.rotation, {
-                            x: -2.81,
-                            y: 6.28,
-                            z: 2.81,
-                            duration: 0.095,
-                            ease: "power2.inOut",
-                        });
-                    }
+                    paddleRotations.forEach(({ ref, positive, negative }) => {
+                        const paddle = ref.current.mesh;
+                        if (paddle.position.x > 0) {
+                            gsap.to(paddle.rotation, {
+                                x: positive.x, y: positive.y, z: positive.z,
+                                duration: 0.095, ease: "power2.inOut"
+                            });
+                        } else {
+                            gsap.to(paddle.rotation, {
+                                x: negative.x, y: negative.y, z: negative.z,
+                                duration: 0.095, ease: "power2.inOut"
+                            });
+                        }
+                    });
                 }
 
                 simulatePhysics(deltaTime);
@@ -782,29 +786,60 @@ const QuadraMode = () => {
             }
             
             controls.update();
+            
+            // Get current client dimensions to prevent scrollbars
+            const clientWidth = document.documentElement.clientWidth;
+            const clientHeight = document.documentElement.clientHeight;
+            
             renderer.setScissorTest(true);
+            
+            if (isLandscape) {
+                // Landscape layout: 2x2 grid with fixed dimensions
+                const halfWidth = Math.floor(clientWidth / 2);
+                const halfHeight = Math.floor(clientHeight / 2);
+                
+                renderer.setViewport(0, 0, halfWidth, halfHeight);
+                renderer.setScissor(0, 0, halfWidth, halfHeight);
+                renderer.render(scene, cameraP2);
 
-            renderer.setViewport(0, 0, window.innerWidth / 2, window.innerHeight / 2);
-            renderer.setScissor(0, 0, window.innerWidth / 2, window.innerHeight / 2);
-            renderer.render(scene, cameraP2);
+                renderer.setViewport(halfWidth, 0, halfWidth, halfHeight);
+                renderer.setScissor(halfWidth, 0, halfWidth, halfHeight);
+                renderer.render(scene, cameraP1);
 
-            renderer.setViewport(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight / 2);
-            renderer.setScissor(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight / 2);
-            renderer.render(scene, cameraP1);
+                renderer.setViewport(0, halfHeight, halfWidth, halfHeight);
+                renderer.setScissor(0, halfHeight, halfWidth, halfHeight);
+                renderer.render(scene, cameraP3);
 
-            renderer.setViewport(0, window.innerHeight / 2, window.innerWidth / 2, window.innerHeight / 2);
-            renderer.setScissor(0, window.innerHeight / 2, window.innerWidth / 2, window.innerHeight / 2);
-            renderer.render(scene, cameraP3);
-
-            renderer.setViewport(window.innerWidth / 2, window.innerHeight / 2, window.innerWidth / 2, window.innerHeight / 2);
-            renderer.setScissor(window.innerWidth / 2, window.innerHeight / 2, window.innerWidth / 2, window.innerHeight / 2);
-            renderer.render(scene, cameraP4);
+                renderer.setViewport(halfWidth, halfHeight, halfWidth, halfHeight);
+                renderer.setScissor(halfWidth, halfHeight, halfWidth, halfHeight);
+                renderer.render(scene, cameraP4);
+            } else {
+                // Portrait layout: stacked 4 rows with fixed dimensions
+                const rowHeight = Math.floor(clientHeight / 4);
+                const fullWidth = clientWidth;
+                
+                renderer.setViewport(0, 0, fullWidth, rowHeight);
+                renderer.setScissor(0, 0, fullWidth, rowHeight);
+                renderer.render(scene, cameraP1);
+                
+                renderer.setViewport(0, rowHeight, fullWidth, rowHeight);
+                renderer.setScissor(0, rowHeight, fullWidth, rowHeight);
+                renderer.render(scene, cameraP2);
+                
+                renderer.setViewport(0, rowHeight * 2, fullWidth, rowHeight);
+                renderer.setScissor(0, rowHeight * 2, fullWidth, rowHeight);
+                renderer.render(scene, cameraP3);
+                
+                renderer.setViewport(0, rowHeight * 3, fullWidth, rowHeight);
+                renderer.setScissor(0, rowHeight * 3, fullWidth, rowHeight);
+                renderer.render(scene, cameraP4);
+            }
 
             requestAnimationFrame(animate);
-
             renderer.setScissorTest(false);
-            if (gameObjectsRef.current.length > 0 && paddleRefP1.current?.mesh && paddleRefP2.current?.mesh && tableObject.mesh && netObject.mesh) {
 
+            // Set up bounding boxes
+            if (gameObjectsRef.current.length > 0 && paddleRefP1.current?.mesh && paddleRefP2.current?.mesh && tableObject.mesh && netObject.mesh) {
                 tableBoundingBox.setFromObject(tableObject.mesh);
                 netBoundingBox.setFromObject(netObject.mesh);
                 if (!isBoundingBoxVisible) {
@@ -814,7 +849,6 @@ const QuadraMode = () => {
                     scene.add(netBoxHelper);
                     isBoundingBoxVisible = true;
                 }
-            
             }
         };
 
@@ -832,6 +866,9 @@ const QuadraMode = () => {
             window.addEventListener('keydown', handleKeyDown);
             window.addEventListener('keyup', handleKeyUp);
             window.addEventListener('resize', handleResize);
+            
+            // Call handleResize initially to set correct canvas size
+            handleResize();
             
             animate();
         };
@@ -855,18 +892,41 @@ const QuadraMode = () => {
             renderer.dispose();
             if (controls) controls.dispose();
         };
-    }, []);
+    }, [isLandscape]);
+
+    // Handle touch controls for a player
+    const handleTouchControl = (player, direction, isPressed) => {
+        setTouchControls(prev => ({
+            ...prev,
+            [player]: {
+                ...prev[player],
+                [direction]: isPressed
+            }
+        }));
+    };
+    
+    // Toggle game start/pause
+    const toggleGame = () => {
+        const event = new KeyboardEvent('keydown', { key: 'Enter' });
+        window.dispatchEvent(event);
+    };
 
     return (
-        <>
-            <canvas ref={canvasRef} className="webgl" />
+        <div className="relative w-full h-full overflow-hidden">
+            <canvas ref={canvasRef} className="webgl absolute top-0 left-0 w-full h-full" />
             
-            <div className="absolute top-10 left-1/2 transform -translate-x-1/2 flex items-center justify-between w-full max-w-5xl px-8 py-6 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full border-4 border-cyan-400 shadow-glow">
+            {/* Updated Score and team display with unified UI styling */}
+            <div className={`
+                fixed z-10 flex items-center justify-between 
+                ${isMobile ? 'top-2 left-1/2 transform -translate-x-1/2 w-11/12 px-3 py-2' : 'top-4 left-1/2 transform -translate-x-1/2 w-4/5 max-w-5xl px-4 py-2'} 
+                bg-gray-800/80 backdrop-blur-sm rounded-full
+                border-2 border-gradient-to-r from-cyan-400 to-rose-400 shadow-lg
+            `}>
                 {/* Red Team */}
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-center">
                     {teams.red.map((player, index) => (
-                        <div key={`red-${index}`} className="flex items-center space-x-2">
-                            <div className="w-12 h-12 rounded-full overflow-hidden border-4 border-rose-400">
+                        <div key={`red-${index}`} className="flex items-center gap-1 sm:gap-2">
+                            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden border-2 border-rose-400">
                                 {player.image && (
                                     <img 
                                         src={player.image} 
@@ -875,27 +935,27 @@ const QuadraMode = () => {
                                     />
                                 )}
                             </div>
-                            <span className="text-rose-400 text-sm">{player.nickname}</span>
+                            <span className="text-rose-400 text-xs sm:text-sm">{player.nickname}</span>
                         </div>
                     ))}
                 </div>
                 
                 {/* Score Display */}
-                <div className="flex flex-col items-center">
-                    <div className="text-white text-2xl">
+                <div className="flex flex-col items-center mx-1 sm:mx-4">
+                    <div className="text-white text-base sm:text-2xl font-bold">
                         {scores.player} - {scores.ai}
                     </div>
-                    <div className="text-gray-400">
+                    <div className="text-gray-400 text-xs sm:text-base">
                         Round {matches.player + matches.ai + 1}
                     </div>
                 </div>
                 
                 {/* Blue Team */}
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-center">
                     {teams.blue.map((player, index) => (
-                        <div key={`blue-${index}`} className="flex items-center space-x-2">
-                            <span className="text-cyan-400 text-sm">{player.nickname}</span>
-                            <div className="w-12 h-12 rounded-full overflow-hidden border-4 border-cyan-400">
+                        <div key={`blue-${index}`} className="flex items-center gap-1 sm:gap-2">
+                            <span className="text-cyan-400 text-xs sm:text-sm">{player.nickname}</span>
+                            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden border-2 border-cyan-400">
                                 {player.image && (
                                     <img 
                                         src={player.image} 
@@ -909,43 +969,237 @@ const QuadraMode = () => {
                 </div>
             </div>
             
-            {/* Controls Info */}
-            <div className="absolute bottom-4 left-4 text-white text-sm space-y-1">
-                <p>Red Team Controls:</p>
-                <p>Player 1: Arrow Keys</p>
-                <p>Player 2: WASD</p>
+            {/* Start/Pause button - updated to match unified UI style */}
+            <button
+                onClick={toggleGame}
+                className={`
+                    fixed z-10 bg-gradient-to-r from-gray-800/80 to-gray-900/80 backdrop-blur-sm
+                    text-white px-4 py-2 rounded-full
+                    border border-white/30 text-xs sm:text-sm hover:bg-gray-700/80
+                    ${isLandscape ? 'left-1/2 transform -translate-x-1/2 bottom-4' : 'left-1/2 transform -translate-x-1/2 bottom-4'}
+                    transition-all duration-300 ease-in-out
+                `}
+            >
+                {gameStarted ? "Pause Game" : "Start Game"}
+            </button>
+            
+            {/* Quadra Mode Indicator */}
+            <div className="fixed z-10 bottom-28 left-1/2 transform -translate-x-1/2 bg-gray-900/70 backdrop-blur-sm rounded-full px-3 py-1 flex items-center space-x-2">
+                <Swords className="w-4 h-4 text-yellow-400" />
+                <span className="text-white text-xs">Quadra Mode • 2v2</span>
             </div>
             
-            <div className="absolute bottom-4 right-4 text-white text-sm space-y-1 text-right">
-                <p>Blue Team Controls:</p>
-                <p>Player 1: IJKL</p>
-                <p>Player 2: Numpad 8456</p>
-            </div>
+            {/* Touch controls for mobile */}
+            {isMobile && (
+                <div className="fixed z-10 inset-0 pointer-events-none">
+                    {isLandscape ? (
+                        // Landscape layout
+                        <>
+                            {/* Four corners with controls */}
+                            <PlayerTouchControls 
+                                player="player1"
+                                position="top-right"
+                                color="rose"
+                                playerName={teams.red[0].nickname}
+                                onControlChange={handleTouchControl}
+                            />
+                            
+                            <PlayerTouchControls 
+                                player="player2"
+                                position="top-left"
+                                color="cyan"
+                                playerName={teams.blue[0].nickname}
+                                onControlChange={handleTouchControl}
+                            />
+                            
+                            <PlayerTouchControls 
+                                player="player3"
+                                position="bottom-left"
+                                color="cyan"
+                                playerName={teams.blue[1].nickname}
+                                onControlChange={handleTouchControl}
+                            />
+                            
+                            <PlayerTouchControls 
+                                player="player4"
+                                position="bottom-right"
+                                color="rose"
+                                playerName={teams.red[1].nickname}
+                                onControlChange={handleTouchControl}
+                            />
+                        </>
+                    ) : (
+                        // Portrait layout - controls on sides
+                        <>
+                            <div className="absolute right-2 inset-y-0 flex flex-col justify-around items-center w-16">
+                                <PlayerTouchControls 
+                                    player="player1"
+                                    position="compact"
+                                    color="rose"
+                                    playerName={teams.red[0].nickname}
+                                    onControlChange={handleTouchControl}
+                                />
+                                
+                                <PlayerTouchControls 
+                                    player="player4"
+                                    position="compact"
+                                    color="rose"
+                                    playerName={teams.red[1].nickname}
+                                    onControlChange={handleTouchControl}
+                                />
+                            </div>
+                            
+                            <div className="absolute left-2 inset-y-0 flex flex-col justify-around items-center w-16">
+                                <PlayerTouchControls 
+                                    player="player2"
+                                    position="compact"
+                                    color="cyan"
+                                    playerName={teams.blue[0].nickname}
+                                    onControlChange={handleTouchControl}
+                                />
+                                
+                                <PlayerTouchControls 
+                                    player="player3"
+                                    position="compact"
+                                    color="cyan"
+                                    playerName={teams.blue[1].nickname}
+                                    onControlChange={handleTouchControl}
+                                />
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
             
-            <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-white text-lg">
-                Press ENTER to start/pause game
-            </div>
+            {/* Desktop control instructions - updated to match unified UI style */}
+            {!isMobile && (
+                <div className="fixed z-10 bottom-16 left-1/2 transform -translate-x-1/2 
+                              bg-black/50 backdrop-blur-sm rounded-lg p-2
+                              w-auto max-w-lg grid grid-cols-2 gap-x-8 gap-y-1 text-xs">
+                    <div className="text-rose-400">{teams.red[0].nickname}: Arrow Keys</div>
+                    <div className="text-cyan-400">{teams.blue[0].nickname}: WASD</div>
+                    <div className="text-rose-400">{teams.red[1].nickname}: Numpad 8456</div>
+                    <div className="text-cyan-400">{teams.blue[1].nickname}: IJKL</div>
+                </div>
+            )}
             
+            {/* Game over screen - updated to match unified UI style */}
             {gameOver && (
-                <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
-                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-lg text-center border-2 border-cyan-400">
-                        <Swords className={`w-16 h-16 mx-auto mb-4 ${winner === 'red' ? 'text-rose-400' : 'text-cyan-400'} animate-pulse`} />
-                        <div className={`text-2xl font-bold ${winner === 'red' ? 'text-rose-400' : 'text-cyan-400'} animate-pulse mb-4`}>
+                <div className="fixed inset-0 z-20 bg-black/80 flex items-center justify-center">
+                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-6 sm:p-8 rounded-lg text-center border-2 border-gradient-to-r from-cyan-400 to-rose-400 max-w-xs sm:max-w-md">
+                        <Swords className={`w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 ${winner === 'red' ? 'text-rose-400' : 'text-cyan-400'} animate-pulse`} />
+                        <div className={`text-xl sm:text-2xl font-bold ${winner === 'red' ? 'text-rose-400' : 'text-cyan-400'} animate-pulse mb-4`}>
                             {winner.toUpperCase()} Team Wins!
+                        </div>
+                        <div className="text-white/70 text-sm mb-4">
+                            Final Score: {winner === 'red' ? scores.player : scores.ai} - {winner === 'red' ? scores.ai : scores.player}
                         </div>
                         <button
                             onClick={() => navigate('/game-lobby/quadra-register')}
-                            className="bg-transparent text-cyan-400 border-2 border-cyan-400 px-6 py-2 rounded-lg hover:bg-cyan-400/10 transition-colors duration-300"
+                            className="bg-transparent text-white border-2 border-gradient-to-r from-cyan-400 to-rose-400 px-4 sm:px-6 py-2 rounded-lg hover:bg-gradient-to-r hover:from-cyan-400/10 hover:to-rose-400/10 transition-colors duration-300 text-sm sm:text-base"
                         >
                             Back to Lobby
                         </button>
                     </div>
                 </div>
             )}
-        </>
+        </div>
     );
+};
 
-
-}
+// Touch controls component for each player - updated with unified styling
+const PlayerTouchControls = ({ player, position, color, playerName, onControlChange }) => {
+    if (position === "compact") {
+        return (
+            <div className="relative pointer-events-auto w-16 h-16">
+                <button 
+                    className={`absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-${color}-500/30 rounded-full flex items-center justify-center`}
+                    onTouchStart={() => onControlChange(player, 'up', true)}
+                    onTouchEnd={() => onControlChange(player, 'up', false)}
+                >
+                    <span className="text-white text-xs">↑</span>
+                </button>
+                
+                <button 
+                    className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-${color}-500/30 rounded-full flex items-center justify-center`}
+                    onTouchStart={() => onControlChange(player, 'down', true)}
+                    onTouchEnd={() => onControlChange(player, 'down', false)}
+                >
+                    <span className="text-white text-xs">↓</span>
+                </button>
+                
+                <button 
+                    className={`absolute left-0 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-${color}-500/30 rounded-full flex items-center justify-center`}
+                    onTouchStart={() => onControlChange(player, 'left', true)}
+                    onTouchEnd={() => onControlChange(player, 'left', false)}
+                >
+                    <span className="text-white text-xs">←</span>
+                </button>
+                
+                <button 
+                    className={`absolute right-0 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-${color}-500/30 rounded-full flex items-center justify-center`}
+                    onTouchStart={() => onControlChange(player, 'right', true)}
+                    onTouchEnd={() => onControlChange(player, 'right', false)}
+                >
+                    <span className="text-white text-xs">→</span>
+                </button>
+                
+                <div className={`absolute -bottom-5 w-full text-center text-${color}-400 text-xs`}>
+                    {playerName}
+                </div>
+            </div>
+        );
+    }
+    
+    // Position mapping
+    const positions = {
+        "top-left": "left-4 top-20",
+        "top-right": "right-4 top-20",
+        "bottom-left": "left-4 bottom-20",
+        "bottom-right": "right-4 bottom-20",
+    };
+    
+    return (
+        <div className={`absolute ${positions[position]} pointer-events-auto w-20 h-20`}>
+            <div className="relative w-full h-full">
+                <button 
+                    className={`absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-${color}-500/30 rounded-full flex items-center justify-center`}
+                    onTouchStart={() => onControlChange(player, 'up', true)}
+                    onTouchEnd={() => onControlChange(player, 'up', false)}
+                >
+                    <span className="text-white text-xs">↑</span>
+                </button>
+                
+                <button 
+                    className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-${color}-500/30 rounded-full flex items-center justify-center`}
+                    onTouchStart={() => onControlChange(player, 'down', true)}
+                    onTouchEnd={() => onControlChange(player, 'down', false)}
+                >
+                    <span className="text-white text-xs">↓</span>
+                </button>
+                
+                <button 
+                    className={`absolute left-0 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-${color}-500/30 rounded-full flex items-center justify-center`}
+                    onTouchStart={() => onControlChange(player, 'left', true)}
+                    onTouchEnd={() => onControlChange(player, 'left', false)}
+                >
+                    <span className="text-white text-xs">←</span>
+                </button>
+                
+                <button 
+                    className={`absolute right-0 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-${color}-500/30 rounded-full flex items-center justify-center`}
+                    onTouchStart={() => onControlChange(player, 'right', true)}
+                    onTouchEnd={() => onControlChange(player, 'right', false)}
+                >
+                    <span className="text-white text-xs">→</span>
+                </button>
+                
+                <div className={`absolute -bottom-6 w-full text-center text-${color}-400 text-xs`}>
+                    {playerName}
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export default QuadraMode;

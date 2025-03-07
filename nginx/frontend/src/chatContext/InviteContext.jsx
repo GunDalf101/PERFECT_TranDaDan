@@ -152,10 +152,10 @@ export const InviteProvider = ({ children }) => {
           reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS &&
           myUsername) {
 
-          setNotification({
-            type: 'warning',
-            message: `Connection lost. Reconnecting... (Attempt ${reconnectAttemptsRef.current + 1}/${MAX_RECONNECT_ATTEMPTS})`
-          });
+          // setNotification({
+          //   type: 'warning',
+          //   message: `Connection lost. Reconnecting... (Attempt ${reconnectAttemptsRef.current + 1}/${MAX_RECONNECT_ATTEMPTS})`
+          // });
 
           reconnectTimerRef.current = setTimeout(() => {
             reconnectAttemptsRef.current++;

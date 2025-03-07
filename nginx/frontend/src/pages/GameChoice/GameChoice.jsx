@@ -1,13 +1,34 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import * as THREE from 'three'
 import gsap from 'gsap'
 import { GLTFLoader } from 'three/examples/jsm/Addons.js'
 import { Link } from 'react-router-dom'
 import './GameChoice.scss'
 
-
-
 const GameChoice = () => {
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [isTablet, setIsTablet] = useState(window.innerWidth < 1200 && window.innerWidth >= 768);
+    const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
+
+    // Handle window resize and orientation changes
+    useEffect(() => {
+        const handleResize = () => {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            setIsMobile(width < 768);
+            setIsTablet(width < 1200 && width >= 768);
+            setIsLandscape(width > height);
+        };
+
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            window.removeEventListener('orientationchange', handleResize);
+        };
+    }, []);
+
     useEffect(() => {
         let audioContext;
         const container = document.getElementById('canvas-container');
@@ -50,32 +71,68 @@ const GameChoice = () => {
         const pongContainer = document.getElementById('pong-container');
         const invadersContainer = document.getElementById('invaders-container');
 
+        let modelUpdateRequired = true;
+
+        // Function to check if container positions changed significantly
+        function haveContainersChanged() {
+            if (!pongContainer || !invadersContainer) return true;
+            
+            const pongRect = pongContainer.getBoundingClientRect();
+            const invadersRect = invadersContainer.getBoundingClientRect();
+            
+            // Store positions for comparison
+            if (!pongContainer._lastPos) {
+                pongContainer._lastPos = { 
+                    left: pongRect.left, 
+                    top: pongRect.top,
+                    width: pongRect.width,
+                    height: pongRect.height
+                };
+                invadersContainer._lastPos = { 
+                    left: invadersRect.left, 
+                    top: invadersRect.top,
+                    width: invadersRect.width,
+                    height: invadersRect.height
+                };
+                return true;
+            }
+            
+            // Check if position changed by more than 5px
+            const pongChanged = Math.abs(pongContainer._lastPos.left - pongRect.left) > 5 ||
+                Math.abs(pongContainer._lastPos.top - pongRect.top) > 5 ||
+                Math.abs(pongContainer._lastPos.width - pongRect.width) > 5 ||
+                Math.abs(pongContainer._lastPos.height - pongRect.height) > 5;
+                
+            const invadersChanged = Math.abs(invadersContainer._lastPos.left - invadersRect.left) > 5 ||
+                Math.abs(invadersContainer._lastPos.top - invadersRect.top) > 5 ||
+                Math.abs(invadersContainer._lastPos.width - invadersRect.width) > 5 ||
+                Math.abs(invadersContainer._lastPos.height - invadersRect.height) > 5;
+            
+            // Update stored positions
+            pongContainer._lastPos = { 
+                left: pongRect.left, 
+                top: pongRect.top,
+                width: pongRect.width,
+                height: pongRect.height
+            };
+            invadersContainer._lastPos = { 
+                left: invadersRect.left, 
+                top: invadersRect.top,
+                width: invadersRect.width,
+                height: invadersRect.height
+            };
+            
+            return pongChanged || invadersChanged;
+        }
+
         (async () => {
             try {
                 const pongModelIn = await createGameModel('/models/pong/scene.gltf');
                 const invadersModelIn = await createGameModel('/models/spaceship/scene.gltf');
-                const pongContainerPosition = pongContainer.getBoundingClientRect();
-                const invadersContainerPosition = invadersContainer.getBoundingClientRect();
-                const pongContainerCenter = {
-                    x: pongContainerPosition.left + pongContainerPosition.width / 2,
-                    y: pongContainerPosition.top + pongContainerPosition.height / 2
-                };
-                const invadersContainerCenter = {
-                    x: invadersContainerPosition.left + invadersContainerPosition.width / 2,
-                    y: invadersContainerPosition.top + invadersContainerPosition.height / 2
-                };
-                const pongContainerSize = {
-                    width: pongContainerPosition.width,
-                    height: pongContainerPosition.height
-                };
-                const invadersContainerSize = {
-                    width: invadersContainerPosition.width,
-                    height: invadersContainerPosition.height
-                };
-
-                pongModelIn.scale.set(30, 30, 30);
-                invadersModelIn.scale.set(3, 3, 3);
-
+                
+                // Initial setup
+                updateModelScales(pongModelIn, invadersModelIn);
+                
                 scene.add(pongModelIn);
                 scene.add(invadersModelIn);
                 pongModel = pongModelIn;
@@ -83,14 +140,22 @@ const GameChoice = () => {
 
                 function animate() {
                     requestAnimationFrame(animate);
-                    updateModelPositions();
+                    
+                    // Check if we need to update model positions
+                    if (modelUpdateRequired || haveContainersChanged()) {
+                        updateModelPositions();
+                        modelUpdateRequired = false;
+                    }
+                    
                     pongModelIn.rotation.z += 0.01;
                     pongModelIn.rotation.x = Math.PI / 3;
                     invadersModelIn.position.y = Math.sin(Date.now() * 0.001);
                     invadersModelIn.rotation.x = 0.5;
+                    
                     renderer.render(scene, camera);
                 }
 
+                // Initial update
                 updateModelPositions();
                 addContainerListeners(pongContainer, pongModel);
                 addContainerListeners(invadersContainer, invadersModel);
@@ -110,7 +175,25 @@ const GameChoice = () => {
 
         camera.position.z = 15;
 
+        // Function to update model scales based on screen size
+        function updateModelScales(pongModel, invadersModel) {
+            if (!pongModel || !invadersModel) return;
+            
+            if (window.innerWidth <= 768) {
+                pongModel.scale.set(20, 20, 20);
+                invadersModel.scale.set(1.75, 1.75, 1.75);
+            } else if (window.innerWidth <= 1200) {
+                pongModel.scale.set(30, 30, 30);
+                invadersModel.scale.set(3, 3, 3);
+            } else {
+                pongModel.scale.set(30, 30, 30);
+                invadersModel.scale.set(3, 3, 3);
+            }
+        }
+
         function screenToWorld(container, camera, renderer) {
+            if (!container) return new THREE.Vector3(0, 0, 0);
+            
             const containerRect = container.getBoundingClientRect();
             const centerX = containerRect.left + containerRect.width / 2;
             const centerY = containerRect.top + containerRect.height / 2;
@@ -128,28 +211,44 @@ const GameChoice = () => {
         }
 
         function updateModelPositions() {
-            if (!pongModel || !invadersModel) {
+            if (!pongModel || !invadersModel || !pongContainer || !invadersContainer) {
                 return;
             }
 
             const pongWorldPosition = screenToWorld(pongContainer, camera, renderer);
             const invadersWorldPosition = screenToWorld(invadersContainer, camera, renderer);
-            pongWorldPosition.y -= 2;
-
-            if (window.innerWidth <= 768) {
-                pongModel.scale.set(20, 20, 20);
-                invadersModel.scale.set(1.75, 1.75, 1.75);
-            } else if (window.innerWidth <= 1200) {
-                pongModel.scale.set(30, 30, 30);
-                invadersModel.scale.set(3, 3, 3);
+            
+            // Consistent offset for all device sizes
+            if (isMobile && !isLandscape) {
+                // In mobile portrait, position models directly in center of containers
+                pongWorldPosition.y += 0;
+            } else {
+                pongWorldPosition.y -= 2;
             }
+            
+            // Apply model scale updates
+            updateModelScales(pongModel, invadersModel);
+            
+            // Update positions
             pongModel.position.copy(pongWorldPosition);
             invadersModel.position.copy(invadersWorldPosition);
         }
 
         function showOptions(container, model) {
             const options = container.querySelectorAll('.game-option');
-            const radius = window.innerWidth <= 768 ? 120 : window.innerWidth <= 1200 ? 175 : window.innerWidth <= 1920 ? 250 : 400;
+            
+            // Use consistent radius calculation across devices
+            let radius;
+            if (window.innerWidth <= 768) {
+                radius = 120; 
+            } else if (window.innerWidth <= 1200) {
+                radius = 175;
+            } else if (window.innerWidth <= 1920) {
+                radius = 250;
+            } else {
+                radius = 400;
+            }
+            
             const totalOptions = options.length;
             const safeRadius = radius;
 
@@ -169,7 +268,6 @@ const GameChoice = () => {
                     ease: "elastic.out(1, 0.7)"
                 });
             });
-
         }
 
         function hideOptions(container, model) {
@@ -202,8 +300,34 @@ const GameChoice = () => {
         function addContainerListeners(container, model) {
             let isAnimating = false;
             let timeoutId = null;
+            let isTouching = false;
 
+            // For mouse devices
             container.addEventListener('mouseenter', () => {
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                    timeoutId = null;
+                }
+                if (!isAnimating && !isTouching) {
+                    isAnimating = true;
+                    showOptions(container, model);
+                    setTimeout(() => {
+                        isAnimating = false;
+                    }, 1000);
+                }
+            });
+
+            container.addEventListener('mouseleave', () => {
+                if (!isTouching) {
+                    timeoutId = setTimeout(() => {
+                        hideOptions(container, model);
+                    }, 100);
+                }
+            });
+            
+            // For touch devices
+            container.addEventListener('touchstart', (e) => {
+                isTouching = true;
                 if (timeoutId) {
                     clearTimeout(timeoutId);
                     timeoutId = null;
@@ -215,21 +339,35 @@ const GameChoice = () => {
                         isAnimating = false;
                     }, 1000);
                 }
+                // Don't prevent default as it would block links
             });
-
-            container.addEventListener('mouseleave', () => {
-                timeoutId = setTimeout(() => {
+            
+            // Reset touch state
+            container.addEventListener('touchend', () => {
+                setTimeout(() => {
+                    isTouching = false;
+                }, 300);
+            });
+            
+            // Close options when touching outside (optional)
+            document.addEventListener('touchstart', (e) => {
+                if (isTouching && !container.contains(e.target)) {
                     hideOptions(container, model);
-                }, 100);
+                    isTouching = false;
+                }
             });
         }
 
-        window.addEventListener('resize', () => {
+        const handleResize = () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-            updateModelPositions();
-        });
+            
+            // Request an update for model positions on next frame
+            modelUpdateRequired = true;
+        };
+
+        window.addEventListener('resize', handleResize);
 
 
         function setupEventListeners() {
@@ -239,11 +377,17 @@ const GameChoice = () => {
 
             function initializeAudioContext() {
                 if (!audioContext) {
-                    audioContext = new AudioContext(); // Create it only after a user gesture.
+                    audioContext = new AudioContext();
                 }
             }
 
             pongSection.addEventListener('mouseenter', () => {
+                initializeAudioContext();
+                playSound(440);
+                title.textContent = 'PONG';
+            });
+            
+            pongSection.addEventListener('touchstart', () => {
                 initializeAudioContext();
                 playSound(440);
                 title.textContent = 'PONG';
@@ -254,10 +398,16 @@ const GameChoice = () => {
                 playSound(523.25);
                 title.textContent = 'SPACE RIVALRY';
             });
+            
+            invadersSection.addEventListener('touchstart', () => {
+                initializeAudioContext();
+                playSound(523.25);
+                title.textContent = 'SPACE RIVALRY';
+            });
         }
 
         function playSound(frequency) {
-            if (!audioContext) return; // Ensure the AudioContext exists.
+            if (!audioContext) return;
 
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
@@ -278,19 +428,21 @@ const GameChoice = () => {
             window.removeEventListener('resize', updateModelPositions);
             renderer.dispose();
         };
-    }, []);
+    }, [isMobile, isTablet, isLandscape]);
+    
     const scanlines = Array.from({ length: 10 }, (_, i) => (
         <div
             key={i}
             className="scanline"
         />
     ));
+    
     return (
         <>
-            <div id="dynamic-title">Choose Your Game</div>
+            <div id="dynamic-title">{isMobile ? "Choose Game" : "Choose Your Game"}</div>
             <div id="canvas-container">
             </div>
-            <div className="game-area">
+            <div className={`game-area ${isMobile ? 'mobile' : ''} ${isTablet ? 'tablet' : ''}`}>
                 <div className="game-container" id="pong-container">
                     <div className="game-title">PONG</div>
                     <Link to="/game-lobby/cpu-mode"><div className="game-option" data-index="0">VS CPU</div></Link>

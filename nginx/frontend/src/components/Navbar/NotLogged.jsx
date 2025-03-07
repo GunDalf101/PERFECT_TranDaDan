@@ -24,7 +24,7 @@ const NotLogged = () => {
   return (
     <nav
       id="navbar"
-      className={`navbar ${scrolled ? 'scrolled' : ''} fixed top-0 w-full flex flex-column justify-between items-center sm:py-2 px-2 sm:px-10 z-10`}
+      className={`navbar ${scrolled ? 'scrolled' : ''} fixed top-0 w-full flex flex-column justify-between items-center sm:py-2 px-2 sm:px-10 z-50`}
     >
        <div className="logo text-white text-5xl ml-5 mb-4">TDD</div>
       <div className="flex space-x-5">

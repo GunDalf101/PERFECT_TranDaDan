@@ -2,8 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import GUI from 'lil-gui';
-import gsap from 'gsap';
 import AdvancedAISystem from './AdvancedAISystem';
 
 const CpuMode = () => {
@@ -14,8 +12,20 @@ const CpuMode = () => {
     const paddleCPURef = useRef(null);
     const [scores, setScores] = useState({ player: 0, ai: 0 });
     const [matches, setMatches] = useState({ player: 0, ai: 0 });
+    const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const advancedAISystem = new AdvancedAISystem();
 
+    // Check device orientation
+    useEffect(() => {
+        const handleResize = () => {
+            setIsLandscape(window.innerWidth > window.innerHeight);
+            setIsMobile(window.innerWidth < 768);
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         if (!canvasRef.current) return;
@@ -57,7 +67,9 @@ const CpuMode = () => {
         scene.add(camera);
 
         const renderer = new THREE.WebGLRenderer({
-            canvas: canvasRef.current
+            canvas: canvasRef.current,
+            alpha: true,
+            antialias: true
         });
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -365,10 +377,30 @@ const CpuMode = () => {
         };
         
         const handleMouseMove = (event) => {
+            if (!inGame) return;
+            
+            // Calculate position based on the element
+            const rect = canvasRef.current.getBoundingClientRect();
             mouseCurrent = {
-                x: (event.clientX / window.innerWidth) * 2 - 1,
-                y: -(event.clientY / window.innerHeight) * 2 + 1
+                x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
+                y: -((event.clientY - rect.top) / rect.height) * 2 + 1
             };
+        };
+
+        const handleTouchMove = (event) => {
+            if (!inGame || event.touches.length === 0) return;
+            
+            // Get touch position
+            const touch = event.touches[0];
+            const rect = canvasRef.current.getBoundingClientRect();
+            
+            mouseCurrent = {
+                x: ((touch.clientX - rect.left) / rect.width) * 2 - 1,
+                y: -((touch.clientY - rect.top) / rect.height) * 2 + 1
+            };
+            
+            // Prevent default to avoid scrolling the page
+            event.preventDefault();
         };
         
         const handleKeyDown = (event) => {
@@ -526,6 +558,7 @@ const CpuMode = () => {
             CreateBall(position);
             
             window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('touchmove', handleTouchMove, { passive: false });
             window.addEventListener('keydown', handleKeyDown);
             window.addEventListener('resize', handleResize);
             
@@ -536,8 +569,8 @@ const CpuMode = () => {
 
         return () => {
             window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('touchmove', handleTouchMove);
             window.removeEventListener('keydown', handleKeyDown);
-
             window.removeEventListener('resize', handleResize);
             inGame = false;
 
@@ -554,44 +587,55 @@ const CpuMode = () => {
         };
     }, []);
 
+    const handleStartGame = () => {
+        // Send keypress programmatically
+        const event = new KeyboardEvent('keydown', { key: 'Enter' });
+        window.dispatchEvent(event);
+    };
+
     return (
         <>
-            <canvas ref={canvasRef} className="webgl" />
-            <div
-                style={{
-                    position: 'absolute',
-                    top: '10px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    color: 'white',
-                    fontSize: '24px'
-                }}
+            <canvas ref={canvasRef} className="webgl fixed top-0 left-0 w-full h-full z-0" />
+            
+            {/* Score display */}
+            <div className={`
+                fixed z-10 flex justify-between items-center 
+                ${isLandscape ? 'top-4 left-1/2 transform -translate-x-1/2 px-4 py-2' : 'top-4 left-1/2 transform -translate-x-1/2 px-4 py-2'} 
+                bg-black/50 backdrop-blur-sm rounded-full text-white
+                ${isMobile ? 'w-4/5 max-w-xs' : 'w-96'}
+            `}>
+                <div className="text-center">
+                    <div className="text-sm md:text-base font-medium">Player</div>
+                    <div className="text-xl md:text-2xl font-bold">{scores.player}</div>
+                </div>
+                
+                <div className="text-center px-2">
+                    <div className="text-xs md:text-sm opacity-80">Match</div>
+                    <div className="text-sm md:text-base">{matches.player} - {matches.ai}</div>
+                </div>
+                
+                <div className="text-center">
+                    <div className="text-sm md:text-base font-medium">AI</div>
+                    <div className="text-xl md:text-2xl font-bold">{scores.ai}</div>
+                </div>
+            </div>
+            
+            {/* Start game button for mobile */}
+            <div className="fixed z-10 bottom-4 left-1/2 transform -translate-x-1/2 w-full flex flex-col items-center">
+                <button
+                    onClick={handleStartGame}
+                    className="bg-black/40 text-white px-6 py-3 rounded-full backdrop-blur-sm 
+                              border border-white/20 font-medium text-sm md:text-base
+                              active:bg-black/60 transition-colors"
                 >
-                Player: {scores.player} | AI: {scores.ai}
-            </div>
-            <div
-                style={{
-                    position: 'absolute',
-                    top: '50px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    color: 'white',
-                    fontSize: '24px'
-                }}
-            >
-                PlayerMatches: {matches.player} | AI: {matches.ai}
-            </div>
-            <div
-                style={{
-                    position: 'absolute',
-                    bottom: '20px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    color: 'white',
-                    fontSize: '16px'
-                }}
-            >
-                Press ENTER to start/pause game
+                    {scores.player === 0 && scores.ai === 0 && matches.player === 0 && matches.ai === 0 
+                        ? "Start Game" 
+                        : "Resume Game"}
+                </button>
+                
+                <div className="mt-2 text-white/80 text-xs md:text-sm">
+                    Move by dragging on screen
+                </div>
             </div>
         </>
     );

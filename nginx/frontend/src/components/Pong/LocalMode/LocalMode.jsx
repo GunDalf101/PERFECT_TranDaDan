@@ -2,23 +2,34 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import GUI from 'lil-gui';
 import gsap from 'gsap';
-import { split } from 'three/src/nodes/TSL.js';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
 
 const LocalMode = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
+    
     useEffect(() => {
         if (!location.state) {
             navigate('/game-lobby/local-register');
         }
+        
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+            setIsLandscape(window.innerWidth > window.innerHeight);
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, [location.state, navigate]);
+    
     if (!location.state) {
         return null;
     }
+    
     const { player1Name, player2Name, player1Image, player2Image } = location.state;
     const canvasRef = useRef(null);
     const sceneRef = useRef(null);
@@ -29,7 +40,14 @@ const LocalMode = () => {
     const [matches, setMatches] = useState({ player: 0, ai: 0 });
     const [winner, setWinner] = useState(null);
     const [gameOver, setGameOver] = useState(false);
+    const [gameStarted, setGameStarted] = useState(false);
     let tableBoundsRef = useRef(null);
+
+    // Touch controls state
+    const [touchControls, setTouchControls] = useState({
+        player1: { up: false, down: false, left: false, right: false },
+        player2: { up: false, down: false, left: false, right: false }
+    });
 
     useEffect(() => {
         if (!canvasRef.current) return;
@@ -56,33 +74,41 @@ const LocalMode = () => {
 
         scene.background = null;
 
-
         const ballSound = new Audio('/sounds/ping_pong.mp3');
 
+        // Different camera setup for mobile vs desktop
+        const aspectRatio = isLandscape 
+            ? window.innerWidth * 0.5 / (window.innerHeight)
+            : window.innerWidth / (window.innerHeight * 0.5);
+        
         const camera = new THREE.PerspectiveCamera(
             75,
-            window.innerWidth * 0.5 / (window.innerHeight ),
+            aspectRatio,
             0.1,
             100
         );
         camera.position.set(10, 10, 15);
         scene.add(camera);
+        
         const splitCamera = new THREE.PerspectiveCamera(
             75,
-            window.innerWidth * 0.5 / (window.innerHeight),
+            aspectRatio,
             0.1,
             100
-        )
+        );
         splitCamera.position.set(-10, 10, 15);
         scene.add(splitCamera);
 
         const renderer = new THREE.WebGLRenderer({
-            canvas: canvasRef.current
+            canvas: canvasRef.current,
+            alpha: true
         });
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.setClearColor(0x000000, 0);
         renderer.setClearAlpha(0);
+        
+        // Initial size - will be updated in handleResize
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
@@ -205,6 +231,7 @@ const LocalMode = () => {
                 obj.mesh.position.copy(obj.position);
             });
         };
+        
         const collisionTimestamps = new Map();
         const collisionDelay = 100;
         const twoObjCollide = (objA, objB) => {
@@ -222,6 +249,7 @@ const LocalMode = () => {
             }
             return false;
         };
+        
         const checkCollisions = () => {
             if (!paddleRef.current || gameObjectsRef.current.length === 0 || !paddleCPURef.current) return;
             
@@ -302,6 +330,7 @@ const LocalMode = () => {
                 ball.position.z += ball.velocity.z * 0.01;
             }
         };
+        
         const resetBall = (direction = 1) => {
             gameObjectsRef.current.forEach(obj => scene.remove(obj.mesh));
             gameObjectsRef.current = [];
@@ -380,7 +409,7 @@ const LocalMode = () => {
             winCheck();
         };
 
-        const paddleSpeed = 0.15;
+        const paddleSpeed = isMobile ? 0.10 : 0.08;
         const smoothFactor = 0.05;
         let paddleVelocityX = 0;
         let paddleVelocityY = 0;
@@ -414,7 +443,8 @@ const LocalMode = () => {
             }
             if (event.key === 'Enter') {
                 inGame = !inGame;
-                // controls.enableRotate = !inGame;
+                setGameStarted(inGame);
+                controls.enableRotate = !inGame;
             }
         };
 
@@ -436,6 +466,7 @@ const LocalMode = () => {
         const lerp = (current, target, smoothFactor) => {
             return current + (target - current) * smoothFactor;
         };
+        
         const setupLighting = () => {
             const ambientLight = new THREE.AmbientLight(0xffffff, 2.1);
             scene.add(ambientLight);
@@ -456,12 +487,26 @@ const LocalMode = () => {
             const width = window.innerWidth;
             const height = window.innerHeight;
             
-            camera.aspect = width  * 0.5 / (height);
+            // Update landscape state
+            const isCurrentlyLandscape = width > height;
+            setIsLandscape(isCurrentlyLandscape);
+            
+            // Use client dimensions to avoid scrollbars
+            const clientWidth = document.documentElement.clientWidth;
+            const clientHeight = document.documentElement.clientHeight;
+            
+            // Adjust aspect ratio based on orientation
+            const aspectRatio = isCurrentlyLandscape 
+                ? clientWidth * 0.5 / clientHeight
+                : clientWidth / (clientHeight * 0.5);
+                
+            camera.aspect = aspectRatio;
             camera.updateProjectionMatrix();
-            splitCamera.aspect = width  * 0.5 / (height);
+            splitCamera.aspect = aspectRatio;
             splitCamera.updateProjectionMatrix();
             
-            renderer.setSize(width, height);
+            // Set renderer size to client dimensions to avoid scrollbars
+            renderer.setSize(clientWidth, clientHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         };
 
@@ -503,10 +548,22 @@ const LocalMode = () => {
                     camera.lookAt(newLookAt);
                     splitCamera.lookAt(newSplitLookAt);
 
+                    // Apply paddle movement - keyboard and touch combined
                     paddleVelocityX = lerp(paddleVelocityX, paddleVelocityX, smoothFactor);
                     paddleVelocityY = lerp(paddleVelocityY, paddleVelocityY, smoothFactor);
                     paddleCpuVelocityX = lerp(paddleCpuVelocityX, paddleCpuVelocityX, smoothFactor);
                     paddleCpuVelocityY = lerp(paddleCpuVelocityY, paddleCpuVelocityY, smoothFactor);
+
+                    // Add touch controls velocity
+                    if (touchControls.player1.up) paddleVelocityY = paddleSpeed;
+                    if (touchControls.player1.down) paddleVelocityY = -paddleSpeed;
+                    if (touchControls.player1.left) paddleVelocityX = -paddleSpeed;
+                    if (touchControls.player1.right) paddleVelocityX = paddleSpeed;
+                    
+                    if (touchControls.player2.up) paddleCpuVelocityY = paddleSpeed;
+                    if (touchControls.player2.down) paddleCpuVelocityY = -paddleSpeed;
+                    if (touchControls.player2.left) paddleCpuVelocityX = paddleSpeed;
+                    if (touchControls.player2.right) paddleCpuVelocityX = -paddleSpeed;
 
                     paddleRef.current.mesh.position.x += paddleVelocityX;
                     paddleRef.current.mesh.position.y += paddleVelocityY;
@@ -581,32 +638,45 @@ const LocalMode = () => {
                 gameLogic();
             }
             
-            // controls.update();
-            // renderer.setScissorTest(true);
-            // renderer.setViewport(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
-            // renderer.setScissor(0, window.innerHeight / 2, window.innerWidth, window.innerHeight / 2);
-            // renderer.render(scene, splitCamera);
-
-            // renderer.setViewport(0, 0, window.innerWidth, window.innerHeight / 2);
-            // renderer.setScissor(0, 0, window.innerWidth, window.innerHeight / 2);
-            // renderer.render(scene, camera);
-
-            // requestAnimationFrame(animate);
-            // renderer.setScissorTest(false);
+            controls.update();
+            
+            // Get current client dimensions to prevent scrollbars
+            const clientWidth = document.documentElement.clientWidth;
+            const clientHeight = document.documentElement.clientHeight;
+            
+            // Render different layouts based on orientation
             renderer.setScissorTest(true);
 
-            renderer.setViewport(0, 0, window.innerWidth / 2, window.innerHeight);
-            renderer.setScissor(0, 0, window.innerWidth / 2, window.innerHeight);
-            renderer.render(scene, splitCamera);
+            if (isLandscape) {
+                // Landscape mode: side by side with fixed dimensions
+                const halfWidth = Math.floor(clientWidth / 2);
+                const fullHeight = clientHeight;
+                
+                renderer.setViewport(0, 0, halfWidth, fullHeight);
+                renderer.setScissor(0, 0, halfWidth, fullHeight);
+                renderer.render(scene, splitCamera);
 
-            renderer.setViewport(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
-            renderer.setScissor(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
-            renderer.render(scene, camera);
+                renderer.setViewport(halfWidth, 0, halfWidth, fullHeight);
+                renderer.setScissor(halfWidth, 0, halfWidth, fullHeight);
+                renderer.render(scene, camera);
+            } else {
+                // Portrait mode: stacked with fixed dimensions
+                const fullWidth = clientWidth;
+                const halfHeight = Math.floor(clientHeight / 2);
+                
+                renderer.setViewport(0, halfHeight, fullWidth, halfHeight);
+                renderer.setScissor(0, halfHeight, fullWidth, halfHeight);
+                renderer.render(scene, splitCamera);
+
+                renderer.setViewport(0, 0, fullWidth, halfHeight);
+                renderer.setScissor(0, 0, fullWidth, halfHeight);
+                renderer.render(scene, camera);
+            }
 
             requestAnimationFrame(animate);
             renderer.setScissorTest(false);
+            
             if (gameObjectsRef.current.length > 0 && paddleRef.current?.mesh && paddleCPURef.current?.mesh && tableObject.mesh && netObject.mesh) {
-
                 tableBoundingBox.setFromObject(tableObject.mesh);
                 netBoundingBox.setFromObject(netObject.mesh);
                 if (!isBoundingBoxVisible) {
@@ -616,7 +686,6 @@ const LocalMode = () => {
                     scene.add(netBoxHelper);
                     isBoundingBoxVisible = true;
                 }
-            
             }
         };
         
@@ -634,6 +703,9 @@ const LocalMode = () => {
             window.addEventListener('keydown', handleKeyDown);
             window.addEventListener('keyup', handleKeyUp);
             window.addEventListener('resize', handleResize);
+            
+            // Call handleResize initially to set correct canvas size
+            handleResize();
             
             animate();
         };
@@ -655,40 +727,40 @@ const LocalMode = () => {
             });
             
             renderer.dispose();
-            // if (controls) controls.dispose();
+            if (controls) controls.dispose();
         };
-    }, []);
+    }, [isLandscape]);
+
+    // Function to handle touch controls
+    const handleTouchControl = (player, direction, isPressed) => {
+        setTouchControls(prev => ({
+            ...prev,
+            [player]: {
+                ...prev[player],
+                [direction]: isPressed
+            }
+        }));
+    };
+
+    // Function to start/pause the game
+    const toggleGame = () => {
+        const event = new KeyboardEvent('keydown', { key: 'Enter' });
+        window.dispatchEvent(event);
+    };
 
     return (
-        <>
-            <canvas ref={canvasRef} className="webgl" />
+        <div className="relative w-full h-full overflow-hidden">
+            <canvas ref={canvasRef} className="webgl absolute top-0 left-0 w-full h-full" />
             
-            <div className="absolute top-10 left-1/2 transform -translate-x-1/2 flex items-center justify-between w-full max-w-4xl px-6 py-4 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full border-4 border-cyan-400 shadow-glow">
-                <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-cyan-400">
-                        {player1Image && (
-                            <img 
-                                src={player1Image} 
-                                alt={player1Name}
-                                className="w-full h-full object-cover"
-                            />
-                        )}
-                    </div>
-                    <span className="text-cyan-400 text-xl">{player1Name}</span>
-                </div>
-                
-                <div className="flex flex-col items-center">
-                    <div className="text-white text-2xl">
-                        {scores.player} - {scores.ai}
-                    </div>
-                    <div className="text-gray-400">
-                        Round {matches.player + matches.ai + 1}
-                    </div>
-                </div>
-                
-                <div className="flex items-center space-x-4">
-                    <span className="text-rose-400 text-xl">{player2Name}</span>
-                    <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-rose-400">
+            {/* Updated Score display with unified styling */}
+            <div className={`
+                fixed z-10 flex items-center justify-between 
+                ${isLandscape ? 'top-4 left-1/2 transform -translate-x-1/2 w-4/5 max-w-4xl' : 'top-2 left-1/2 transform -translate-x-1/2 w-11/12 max-w-sm'}
+                px-4 py-2 bg-gray-800/80 backdrop-blur-sm rounded-full shadow-lg
+                border-2 border-gradient-to-r from-cyan-400 to-rose-400
+            `}>
+                <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-cyan-400">
                         {player2Image && (
                             <img 
                                 src={player2Image} 
@@ -697,40 +769,168 @@ const LocalMode = () => {
                             />
                         )}
                     </div>
+                    <span className="text-cyan-400 text-xs sm:text-base">{player2Name}</span>
+                </div>
+                
+                <div className="flex flex-col items-center mx-2">
+                    <div className="text-white text-sm sm:text-xl font-bold">
+                        {scores.ai} - {scores.player}
+                    </div>
+                    <div className="text-gray-400 text-xs sm:text-sm">
+                        Round {matches.player + matches.ai + 1}
+                    </div>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                    <span className="text-rose-400 text-xs sm:text-base">{player1Name}</span>
+                    <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-rose-400">
+                        {player1Image && (
+                            <img 
+                                src={player1Image} 
+                                alt={player1Name}
+                                className="w-full h-full object-cover"
+                            />
+                        )}
+                    </div>
                 </div>
             </div>
     
-            <div className="absolute bottom-4 left-4 text-white text-sm space-y-1">
-                <p>{player1Name}: Arrow Keys</p>
-            </div>
-            
-            <div className="absolute bottom-4 right-4 text-white text-sm space-y-1 text-right">
-                <p>{player2Name}: WASD</p>
-            </div>
-            
-            <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-white text-lg">
-                Press ENTER to start/pause game
-            </div>
+            {/* Updated Start/Pause button */}
+            <button
+                onClick={toggleGame}
+                className={`
+                    fixed z-10 bg-gradient-to-r from-gray-800/80 to-gray-900/80 backdrop-blur-sm
+                    text-white px-4 py-2 rounded-full
+                    border border-white/30 text-xs sm:text-sm hover:bg-gray-700/80
+                    ${isLandscape ? 'left-1/2 transform -translate-x-1/2 bottom-4' : 'left-1/2 transform -translate-x-1/2 bottom-4'}
+                    transition-all duration-300 ease-in-out
+                `}
+            >
+                {gameStarted ? "Pause Game" : "Start Game"}
+            </button>
     
+            {/* Touch controls for mobile */}
+            {isMobile && (
+                <div className={`fixed z-10 w-full ${isLandscape ? 'h-full' : 'h-1/2 bottom-0'} pointer-events-none`}>
+                    {/* Controls divider */}
+                    <div className={`absolute ${isLandscape ? 'h-full w-0.5 left-1/2 top-0' : 'w-full h-0.5 top-1/2 left-0'} bg-white/10`}></div>
+                    
+                    {/* Player 1 controls */}
+                    <div className={`absolute pointer-events-auto ${isLandscape ? 'right-4 bottom-20 w-24 h-24' : 'right-4 bottom-16 w-24 h-24'}`}>
+                        <div className="relative w-full h-full">
+                            <button 
+                                className="absolute top-0 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-rose-500/30 rounded-full flex items-center justify-center"
+                                onTouchStart={() => handleTouchControl('player1', 'up', true)}
+                                onTouchEnd={() => handleTouchControl('player1', 'up', false)}
+                            >
+                                <span className="text-white text-lg">↑</span>
+                            </button>
+                            
+                            <button 
+                                className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-rose-500/30 rounded-full flex items-center justify-center"
+                                onTouchStart={() => handleTouchControl('player1', 'down', true)}
+                                onTouchEnd={() => handleTouchControl('player1', 'down', false)}
+                            >
+                                <span className="text-white text-lg">↓</span>
+                            </button>
+                            
+                            <button 
+                                className="absolute left-0 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-rose-500/30 rounded-full flex items-center justify-center"
+                                onTouchStart={() => handleTouchControl('player1', 'left', true)}
+                                onTouchEnd={() => handleTouchControl('player1', 'left', false)}
+                            >
+                                <span className="text-white text-lg">←</span>
+                            </button>
+                            
+                            <button 
+                                className="absolute right-0 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-rose-500/30 rounded-full flex items-center justify-center"
+                                onTouchStart={() => handleTouchControl('player1', 'right', true)}
+                                onTouchEnd={() => handleTouchControl('player1', 'right', false)}
+                            >
+                                <span className="text-white text-lg">→</span>
+                            </button>
+                            
+                            <div className="absolute -bottom-6 w-full text-center text-rose-400 text-xs">
+                                {player1Name}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Player 2 controls */}
+                    <div className={`absolute pointer-events-auto ${isLandscape ? 'left-4 bottom-20 w-24 h-24' : 'left-4 top-16 w-24 h-24'}`}>
+                        <div className="relative w-full h-full">
+                            <button 
+                                className="absolute top-0 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-cyan-500/30 rounded-full flex items-center justify-center"
+                                onTouchStart={() => handleTouchControl('player2', 'up', true)}
+                                onTouchEnd={() => handleTouchControl('player2', 'up', false)}
+                            >
+                                <span className="text-white text-lg">↑</span>
+                            </button>
+                            
+                            <button 
+                                className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-cyan-500/30 rounded-full flex items-center justify-center"
+                                onTouchStart={() => handleTouchControl('player2', 'down', true)}
+                                onTouchEnd={() => handleTouchControl('player2', 'down', false)}
+                            >
+                                <span className="text-white text-lg">↓</span>
+                            </button>
+                            
+                            <button 
+                                className="absolute left-0 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-cyan-500/30 rounded-full flex items-center justify-center"
+                                onTouchStart={() => handleTouchControl('player2', 'left', true)}
+                                onTouchEnd={() => handleTouchControl('player2', 'left', false)}
+                            >
+                                <span className="text-white text-lg">←</span>
+                            </button>
+                            
+                            <button 
+                                className="absolute right-0 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-cyan-500/30 rounded-full flex items-center justify-center"
+                                onTouchStart={() => handleTouchControl('player2', 'right', true)}
+                                onTouchEnd={() => handleTouchControl('player2', 'right', false)}
+                            >
+                                <span className="text-white text-lg">→</span>
+                            </button>
+                            
+                            <div className="absolute -bottom-6 w-full text-center text-cyan-400 text-xs">
+                                {player2Name}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            {/* Desktop control instructions */}
+            {!isMobile && (
+                <div className="fixed z-10 bottom-16 left-1/2 transform -translate-x-1/2
+                            bg-black/50 backdrop-blur-sm rounded-lg p-2
+                            grid grid-cols-2 gap-x-8 gap-y-1 text-xs">
+                    <div className="text-rose-400">{player1Name}: Arrow Keys</div>
+                    <div className="text-cyan-400">{player2Name}: WASD</div>
+                </div>
+            )}
+            
+            {/* Game over screen */}
             {gameOver && (
-                <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
-                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-lg text-center border-2 border-cyan-400">
-                        <Trophy className={`w-16 h-16 mx-auto mb-4 ${winner === player1Name ? 'text-cyan-400' : 'text-rose-400'} animate-pulse`} />
-                        <div className={`text-2xl font-bold ${winner === player1Name ? 'text-cyan-400' : 'text-rose-400'} animate-pulse mb-4`}>
+                <div className="fixed inset-0 z-20 bg-black/80 flex items-center justify-center">
+                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-6 sm:p-8 rounded-lg text-center border-2 border-gradient-to-r from-cyan-400 to-rose-400 max-w-xs sm:max-w-md">
+                        <Trophy className={`w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 ${winner === player1Name ? 'text-rose-400' : 'text-cyan-400'} animate-pulse`} />
+                        <div className={`text-xl sm:text-2xl font-bold ${winner === player1Name ? 'text-rose-400' : 'text-cyan-400'} animate-pulse mb-4`}>
                             {winner} Wins!
+                        </div>
+                        <div className="text-white/70 text-sm mb-4">
+                            Final Score: {matches.player} - {matches.ai}
                         </div>
                         <button
                             onClick={() => navigate('/game-lobby/local-register')}
-                            className="bg-transparent text-cyan-400 border-2 border-cyan-400 px-6 py-2 rounded-lg hover:bg-cyan-400/10 transition-colors duration-300"
+                            className="bg-transparent text-white border-2 border-gradient-to-r from-cyan-400 to-rose-400 px-4 sm:px-6 py-2 rounded-lg hover:bg-gradient-to-r hover:from-cyan-400/10 hover:to-rose-400/10 transition-colors duration-300 text-sm sm:text-base"
                         >
                             Back to Lobby
                         </button>
                     </div>
                 </div>
             )}
-        </>
+        </div>
     );
-
 };
 
 export default LocalMode;

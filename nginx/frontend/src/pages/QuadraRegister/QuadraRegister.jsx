@@ -5,6 +5,7 @@ import { Upload, Swords } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { myToast } from '../../lib/utils1';
 
+// Fixed PlayerCard with responsive design and static classes
 const PlayerCard = ({ player, onUpdate, teamColor, playerNumber }) => {
   const [imagePreview, setImagePreview] = useState(null);
 
@@ -21,14 +22,33 @@ const PlayerCard = ({ player, onUpdate, teamColor, playerNumber }) => {
   };
 
   const isBlueTeam = teamColor === 'blue';
-  const baseColor = isBlueTeam ? 'cyan' : 'rose';
+  
+  // Pre-compute all classes
+  const cardClass = isBlueTeam 
+    ? "card bg-gray-900 p-3 sm:p-6 rounded-lg text-center w-full flex flex-col items-center hover-glow border-2 border-cyan-500/50"
+    : "card bg-gray-900 p-3 sm:p-6 rounded-lg text-center w-full flex flex-col items-center hover-glow border-2 border-rose-500/50";
+  
+  const avatarClass = isBlueTeam
+    ? "w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden mb-3 sm:mb-4 bg-gray-800 border-2 border-cyan-500/50"
+    : "w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden mb-3 sm:mb-4 bg-gray-800 border-2 border-rose-500/50";
+  
+  const uploadClass = isBlueTeam
+    ? "cursor-pointer hover:text-cyan-400 transition-colors duration-300"
+    : "cursor-pointer hover:text-rose-400 transition-colors duration-300";
+  
+  const inputClass = isBlueTeam
+    ? "bg-gray-800 border-cyan-500/30 text-cyan-400 placeholder-cyan-700 focus:border-cyan-400 focus:ring-cyan-400/50 mb-2 w-full"
+    : "bg-gray-800 border-rose-500/30 text-rose-400 placeholder-rose-700 focus:border-rose-400 focus:ring-rose-400/50 mb-2 w-full";
+  
+  const teamClass = isBlueTeam
+    ? "text-sm text-cyan-400"
+    : "text-sm text-rose-400";
+
   const teamName = isBlueTeam ? 'BLUE' : 'RED';
 
   return (
-    <div className={`card bg-gray-900 p-6 rounded-lg text-center w-full flex flex-col items-center hover-glow
-      border-2 border-${baseColor}-500/50`}>
-      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden mb-4 bg-gray-800
-        border-2 border-${baseColor}-500/50">
+    <div className={cardClass}>
+      <div className={avatarClass}>
         {imagePreview ? (
           <img
             src={imagePreview}
@@ -37,8 +57,8 @@ const PlayerCard = ({ player, onUpdate, teamColor, playerNumber }) => {
           />
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-gray-500">
-            <label className={`cursor-pointer hover:text-${baseColor}-400 transition-colors duration-300`}>
-              <Upload className="w-6 h-6 sm:w-8 sm:h-8 mb-1" />
+            <label className={uploadClass}>
+              <Upload className="w-5 h-5 sm:w-6 sm:h-6 mb-1" />
               <div className="text-xs">Upload</div>
               <input
                 type="file"
@@ -55,10 +75,9 @@ const PlayerCard = ({ player, onUpdate, teamColor, playerNumber }) => {
         placeholder="Enter nickname"
         value={player.nickname || ''}
         onChange={(e) => onUpdate({ ...player, nickname: e.target.value })}
-        className={`bg-gray-800 border-${baseColor}-500/30 text-${baseColor}-400 placeholder-${baseColor}-700
-          focus:border-${baseColor}-400 focus:ring-${baseColor}-400/50 mb-2 max-w-[200px]`}
+        className={inputClass}
       />
-      <div className={`text-sm text-${baseColor}-400`}>
+      <div className={teamClass}>
         {teamName} TEAM - Player {playerNumber}
       </div>
     </div>
@@ -138,27 +157,26 @@ const QuadraRegister = () => {
     setWinner(null);
   };
 
-
   const handleTeamWin = (team) => {
     setWinner(team);
   };
 
   return (
-    <div className="match-container min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <div className="w-11/12 max-w-6xl mx-auto rounded-lg shadow-lg overflow-hidden border border-cyan-400 relative z-10">
+    <div className="min-h-screen bg-opacity-0 flex items-center justify-center p-4 overflow-auto">
+      <div className="w-full sm:w-11/12 max-w-6xl mx-auto rounded-lg shadow-lg overflow-hidden border border-cyan-400 relative z-10">
         <div className="bg-gradient-to-b from-gray-900 to-gray-800 p-4 sm:p-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-center mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-6 sm:mb-8">
             <span className="text-cyan-400">BLUE</span>
-            <span className="text-white mx-4">VS</span>
+            <span className="text-white mx-2 sm:mx-4">VS</span>
             <span className="text-rose-400">RED</span>
           </h1>
 
           {!battleStarted ? (
-            <div className="space-y-8">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-6 sm:space-y-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
                 {/* Blue Team */}
                 <div className="space-y-4">
-                  <h2 className="text-2xl font-bold text-center text-cyan-400 mb-6">BLUE TEAM</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-center text-cyan-400 mb-4 sm:mb-6">BLUE TEAM</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {teams.blue.map((player, index) => (
                       <PlayerCard
@@ -174,7 +192,7 @@ const QuadraRegister = () => {
 
                 {/* Red Team */}
                 <div className="space-y-4">
-                  <h2 className="text-2xl font-bold text-center text-rose-400 mb-6">RED TEAM</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-center text-rose-400 mb-4 sm:mb-6">RED TEAM</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {teams.red.map((player, index) => (
                       <PlayerCard
@@ -189,58 +207,62 @@ const QuadraRegister = () => {
                 </div>
               </div>
 
-              <div className="text-center">
+              <div className="text-center pt-4">
                 <button
                   onClick={startBattle}
                   disabled={!teams.blue.every(p => p.nickname) || !teams.red.every(p => p.nickname)}
-                  className="cancel-button disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="cancel-button disabled:opacity-50 disabled:cursor-not-allowed text-base sm:text-lg py-2 sm:py-3 px-4 sm:px-6"
                 >
                   Start Battle
                 </button>
               </div>
             </div>
           ) : (
-            <div className="space-y-8">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-6 sm:space-y-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
                 {/* Battle Display */}
-                <div className="card bg-gray-900/50 p-6 text-center">
-                  <h3 className="text-cyan-400 text-xl mb-4">BLUE TEAM</h3>
-                  {teams.blue.map((player, index) => (
-                    <div key={index} className="flex items-center gap-2 mb-2 justify-center">
-                      <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-800">
-                        {player.image && (
-                          <img src={player.image} alt={player.nickname} className="w-full h-full object-cover" />
-                        )}
+                <div className="card bg-gray-900/50 p-4 sm:p-6 text-center">
+                  <h3 className="text-cyan-400 text-lg sm:text-xl mb-3 sm:mb-4">BLUE TEAM</h3>
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    {teams.blue.map((player, index) => (
+                      <div key={index} className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 justify-center">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-gray-800">
+                          {player.image && (
+                            <img src={player.image} alt={player.nickname} className="w-full h-full object-cover" />
+                          )}
+                        </div>
+                        <span className="text-cyan-400 text-xs sm:text-sm">{player.nickname}</span>
                       </div>
-                      <span className="text-cyan-400">{player.nickname}</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                   {!winner && (
                     <button
                       onClick={() => handleTeamWin('blue')}
-                      className="cancel-button mt-4 py-2 px-4 text-sm"
+                      className="cancel-button mt-2 sm:mt-4 py-1 sm:py-2 px-3 sm:px-4 text-xs sm:text-sm"
                     >
                       Victory!
                     </button>
                   )}
                 </div>
 
-                <div className="card bg-gray-900/50 p-6 text-center">
-                  <h3 className="text-rose-400 text-xl mb-4">RED TEAM</h3>
-                  {teams.red.map((player, index) => (
-                    <div key={index} className="flex items-center gap-2 mb-2 justify-center">
-                      <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-800">
-                        {player.image && (
-                          <img src={player.image} alt={player.nickname} className="w-full h-full object-cover" />
-                        )}
+                <div className="card bg-gray-900/50 p-4 sm:p-6 text-center">
+                  <h3 className="text-rose-400 text-lg sm:text-xl mb-3 sm:mb-4">RED TEAM</h3>
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    {teams.red.map((player, index) => (
+                      <div key={index} className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 justify-center">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-gray-800">
+                          {player.image && (
+                            <img src={player.image} alt={player.nickname} className="w-full h-full object-cover" />
+                          )}
+                        </div>
+                        <span className="text-rose-400 text-xs sm:text-sm">{player.nickname}</span>
                       </div>
-                      <span className="text-rose-400">{player.nickname}</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                   {!winner && (
                     <button
                       onClick={() => handleTeamWin('red')}
-                      className="cancel-button mt-4 py-2 px-4 text-sm border-rose-400 text-rose-400"
+                      className="cancel-button mt-2 sm:mt-4 py-1 sm:py-2 px-3 sm:px-4 text-xs sm:text-sm border-rose-400 text-rose-400"
                     >
                       Victory!
                     </button>
@@ -250,19 +272,19 @@ const QuadraRegister = () => {
 
               {winner && (
                 <div className="text-center">
-                  <div className="card bg-gray-900/50 p-6 inline-block">
-                    <Swords className={`w-16 h-16 ${winner === 'blue' ? 'text-cyan-400' : 'text-rose-400'} mx-auto mb-4`} />
-                    <div className={`text-2xl font-bold ${winner === 'blue' ? 'text-cyan-400' : 'text-rose-400'} animate-pulse`}>
+                  <div className="card bg-gray-900/50 p-4 sm:p-6 inline-block">
+                    <Swords className={`w-12 h-12 sm:w-16 sm:h-16 ${winner === 'blue' ? 'text-cyan-400' : 'text-rose-400'} mx-auto mb-3 sm:mb-4`} />
+                    <div className={`text-xl sm:text-2xl font-bold ${winner === 'blue' ? 'text-cyan-400' : 'text-rose-400'} animate-pulse`}>
                       {winner.toUpperCase()} TEAM WINS!
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="text-center">
+              <div className="text-center pt-4">
                 <button
                   onClick={resetBattle}
-                  className="cancel-button"
+                  className="cancel-button text-base sm:text-lg py-2 sm:py-3 px-4 sm:px-6"
                 >
                   New Battle
                 </button>
@@ -273,19 +295,13 @@ const QuadraRegister = () => {
       </div>
 
       <style jsx>{`
-        .match-container {
-          overflow: hidden;
-          animation: zoomIn 2s ease-in-out forwards;
-          background: radial-gradient(circle at center, rgba(0, 249, 255, 0.1) 0%, transparent 70%);
-        }
-
         @keyframes zoomIn {
           0% { transform: scale(1); }
           100% { transform: scale(1.05); }
         }
 
         .card {
-          transform: scale(0.5);
+          transform: scale(0.95);
           animation: cardTransition 1s ease-out forwards;
           box-shadow: 0 0 20px rgba(255, 255, 255, 0.4), 0 0 30px rgba(0, 255, 255, 0.6);
           transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -294,7 +310,7 @@ const QuadraRegister = () => {
         @keyframes cardTransition {
           0% {
             opacity: 0;
-            transform: scale(0.5);
+            transform: scale(0.9);
           }
           100% {
             opacity: 1;
@@ -307,10 +323,10 @@ const QuadraRegister = () => {
         }
 
         .cancel-button {
-          padding: 12px 24px;
+          padding: 10px 20px;
           background-color: transparent;
           color: #00f9ff;
-          font-size: 18px;
+          font-size: 16px;
           border: 2px solid #00f9ff;
           border-radius: 12px;
           box-shadow: 0 0 10px rgba(0, 255, 255, 0.6), 0 0 15px rgba(0, 255, 255, 0.8);
@@ -326,6 +342,13 @@ const QuadraRegister = () => {
 
         .cancel-button:focus {
           outline: none;
+        }
+
+        @media (max-width: 640px) {
+          .cancel-button {
+            padding: 8px 16px;
+            font-size: 14px;
+          }
         }
       `}</style>
     </div>

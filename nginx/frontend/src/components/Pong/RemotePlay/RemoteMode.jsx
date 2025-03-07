@@ -3,11 +3,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import gsap from 'gsap';
-import { split } from 'three/src/nodes/TSL.js';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
 import { axiosInstance } from '../../../api/axiosInstance';
-import { env } from '../../../config/env';
 
 const RemoteMode = () => {
     const canvasRef = useRef(null);
@@ -30,6 +28,8 @@ const RemoteMode = () => {
     const navigate = useNavigate();
     const [userAvatar, setUserAvatar] = useState('/default_profile.webp');
     const [opponentAvatar, setOpponentAvatar] = useState('/default_profile.webp');
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
 
     const [connectionState, setConnectionState] = useState({
         status: 'connecting',
@@ -38,6 +38,17 @@ const RemoteMode = () => {
     });
     const pingInterval = useRef(null);
     const lastPongReceived = useRef(Date.now());
+
+    // Check for mobile and orientation
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+            setIsLandscape(window.innerWidth > window.innerHeight);
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const gameSession = JSON.parse(localStorage.getItem('gameSession'));
     if (!gameSession) {
@@ -306,7 +317,8 @@ const RemoteMode = () => {
         scene.add(camera);
 
         const renderer = new THREE.WebGLRenderer({
-            canvas: canvasRef.current
+            canvas: canvasRef.current,
+            alpha: true
         });
 
         renderer.shadowMap.enabled = true;
@@ -574,14 +586,6 @@ const RemoteMode = () => {
             }
         };
 
-        // const handleVisibilityChange = () => {
-        //     if (document.hidden && websocketRef.current) {
-        //         isUnmounting.current = true;
-        //         websocketRef.current.close();
-        //         websocketRef.current = null;
-        //     }
-        // };
-
         const resetBall = (direction = 1) => {
             gameObjectsRef.current.forEach(obj => {
                 scene.remove(obj.mesh);
@@ -693,13 +697,35 @@ const RemoteMode = () => {
         };
 
         const handleMouseMove = (event) => {
+            // Get correct mouse coordinates based on canvas position
+            const rect = canvasRef.current.getBoundingClientRect();
             mouseCurrent = {
-                x: (event.clientX / window.innerWidth) * 2 - 1,
-                y: -(event.clientY / window.innerHeight) * 2 + 1
+                x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
+                y: -((event.clientY - rect.top) / rect.height) * 2 + 1
             };
+            
             if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN && inGame) {
                 websocketRef.current.send(JSON.stringify({ type: 'mouse_move', mouse_position: mouseCurrent }));
             }
+        };
+        
+        // Add touch support
+        const handleTouchMove = (event) => {
+            if (!inGame || event.touches.length === 0) return;
+            
+            const touch = event.touches[0];
+            const rect = canvasRef.current.getBoundingClientRect();
+            mouseCurrent = {
+                x: ((touch.clientX - rect.left) / rect.width) * 2 - 1,
+                y: -((touch.clientY - rect.top) / rect.height) * 2 + 1
+            };
+            
+            if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
+                websocketRef.current.send(JSON.stringify({ type: 'mouse_move', mouse_position: mouseCurrent }));
+            }
+            
+            // Prevent default to stop scrolling
+            event.preventDefault();
         };
 
         const setupLighting = () => {
@@ -810,7 +836,7 @@ const RemoteMode = () => {
 
             renderer.render(scene, camera);
             requestAnimationFrame(animate);
-            if (gameObjectsRef.current.length >= 0 && paddleRef.current?.mesh && paddleOpponentRef.current?.mesh && tableObject.mesh && netObject.mesh) {
+            if (gameObjectsRef.current.length > 0 && paddleRef.current?.mesh && paddleOpponentRef.current?.mesh && tableObject.mesh && netObject.mesh) {
 
                 tableBoundingBox.setFromObject(tableObject.mesh);
                 netBoundingBox.setFromObject(netObject.mesh);
@@ -832,8 +858,8 @@ const RemoteMode = () => {
             CreateBall(new THREE.Vector3(0, 5.0387, -8));
 
             window.addEventListener('beforeunload', handleBeforeUnload);
-            // document.addEventListener('visibilitychange', handleVisibilityChange);
             window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('touchmove', handleTouchMove, { passive: false });
             window.addEventListener('resize', handleResize);
 
             animate();
@@ -871,9 +897,9 @@ const RemoteMode = () => {
             }
 
             window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('touchmove', handleTouchMove);
             window.removeEventListener('resize', handleResize);
             window.removeEventListener('beforeunload', handleBeforeUnload);
-            // document.removeEventListener('visibilitychange', handleVisibili0tyChange);
 
             inGame = false;
             reconnectAttempts.current = 0;
@@ -897,11 +923,17 @@ const RemoteMode = () => {
 
     return (
         <>
-            <canvas ref={canvasRef} className="webgl" />
+            <canvas ref={canvasRef} className="webgl fixed top-0 left-0 w-full h-full" />
 
-            <div className="absolute top-10 left-1/2 transform -translate-x-1/2 flex items-center justify-between w-full max-w-4xl px-6 py-4 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full border-4 border-cyan-400 shadow-glow">
-                <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-cyan-400">
+            {/* Responsive header with player info and score */}
+            <div className={`
+                fixed z-10 flex items-center justify-between 
+                ${isMobile ? 'top-2 left-1/2 transform -translate-x-1/2 w-11/12 px-2 py-1' : 'top-4 left-1/2 transform -translate-x-1/2 w-full max-w-4xl px-6 py-4'}
+                bg-gradient-to-r from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-full 
+                border-2 border-cyan-400 shadow-glow
+            `}>
+                <div className="flex items-center space-x-2">
+                    <div className={`${isMobile ? 'w-8 h-8' : 'w-16 h-16'} rounded-full overflow-hidden border-2 border-cyan-400`}>
                         <img
                             src={isPlayer1 ? userAvatar : opponentAvatar}
                             alt={isPlayer1 ? username : opponent}
@@ -911,21 +943,21 @@ const RemoteMode = () => {
                             }}
                         />
                     </div>
-                    <span className="text-cyan-400 text-xl">{isPlayer1 ? username : opponent}</span>
+                    <span className="text-cyan-400 text-xs sm:text-xl">{isPlayer1 ? username : opponent}</span>
                 </div>
 
                 <div className="flex flex-col items-center">
-                    <div className="text-white text-2xl">
+                    <div className="text-white text-sm sm:text-2xl">
                         {scores[isPlayer1 ? 'player1' : 'player2']} - {scores[isPlayer1 ? 'player2' : 'player1']}
                     </div>
-                    <div className="text-gray-400">
+                    <div className="text-gray-400 text-xs sm:text-base">
                         Round {matches[isPlayer1 ? 'player1' : 'player2'] + matches[isPlayer1 ? 'player2' : 'player1'] + 1}
                     </div>
                 </div>
 
-                <div className="flex items-center space-x-4">
-                    <span className="text-rose-400 text-xl">{isPlayer1 ? opponent : username}</span>
-                    <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-rose-400">
+                <div className="flex items-center space-x-2">
+                    <span className="text-rose-400 text-xs sm:text-xl">{isPlayer1 ? opponent : username}</span>
+                    <div className={`${isMobile ? 'w-8 h-8' : 'w-16 h-16'} rounded-full overflow-hidden border-2 border-rose-400`}>
                         <img
                             src={isPlayer1 ? opponentAvatar : userAvatar}
                             alt={isPlayer1 ? opponent : username}
@@ -938,13 +970,21 @@ const RemoteMode = () => {
                 </div>
             </div>
 
+            {/* Status message display */}
             {errorMessage && (
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-gray-800 to-gray-900 text-neon-white text-lg pixel-font px-6 py-4 rounded-lg border-2 border-neon-red shadow-glow z-50">
+                <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+                             bg-gradient-to-br from-gray-800/90 to-gray-900/90 text-white
+                             text-xs sm:text-lg px-4 py-3 sm:px-6 sm:py-4 rounded-lg 
+                             border-2 border-red-500 shadow-lg z-50 max-w-xs sm:max-w-md text-center">
                     {errorMessage}
                 </div>
             )}
 
-            <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-neon-white text-lg pixel-font bg-gray-800/80 px-6 py-2 rounded-full border-2 border-neon-cyan animate-flicker">
+            {/* Game status indicator */}
+            <div className="fixed bottom-16 sm:bottom-20 left-1/2 transform -translate-x-1/2 
+                          text-white text-xs sm:text-lg bg-gray-800/80 backdrop-blur-sm
+                          px-3 py-1 sm:px-6 sm:py-2 rounded-full border border-cyan-400/50
+                          animate-pulse">
                 {connectionState.status === 'connecting' ? 'Connecting...' :
                  connectionState.status === 'waiting_opponent' ? 'Waiting for opponent...' :
                  connectionState.status === 'unstable' ? 'Connection unstable...' :
@@ -952,12 +992,14 @@ const RemoteMode = () => {
                  connectionState.hasGameStarted ? 'Game in progress' : 'Waiting to start'}
             </div>
 
-            <div className={`fixed bottom-4 right-4 flex items-center gap-2 px-4 py-2 rounded-full text-sm ${
+            {/* Connection status indicator */}
+            <div className={`fixed bottom-4 right-4 flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-2 rounded-full 
+                            text-xs sm:text-sm backdrop-blur-sm ${
                 connectionState.status === 'connected' ? 'bg-green-500/20' :
                 connectionState.status === 'unstable' ? 'bg-yellow-500/20' :
                 'bg-red-500/20'
             }`}>
-                <div className={`w-3 h-3 rounded-full ${
+                <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${
                     connectionState.status === 'connected' ? 'bg-green-500' :
                     connectionState.status === 'unstable' ? 'bg-yellow-500' :
                     'bg-red-500 animate-pulse'
@@ -970,11 +1012,20 @@ const RemoteMode = () => {
                 </span>
             </div>
 
+            {/* Mobile controls instruction */}
+            {isMobile && (
+                <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 text-white/60 text-xs">
+                    Touch and drag to move paddle
+                </div>
+            )}
+
+            {/* Game end screen */}
             {gameStatus === 'completed' && (
-                <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
-                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-lg text-center border-2 border-cyan-400">
-                        <Trophy className="w-16 h-16 mx-auto mb-4 text-cyan-400 animate-pulse" />
-                        <div className="text-2xl font-bold text-cyan-400 animate-pulse mb-4">
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 sm:p-8 rounded-lg 
+                                text-center border-2 border-cyan-400 max-w-xs sm:max-w-md">
+                        <Trophy className="w-10 h-10 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-4 text-cyan-400 animate-pulse" />
+                        <div className="text-base sm:text-2xl font-bold text-cyan-400 animate-pulse mb-4">
                             {winner}
                         </div>
                         <button
@@ -983,7 +1034,8 @@ const RemoteMode = () => {
                                 websocketRef.current && websocketRef.current.close();
                                 websocketRef.current = null;
                             }}
-                            className="bg-transparent text-cyan-400 border-2 border-cyan-400 px-6 py-2 rounded-lg hover:bg-cyan-400/10 transition-colors duration-300"
+                            className="bg-transparent text-cyan-400 border-2 border-cyan-400 px-3 py-1 sm:px-6 sm:py-2 
+                                    rounded-lg hover:bg-cyan-400/10 transition-colors duration-300 text-xs sm:text-base"
                         >
                             Back to Lobby
                         </button>
@@ -992,7 +1044,6 @@ const RemoteMode = () => {
             )}
         </>
     );
-
-}
+};
 
 export default RemoteMode;

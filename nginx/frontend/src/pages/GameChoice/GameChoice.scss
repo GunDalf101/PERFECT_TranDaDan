@@ -137,6 +137,11 @@
     font-size: 2em;
     z-index: 10;
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+    
+    @media (max-width: 768px) {
+        font-size: 1.2em;
+    }
 }
 
 #canvas-container {
@@ -242,6 +247,23 @@ canvas {
     justify-content: center;
     align-items: center;
     z-index: 2;
+    
+    &.mobile {
+        flex-direction: column;
+        padding: 60px 0 20px;
+        height: auto;
+        min-height: 100vh;
+        
+        @media (orientation: landscape) {
+            flex-direction: row;
+            padding: 10px 0;
+            height: 100vh;
+        }
+    }
+    
+    &.tablet {
+        gap: 20px;
+    }
 }
 
 .game-container {
@@ -307,5 +329,21 @@ canvas {
 
     .game-title {
         font-size: 1rem;
+    }
+    
+    /* Landscape adjustment for mobile */
+    @media (orientation: landscape) {
+        .game-area {
+            flex-direction: row;
+            padding: 1rem 0;
+        }
+        
+        .game-container {
+            margin: 0 2rem;
+            height: 45vh;
+            width: 45vh;
+            max-width: 45vw;
+            max-height: 80vh;
+        }
     }
 }
