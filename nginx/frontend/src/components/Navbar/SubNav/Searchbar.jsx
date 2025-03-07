@@ -5,11 +5,15 @@ import _ from 'lodash';
 import { useNavigate } from 'react-router-dom';
 import { useClickOutside } from '../../../hooks/useClickOutside';
 import "./SubNav.css";
+
 const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [results, setResults] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
+    
+    // Add a state to track the selected result for navigation
+    const [selectedResult, setSelectedResult] = useState(null);
 
     // Add refs for click outside detection
     const searchWrapperRef = useRef(null);
@@ -22,6 +26,20 @@ const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
     useClickOutside([searchWrapperRef, dropdownRef, inputRef], () => {
         setShowDropdown(false);
     });
+
+    // Handle navigation AFTER state updates are complete
+    useEffect(() => {
+        if (selectedResult) {
+            // Use a timeout to ensure the dropdown is fully closed
+            const timer = setTimeout(() => {
+                navigate(`/user/${selectedResult.username}`);
+                // Reset for next time
+                setSelectedResult(null);
+            }, 100);
+            
+            return () => clearTimeout(timer);
+        }
+    }, [selectedResult, navigate]);
 
     // Debounced search function
     const debouncedSearch = useCallback(
@@ -62,12 +80,19 @@ const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
     });
     const [updateError, setUpdateError] = useState(null);
 
-    const handleResultClick = (result) => {
+    // Simplified handleResultClick - just sets state, doesn't navigate
+    const handleResultClick = (result, e) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        // Set search term and selected result
         setSearchTerm(result.username);
+        setSelectedResult(result);
         setShowDropdown(false);
-
-        navigate(`/user/${result.username}`);
-
+        
+        // Handle editing if needed
         if (currentUser && currentUser.id === result.id) {
             setEditingUser(result);
             setUpdateData({
@@ -136,7 +161,7 @@ const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
                                     {results.map((result) => (
                                         <li
                                             key={result.id}
-                                            onClick={() => handleResultClick(result)}
+                                            onMouseDown={(e) => handleResultClick(result, e)} // Changed to onMouseDown
                                             className="p-3 hover:bg-gray-700 cursor-pointer text-teal-200 border-b border-gray-700 last:border-b-0 flex items-center"
                                         >
                                             <img
@@ -167,6 +192,7 @@ const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
                     <button
                         id="closeSearchModal"
                         className="absolute top-4 left-4 text-teal-200 hover:text-white transition duration-300 ease-in-out"
+                        onClick={(e) => e.stopPropagation()} // Prevent close on click
                     >
                         <svg
                             className="w-8 h-8 animate-pulse font-pixel"
@@ -196,7 +222,10 @@ const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
                         <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={24} />
 
                         {showDropdown && (results.length > 0 || isLoading) && (
-                            <div className={`dropdownScroll absolute w-full mt-2 bg-gray-800 border-2 border-pink-500 rounded-md shadow-lg max-h-[40vh] overflow-y-auto`}>
+                            <div 
+                                className={`dropdownScroll absolute w-full mt-2 bg-gray-800 border-2 border-pink-500 rounded-md shadow-lg max-h-[40vh] overflow-y-auto`}
+                                ref={dropdownRef}
+                            >
                                 {isLoading ? (
                                     <div className="p-4 text-teal-200 text-center">Loading...</div>
                                 ) : (
@@ -232,7 +261,10 @@ const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
                                                         <div className="flex justify-end space-x-2">
                                                             <button
                                                                 type="button"
-                                                                onClick={() => setEditingUser(null)}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setEditingUser(null);
+                                                                }}
                                                                 className="p-2 text-gray-400 hover:text-white"
                                                             >
                                                                 <X size={20} />
@@ -247,7 +279,7 @@ const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
                                                     </form>
                                                 ) : (
                                                     <div
-                                                        onClick={() => handleResultClick(result)}
+                                                        onMouseDown={(e) => handleResultClick(result, e)} // Changed to onMouseDown
                                                         className="flex items-center justify-between w-full"
                                                     >
                                                         <img
@@ -264,9 +296,9 @@ const SearchDropdown = React.forwardRef(({ isVisible, currentUser }, ref) => {
                                                         </div>
                                                         {currentUser && currentUser.id === result.id && (
                                                             <button
-                                                                onClick={(e) => {
+                                                                onMouseDown={(e) => { // Changed to onMouseDown
                                                                     e.stopPropagation();
-                                                                    handleResultClick(result);
+                                                                    handleResultClick(result, e);
                                                                 }}
                                                                 className="p-2 text-gray-400 hover:text-white"
                                                             >
