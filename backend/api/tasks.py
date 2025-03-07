@@ -10,10 +10,10 @@ def _send_email(email, subject, message):
         send_mail(
             subject,
             message,
-            EMAIL_HOST_USER,
+            'wizards@trandadan.live',
             [email],
             html_message=message,
-            fail_silently=True,
+            # fail_silently=True,
         )
     except Exception as e:
         print(e)
