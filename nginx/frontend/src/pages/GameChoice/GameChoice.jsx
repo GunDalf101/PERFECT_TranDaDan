@@ -445,7 +445,7 @@ const GameChoice = () => {
             <div className={`game-area ${isMobile ? 'mobile' : ''} ${isTablet ? 'tablet' : ''}`}>
                 <div className="game-container" id="pong-container">
                     <div className="game-title">PONG</div>
-                    <Link to="/game-lobby/cpu-mode"><div className="game-option" data-index="0">VS CPU</div></Link>
+                    {/* <Link to="/game-lobby/cpu-mode"><div className="game-option" data-index="0">VS CPU</div></Link> */}
                     <Link to="/game-lobby/matchmaking?gameType=pong"><div className="game-option" data-index="1">REMOTE MODE</div></Link>
                     <Link to="/game-lobby/tournament"><div className="game-option" data-index="2">TOURNAMENT</div></Link>
                     <Link to="/game-lobby/local-register"><div className="game-option" data-index="3">LOCAL MODE</div></Link>
